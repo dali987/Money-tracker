@@ -1,0 +1,36 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@preline/select": "^3.2.3",
+    "daisyui": "^5.3.10",
+    "jquery": "^3.7.1",
+    "lodash": "^4.17.21",
+    "lucide-react": "^0.552.0",
+    "next": "16.0.1",
+    "pikaday": "^1.8.2",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/postcss": "^4.1.16",
+    "@types/jquery": "^3.5.33",
+    "@types/lodash": "^4.17.20",
+    "@types/node": "^20",
+    "@types/pikaday": "^1.7.10",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.1",
+    "tailwindcss": "^4.1.16",
+    "typescript": "^5"
+  }
+}

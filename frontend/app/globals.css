@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+  name: "mostlyextreme";
+  default: true;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: #f9fafb;
+  --color-base-200: oklch(0.949 0.002 247.8);
+  --color-base-300: #d1d5dc;
+  --color-base-content: oklch(0.030 0.003 264.5);
+  --color-primary: oklch(67% 0.182 276.935);
+  --color-primary-content: oklch(25% 0.09 281.288);
+  --color-secondary: oklch(79% 0.209 151.711);
+  --color-secondary-content: oklch(26% 0.065 152.934);
+  --color-accent: oklch(77% 0.152 181.912);
+  --color-accent-content: oklch(27% 0.046 192.524);
+  --color-neutral: oklch(37% 0.034 259.733);
+  --color-neutral-content: oklch(98% 0.002 247.839);
+  --color-info: oklch(70% 0.165 254.624);
+  --color-info-content: oklch(28% 0.091 267.935);
+  --color-success: oklch(76% 0.177 163.223);
+  --color-success-content: oklch(26% 0.051 172.552);
+  --color-warning: oklch(82% 0.189 84.429);
+  --color-warning-content: oklch(27% 0.077 45.635);
+  --color-error: oklch(71% 0.202 349.761);
+  --color-error-content: oklch(28% 0.109 3.907);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --header-height: 80px; 
+  --nav-width: 4.5rem;
+  box-sizing: border-box;
+   --color-base-100: #f9fafb;
+  --color-base-200: oklch(0.949 0.002 247.8);
+  --color-base-300: #b7bbc2;
+  --color-base-content: oklch(0.030 0.003 264.5);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-roboto-mono: Roboto Mono, monospace;
+}
+
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), sans-serif;
+}
+
+@layer components {
+  .menu > *:hover {
+    @apply bg-gray-200 rounded-md ;
+  }
+
+  .accounts-worth{
+    @apply flex justify-between gap-4;
+  }
+}
+
+.collapse-title:after{
+  inset-inline-start: -0.6rem;
+}
+
+.accounts-worth > h3{
+  color: #4183c4;
+}
+
+.last{
+  border-start-end-radius: 0rem;
+}
+
+.select option > h5{
+  color: var(--color-base-300);
+}
+
+select:not(:-internal-list-box):not([multiple]){
+  background-color: #4183c4;
+}
+
+select:not(:-internal-list-box):not([multiple]) {
+    background-color: #171717;
+}
+
+.list-row::after{
+  border-color: color-mix(in lab, var(--color-base-content) 30%, white);
+}
