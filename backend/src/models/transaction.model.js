@@ -1,16 +1,9 @@
 import mongoose from "mongoose"
 
 const transactionSchema = new mongoose.Schema({
-    account: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Account',
-        required: true,
-        index: true,
-    },
     type: {
         type: String,
         enum: ["expense", "transfer", "income"],
-        required: true
     },
     fromAccount: {
         type: mongoose.Schema.Types.ObjectId,
@@ -27,7 +20,6 @@ const transactionSchema = new mongoose.Schema({
     currency: {
         type: String,
         default: "USD",
-        required: true
     },
     note: {
         type: String,
@@ -42,6 +34,20 @@ const transactionSchema = new mongoose.Schema({
         default: Date.now
     }
 })
+
+transactionSchema.pre("validate", function (next) {
+  if (!this.fromAccount && !this.toAccount) {
+    return next(new Error("Transaction must have either from account  or to account."));
+  }
+  next();
+});
+
+transactionSchema.pre("save", function (next) {
+  if (this.fromAccount && this.toAccount) this.type = "transfer";
+  else if (this.fromAccount) this.type = "expense";
+  else if (this.toAccount) this.type = "income";
+  next();
+});
 
 const Transaction = mongoose.model("Transaction", transactionSchema)
 

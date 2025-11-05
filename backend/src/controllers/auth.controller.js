@@ -3,6 +3,8 @@ import User from "../models/user.model.js"
 import bcrypt from "bcrypt"
 import { createToken, getRefreshToken } from "../lib/utils.js"
 import { ENV } from "../lib/env.js"
+import jwt from "jsonwebtoken"
+import redisClient from "../database/redisClient.js"
 
 export const signUp = async (req, res, next) =>{
     const session = await mongoose.startSession()
@@ -10,7 +12,7 @@ export const signUp = async (req, res, next) =>{
     try{
         const { username, email, password } = req.body
 
-        const existingUser = User.findOne({ email })
+        const existingUser = await User.findOne({ email })
 
         if (existingUser){
             const error = new Error('User already exists');
@@ -22,17 +24,17 @@ export const signUp = async (req, res, next) =>{
         const hashedPassword = await bcrypt.hash(password, salt)
 
 
-        const newUsers = await User.create([{name, email, password: hashedPassword}], { session})
+        const newUsers = await User.create([{username, email, password: hashedPassword}], { session})
 
         const newUser = newUsers[0]
 
         newUser.password = undefined
 
-        const accessToken = createToken(newUser._id)
+        const accessToken = createToken(newUser._id, "access", ENV.JWT_ACCESS_TOKEN_EXPIRE)
         await getRefreshToken(res, next, newUser._id, false)
 
         await session.commitTransaction()
-        session.endSession()
+
 
         res.status(201).json({
             success: true,
@@ -46,8 +48,10 @@ export const signUp = async (req, res, next) =>{
     catch (error){
         console.error("An error occurred while signing up: ", error)
         await session.abortTransaction()
-        session.endSession()
         next(error)
+    }
+    finally{
+        session.endSession()
     }
 }
 
@@ -93,6 +97,8 @@ export const signOut = async (req, res, next) => {
     try{
         const refreshToken = req.cookies.refreshToken
 
+        console.log(req.cookies)
+
         
         if (!refreshToken) return res.status(400).json({ message: "No refresh token provided" })
         
@@ -109,7 +115,7 @@ export const signOut = async (req, res, next) => {
 
         return res.status(200).json({ message: "Logged out successfully" });
     }
-    catch{
+    catch (error){
         console.error("An error occurred while signing out: ", error)
         next(error)
     }

@@ -24,13 +24,19 @@ nextApp.prepare().then(() =>{
 
     apiRouter.use("/auth", authRouter)
     apiRouter.use("/account", accountRouter)
-    apiRouter.use("transaction", transactionRouter)
+    apiRouter.use("/transaction", transactionRouter)
+
+    app.use("/api/v1", apiRouter)
+    app.get("/test", (req, res) => {
+        console.log("Cookies:", req.cookies);
+        res.json(req.cookies);
+    });
+
+    app.use(errorMiddleware)
 
     app.all(/.*/, (req, res) => {
         return handle(req, res)
     })
-
-    app.use(errorMiddleware)
 
     app.listen(PORT, async () =>{
         console.log("server is up, port: ", PORT)

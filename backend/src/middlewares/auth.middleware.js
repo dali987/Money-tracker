@@ -31,6 +31,7 @@ export const authorizeToken = async (req, res, next) =>{
 
 export const verifyRefreshToken = async (req, res, next) =>{
 
+
     const token = req.cookies.refreshToken;
 
     if (!token) {
@@ -42,9 +43,11 @@ export const verifyRefreshToken = async (req, res, next) =>{
         const decoded = jwt.verify(token, ENV.JWT_REFRESH_TOKEN_SECRET)
 
         const storedRefreshTokenData = await redisClient.get(decoded.userId.toString())
-        if (!storedTokenData) {
+        if (!storedRefreshTokenData) {
             return res.status(401).json({ message: "Unauthorized: Invalid session." });
         }
+
+        req.userId = decoded.userId
 
         const { refreshToken : storedRefreshToken } = JSON.parse(storedRefreshTokenData)
 
@@ -52,10 +55,13 @@ export const verifyRefreshToken = async (req, res, next) =>{
             return res.status(401).json({message: "Unauthorized: Invalid token." });
         }
 
+        req.cookies.refreshToken = token
+
         next()
 
     }
     catch (error){
+        console.error(error)
         return res.status(401).json({ message: "Unauthorized: Session has expired or is invalid." });
     }
 }

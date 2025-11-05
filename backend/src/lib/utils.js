@@ -8,12 +8,12 @@ import redisClient from "../database/redisClient.js"
 */
 
 export const createToken = (userId, type, period) =>{
-    const token = jwt.sign({ userId }, ENV[`JWT_${type.toUpperCase()}_TOKEN_SECRET`], { expiresIn: ms(period)})
+    const token = jwt.sign({ userId }, ENV[`JWT_${type.toUpperCase()}_TOKEN_SECRET`], {expiresIn: ms(period)})
 
     return token
 }
 
-export const gerRefreshToken = async (res, next, userId, rememberMe) =>{
+export const getRefreshToken = async (res, next, userId, rememberMe) =>{
     try{
         const period = rememberMe ? ENV.JWT_REFRESH_TOKEN_EXPIRE_REMEMBER_ME : ENV.JWT_REFRESH_TOKEN_EXPIRE
 

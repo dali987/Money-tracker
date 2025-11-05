@@ -17,13 +17,9 @@ export const createAccount = async (req, res, next) =>{
 
 export const getUserAccounts = async (req, res, next) =>{
     try{
-        if(req.user.id !== req.params.id) {
-            const error = new Error('You are not the owner of this account');
-            error.status = 401;
-            throw error;
-        }
+
         
-        const accounts = await Transaction.find({ user: req.user.id})
+        const accounts = await Account.find({ user: req.user._id})
 
         res.status(200).json({ success: true, data: accounts });
     }
@@ -36,17 +32,12 @@ export const getUserAccounts = async (req, res, next) =>{
 
 export const getAccount = async (req, res, next) =>{
     try{
-        if(req.user.id !== req.params.id) {
-            const error = new Error('You are not the owner of this account');
-            error.status = 401;
-            throw error;
-        }
 
-        const { accountId } = req.body
+        const { id: accountId } = req.params
 
         const account = await Account.findById(accountId)
 
-        if (transaction.user._id.toString() !== req.user.id.toString()) {
+        if (account.user._id.toString() !== req.user.id.toString()) {
             const error = new Error('You are not the owner of this account');
             error.status = 401;
             throw error;
