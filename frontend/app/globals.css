@@ -46,7 +46,7 @@
   box-sizing: border-box;
    --color-base-100: #f9fafb;
   --color-base-200: oklch(0.949 0.002 247.8);
-  --color-base-300: #b7bbc2;
+  --color-base-300: #bdc0c7;
   --color-base-content: oklch(0.030 0.003 264.5);
 }
 

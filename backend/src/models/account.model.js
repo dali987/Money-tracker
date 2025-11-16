@@ -16,9 +16,9 @@ const accountSchema = new mongoose.Schema({
         enum: ["Cash", "Bank", "Credit"],
         required: true
     },
-    currency: {
-        type: String,
-        default: "USD"
+    currencies:{
+        type: [String],
+        default: ["USD"]
     },
     balance: {
         type: Number,

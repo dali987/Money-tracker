@@ -3,11 +3,11 @@ import Account from "../models/account.model.js";
 export const createAccount = async (req, res, next) =>{
     try{
 
-        const account = Account.create({
+        const account = await Account.create({
             ...req.body,
         })
 
-        res.status(201).json({ success: true, data: { account } });
+        res.status(201).json({ success: true, data: account });
     }
     catch (error){
         console.error("An error occurred while creating an account: ", error)
@@ -18,7 +18,6 @@ export const createAccount = async (req, res, next) =>{
 export const getUserAccounts = async (req, res, next) =>{
     try{
 
-        
         const accounts = await Account.find({ user: req.user._id})
 
         res.status(200).json({ success: true, data: accounts });

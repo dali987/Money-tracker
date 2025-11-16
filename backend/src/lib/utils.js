@@ -8,7 +8,7 @@ import redisClient from "../database/redisClient.js"
 */
 
 export const createToken = (userId, type, period) =>{
-    const token = jwt.sign({ userId }, ENV[`JWT_${type.toUpperCase()}_TOKEN_SECRET`], {expiresIn: ms(period)})
+    const token = jwt.sign({ userId }, ENV[`JWT_${type.toUpperCase()}_TOKEN_SECRET`], {expiresIn: period})
 
     return token
 }

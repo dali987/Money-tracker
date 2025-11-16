@@ -61,7 +61,7 @@ export const signIn = async (req, res, next) =>{
 
         const user = await User.findOne({ email })
         if (!user){
-            const error = new Error('User already exists');
+            const error = new Error('User does not exist');
             error.statusCode = 409;
             throw error
         }
@@ -128,10 +128,9 @@ export const getNewToken = async (req, res) =>{
         const userId = req.userId
 
     // creating a new access token
-        console.log(ENV.JWT_ACCESS_TOKEN_EXPIRE)
         const accessToken = createToken(userId, "access", ENV.JWT_ACCESS_TOKEN_EXPIRE)
 
-        return res.json({status: true, message: "success", data: {accessToken}});
+        return res.json({status: true, message: "success", data: accessToken});
     }
     catch (error){
         console.error("An error occurred while getting new token: ", error)

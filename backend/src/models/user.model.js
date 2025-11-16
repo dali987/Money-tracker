@@ -15,6 +15,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    currencies: {
+        type: Array,
+        default: ["USD"]
+    },
+    baseCurrency: {
+        type: String,
+        default: "USD"
+    },
     profilePic: {
         type: String,
         default: ""

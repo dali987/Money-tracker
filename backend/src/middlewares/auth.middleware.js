@@ -13,14 +13,17 @@ export const authorizeToken = async (req, res, next) =>{
 
         if (!token) return res.status(401).json({message: "Unauthorized"})
 
+
         const decoded = jwt.verify(token, ENV.JWT_ACCESS_TOKEN_SECRET)
+
 
         const user = await User.findById(decoded.userId).select("-password")
 
         if (!user) return res.status(401).json({message: "Unauthorized"})
 
+            
         req.user = user
-
+            
         next()
     }
     catch (error){

@@ -1,6 +1,17 @@
+"use client"
+
+import { useAuthStore } from "@/store/useAuthStore"
 import Image from "next/image"
+import { useEffect } from "react"
 
 const Header = () => {
+
+  const { checkAuth } = useAuthStore()
+
+  useEffect(() => {
+    checkAuth();
+  },[])
+
   return (
     <header className="sticky top-0 left-0 w-full bg-[#3f51b5] flex justify-between items-center px-12 py-4 z-30 shadow-xl h-(--header-height)">
         <div className="flex items-center gap-16">
