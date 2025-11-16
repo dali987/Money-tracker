@@ -7,33 +7,43 @@ import { useEffect } from 'react';
 import TransactionForm from './TransactionForm';
 import React from 'react';
 
+const typeProperties = {
+    transfer: {
+        color: 'text-gray-500',
+        symbol: '',
+        account: '',
+    },
+    income: {
+        color: 'text-green-500',
+        symbol: '+',
+        account: 'toAccount',
+    },
+    expense: {
+        color: 'text-red-500',
+        symbol: '-',
+        account: 'fromAccount',
+    },
+};
+
+const fields = ['expense', 'transfer', 'income'];
+
+
 const TransactionsList = () => {
-    const { getTransactions, transactions, getAccounts, accounts, deleteTransaction } =
-        useTransactionStore();
+    const { transactions, accounts, deleteTransaction } = useTransactionStore();
     const { authUser } = useAuthStore();
 
-    const typeProperties = {
-        transfer: {
-            color: 'text-gray-500',
-            symbol: '',
-            account: '',
-        },
-        income: {
-            color: 'text-green-500',
-            symbol: '+',
-            account: 'toAccount',
-        },
-        expense: {
-            color: 'text-red-500',
-            symbol: '',
-            account: 'fromAccount',
-        },
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const day = date.getDate();
+        const month = date.toLocaleString('default', { month: 'short' });
+        const year = date.getFullYear();
+        return `${day} ${month}, ${year}`;
     };
 
-    useEffect(() => {
-        getTransactions();
-        getAccounts();
-    }, []);
+    const findAccountName = (transactionId: any) => {
+        return accounts.find((account: any) => account._id == transactionId).name;
+    };
 
     return (
         <ul className="list rounded-box">
@@ -45,39 +55,22 @@ const TransactionsList = () => {
                         <div className="list-col-grow">
                             <div className="text-base">
                                 {transaction.type !== 'transfer' ? (
-                                    accounts.find(
-                                        (account: any) =>
-                                            account._id ==
-                                            transaction[
-                                                typeProperties[
-                                                    transaction.type as keyof typeof typeProperties
-                                                ].account
-                                            ]
-                                    ).name
+                                    findAccountName(
+                                        transaction[
+                                            typeProperties[
+                                                transaction.type as keyof typeof typeProperties
+                                            ].account
+                                        ]
+                                    )
                                 ) : (
                                     <div className="flex items-center gap-2">
-                                        {
-                                            accounts.find(
-                                                (account: any) =>
-                                                    account._id == transaction.fromAccount
-                                            ).name
-                                        }{' '}
-                                        <ArrowRight />{' '}
-                                        {
-                                            accounts.find(
-                                                (account: any) =>
-                                                    account._id == transaction.toAccount
-                                            ).name
-                                        }{' '}
+                                        {findAccountName(transaction.fromAccount)} <ArrowRight />{' '}
+                                        {findAccountName(transaction.toAccount)}{' '}
                                     </div>
                                 )}
                             </div>
                             <div className="text-xs uppercase font-semibold opacity-60">
-                                {`${new Date(transaction.date).getDate()} ${new Date(
-                                    transaction.date
-                                ).toLocaleString('default', { month: 'short' })}, ${new Date(
-                                    transaction.date
-                                ).getFullYear()}`}
+                                {formatDate(transaction.date)}
                             </div>
                             <p className="text-base-300">{transaction.note}</p>
                         </div>
@@ -112,37 +105,35 @@ const TransactionsList = () => {
                                     </form>
                                 </div>
                                 <div className="tabs tabs-lift">
-                                    {(['expense', 'transfer', 'income'] as const).map(
-                                        (type: 'expense' | 'transfer' | 'income', i: number) => (
-                                            <React.Fragment key={type}>
-                                                <input
-                                                    type="radio"
-                                                    name="edit-tabs"
+                                    {fields.map((type: string, i: number) => (
+                                        <React.Fragment key={type}>
+                                            <input
+                                                type="radio"
+                                                name="edit-tabs"
+                                                style={{
                                                     //@ts-ignore
-                                                    style={{
-                                                        '--color-base-content':
-                                                            type === 'expense'
-                                                                ? '#fb2c36'
-                                                                : type === 'income'
-                                                                ? 'oklch(72.3% 0.219 149.579)'
-                                                                : '',
+                                                    '--color-base-content':
+                                                        type === 'expense'
+                                                            ? '#fb2c36'
+                                                            : type === 'income'
+                                                            ? 'oklch(72.3% 0.219 149.579)'
+                                                            : '',
+                                                }}
+                                                className="tab grow font-bold"
+                                                aria-label={type}
+                                                defaultChecked
+                                            />
+                                            <div className="tab-content bg-gray-50 border-gray-300 p-6">
+                                                <TransactionForm
+                                                    type={type as 'expense' | 'income' | 'transfer'}
+                                                    action={{
+                                                        type: 'edit',
+                                                        id: transaction._id,
                                                     }}
-                                                    className="tab grow font-bold"
-                                                    aria-label={type}
-                                                    defaultChecked
                                                 />
-                                                <div className="tab-content bg-gray-50 border-gray-300 p-6">
-                                                    <TransactionForm
-                                                        type={type}
-                                                        action={{
-                                                            type: 'edit',
-                                                            id: transaction._id,
-                                                        }}
-                                                    />
-                                                </div>
-                                            </React.Fragment>
-                                        )
-                                    )}
+                                            </div>
+                                        </React.Fragment>
+                                    ))}
                                 </div>
                                 <div className="modal-action">
                                     <form method="dialog">

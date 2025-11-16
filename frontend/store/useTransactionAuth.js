@@ -8,7 +8,7 @@ export const useTransactionStore = create((set, get) => ({
     transactions: [],
     rates: {},
 
-    getAccounts: async () =>{
+    getAccounts: async (force = false) =>{
         try{
             const token = await useAuthStore.getState().getToken()
 

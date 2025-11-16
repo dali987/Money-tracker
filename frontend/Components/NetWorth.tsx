@@ -1,30 +1,31 @@
 'use client';
 
-import { getAccounts } from '@/lib/server/fetchUser';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionAuth';
 import { LoaderIcon } from 'lucide-react';
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
+
+const types = ['Cash', 'Bank', 'Credit']
 
 const NetWorth = () => {
-    const { accounts, rates, getRates, transactions } = useTransactionStore();
-    const { authUser, checkAuth } = useAuthStore();
+    const { accounts, rates, transactions } = useTransactionStore();
+    const { authUser } = useAuthStore();
 
-    useEffect(() => {
-        getRates();
-        checkAuth();
-        getAccounts()
-    }, [])
+    const totalNetWorth = useMemo(() => {
+        if (!accounts) return 0;
+        return accounts.reduce((acc: number, account: any) => acc + account.balance, 0);
+    }, [accounts]);
 
-    const calculateSum = (type?: string) => {
-        let sumAccounts = accounts;
-        if (type) {
-            sumAccounts = accounts.filter((account: any) => account.type === type);
-        }
-
-        const sum = sumAccounts.reduce((acc: number, account: any) => acc + account.balance, 0);
-        return sum;
-    };
+    const sumsByType = useMemo(() => {
+        if (!accounts) return {};
+        return types.reduce((acc, type) => {
+            const sum = accounts
+                .filter((account: any) => account.type === type)
+                .reduce((sum: number, account: any) => sum + account.balance, 0);
+            acc[type] = sum;
+            return acc;
+        }, {} as Record<string, number>);
+    }, [accounts]);
 
     return (
         <div className="collapse collapse-arrow font-mono bg-gray-100 p-2">
@@ -33,26 +34,26 @@ const NetWorth = () => {
                     <input type="checkbox" name="my-accordion" defaultChecked />
                     <div className="collapse-title ml-5 flex justify-between items-center font-bold text-xl">
                         <h1 className="inline">NET WORTH</h1>
-                        <span className={calculateSum() < 0 ? 'text-red-700' : 'text-green-700'}>{calculateSum().toFixed(2)} {authUser.currency}</span>
+                        <span className={totalNetWorth < 0 ? 'text-red-700' : 'text-green-700'}>{totalNetWorth.toFixed(2)} {authUser.currency}</span>
                     </div>
                     <div className="collapse-content ml-2">
-                        {['Cash', 'Bank', 'Credit'].map((type: string, i: number) => (
+                        {types.map((type: string, i: number) => (
                             <div className="collapse" key={type}>
                                 <input type="checkbox" name="my-accordion-1" defaultChecked />
                                 <div className="collapse-title p-4 flex justify-between items-center font-bold text-lg">
                                     <h1 className="inline">{type}</h1>
                                     <span
                                         className={
-                                            calculateSum(type) < 0
+                                            sumsByType[type] < 0
                                                 ? 'text-red-600'
                                                 : 'text-green-600'
                                         }>
-                                        {calculateSum(type).toFixed(2)} {authUser.currency}
+                                        {sumsByType[type].toFixed(2)} {authUser.currency}
                                     </span>
                                 </div>
                                 <div className="collapse-content">
-                                    {accounts.filter((account: any) => account.type === type).map((account: any, i: number) => (
-                                        <React.Fragment key={i}>
+                                    {accounts.filter((account: any) => account.type === type).map((account: any) => (
+                                        <React.Fragment key={account._id}>
                                             <div className="accounts-worth" key={i}>
                                                 <h3>{account.name}</h3>
                                                 <div className="flex flex-col items-end">

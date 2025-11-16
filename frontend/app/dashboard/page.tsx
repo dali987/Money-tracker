@@ -1,11 +1,15 @@
+import Initializer from "@/Components/Initializer"
 import NetWorth from '@/Components/NetWorth';
 import TransactionForm from '@/Components/TransactionForm';
 import TransactionsList from '@/Components/TransactionsList';
 import React from 'react';
 
+const fields = ['expense','transfer', 'income']
+
 const page = () => {
     return (
         <main className="bg-white lg:bg-gray-200 flex justify-center items-center min-h-screen w-[calc(100%-var(--nav-width))] ml-(--nav-width) p-16">
+            <Initializer rates transactions accounts />
             <section className="w-full lg:bg-white lg:rounded-lg lg:shadow-2xl lg:w-5xl p-4 flex gap-4">
                 <div className="w-2/5 flex justify-center ">
                     <NetWorth />
@@ -19,8 +23,8 @@ const page = () => {
                             </div>
                             <div className="collapse-content">
                                 <div className="tabs tabs-lift">
-                                    {(['expense','transfer', 'income'] as const).map(
-                                        (type: "expense" | "income" | "transfer", i: number) => (
+                                    {fields.map(
+                                        (type: string, i: number) => (
                                             <React.Fragment key={type}>
                                                 <input
                                                     type="radio"
@@ -32,7 +36,7 @@ const page = () => {
                                                     defaultChecked
                                                 />
                                                 <div className="tab-content bg-gray-50 border-gray-300 p-6">
-                                                    <TransactionForm type={type} />
+                                                    <TransactionForm type={type as 'expense' | 'income' | 'transfer'} />
                                                 </div>
                                             </React.Fragment>
                                         )

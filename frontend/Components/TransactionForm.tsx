@@ -5,32 +5,13 @@ import MultiSelectDropdown from '@/Components/MultiSelectDropdown';
 import NumberInput from '@/Components/NumberInput';
 import SelectDropdown from '@/Components/SelectDropdown';
 import { transactionSchema } from '@/lib/validations';
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useState } from 'react';
 import { useTransactionStore } from '@/store/useTransactionAuth.js';
 import { toast } from 'sonner';
-import z from 'zod';
+import { z } from 'zod';
 import { useAuthStore } from '@/store/useAuthStore';
 import { LoaderIcon } from 'lucide-react';
-import { getTransactions } from '@/lib/server/fetchUser';
-
-function toISOStringWithOffset(date: any) {
-  const pad = (n: number) => String(Math.floor(Math.abs(n))).padStart(2, "0");
-  const offset = -date.getTimezoneOffset();
-  const sign = offset >= 0 ? "+" : "-";
-  const hours = pad(offset / 60);
-  const minutes = pad(offset % 60);
-
-  return (
-    date.getFullYear() +
-    "-" + pad(date.getMonth() + 1) +
-    "-" + pad(date.getDate()) +
-    "T" + pad(date.getHours()) +
-    ":" + pad(date.getMinutes()) +
-    ":" + pad(date.getSeconds()) +
-    "." + String(date.getMilliseconds()).padStart(3, "0") +
-    sign + hours + ":" + minutes
-  );
-}
+import { formatISO } from 'date-fns';
 
 const MoneyExchangeWithCurrency = ({
     options,
@@ -81,7 +62,7 @@ const TransactionForm = ({
     action?: "create" | {type: "edit", id: string}
 }) => {
     const { createTransaction, getAccounts, accounts, updateTransaction } = useTransactionStore();
-    const { checkAuth, authUser, isCheckingAuth } = useAuthStore();
+    const { authUser, isCheckingAuth } = useAuthStore();
 
     const [ keepFormData, setKeepFormData ] = useState({toAccount: { name: "", type: "", id: ""}, fromAccount: { name: "", type: "", id: ""}, note: "", tags: []})
     
@@ -95,8 +76,8 @@ const TransactionForm = ({
                 const now = new Date()
 
                 //@ts-ignore
-                date = new Date(Number(year), Number(month) - 1, Number(day), now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
-                date = toISOStringWithOffset(date);
+                const newDate = new Date(Number(year), Number(month) - 1, Number(day), now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+                date = formatISO(newDate);
             }
 
 
@@ -163,11 +144,6 @@ const TransactionForm = ({
         handleFormSubmit,
         null
     );
-
-    useEffect(() => {
-        getAccounts();
-        checkAuth()
-    }, []);
 
     const options = handleOptions(accounts);
 
