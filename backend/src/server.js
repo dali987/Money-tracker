@@ -61,10 +61,6 @@ nextApp.prepare().then(() =>{
     apiRouter.use("/exchange", exchangeRouter)
 
     app.use("/api/v1", apiRouter)
-    app.get("/test", (req, res) => {
-        console.log("Cookies:", req.cookies);
-        res.json(req.cookies);
-    });
 
     app.use(errorMiddleware)
 

@@ -92,7 +92,6 @@ const TransactionForm = ({
             if (date !== "") {
                 const [ year, month, day ] = (date as string)?.split("-").map(Number);
             
-                console.log(date)
                 const now = new Date()
 
                 //@ts-ignore
@@ -111,11 +110,9 @@ const TransactionForm = ({
                 date: date
             };
 
-            console.log('form values: ', formValues);
 
             await transactionSchema.parseAsync(formValues);
 
-            console.log(formValues);
 
             const cleanFormValues = Object.fromEntries(
                 Object.entries(formValues).filter(([_, v]) => v !== '' && v != null)
@@ -125,7 +122,6 @@ const TransactionForm = ({
                 await createTransaction(cleanFormValues);
             }
             else{
-                console.log({id: action.id, data: cleanFormValues})
                 await updateTransaction({id: action.id, data: cleanFormValues})
             }
             await getAccounts();
@@ -158,12 +154,8 @@ const TransactionForm = ({
             else{
                 toast.error("Unexpected error occurred")
             }
-            console.log("tags before", keepFormData.tags)
             setKeepFormData((prev) => ({...prev, tags: []}))
-            console.log("should reset: ", keepFormData.tags)
             
-            console.error('error while making the transaction: ', error);
-
         }
     };
 

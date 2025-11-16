@@ -180,7 +180,6 @@ export const deleteTransaction = async (req, res, next) => {
 
     try {
         const { id: transactionId } = req.params;
-        console.log(transactionId);
 
 
         const deletedTransaction = await Transaction.findByIdAndDelete(transactionId);

@@ -96,9 +96,6 @@ export const signIn = async (req, res, next) =>{
 export const signOut = async (req, res, next) => {
     try{
         const refreshToken = req.cookies.refreshToken
-
-        console.log(req.cookies)
-
         
         if (!refreshToken) return res.status(400).json({ message: "No refresh token provided" })
         

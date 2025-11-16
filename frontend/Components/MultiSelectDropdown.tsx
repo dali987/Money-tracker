@@ -73,7 +73,6 @@ export default function MultiSelectDropdown({
 
     useEffect(() => {
         setIsJsEnabled(true);
-        console.log(selected)
     }, [selectedOptions]);
 
 

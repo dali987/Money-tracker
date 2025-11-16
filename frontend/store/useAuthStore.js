@@ -34,7 +34,6 @@ export const useAuthStore = create((set, get) =>({
     },
 
     checkAuth: async () =>{
-        console.log("checking auth: ", get().authUser)
         if (get().authUser) return get().authUser
         set({ isCheckingAuth: true })
 
@@ -48,7 +47,6 @@ export const useAuthStore = create((set, get) =>({
                 }
             })
 
-            console.log("auth is still in proccess")
             if (!res) throw new Error("error getting user")
 
 

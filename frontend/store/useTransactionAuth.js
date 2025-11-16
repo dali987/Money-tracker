@@ -22,7 +22,6 @@ export const useTransactionStore = create((set, get) => ({
             const accounts = res.data.data
             if (!accounts) throw new Error("error getting user")
 
-            console.log("fetched data")
             set({ accounts: accounts })
             return accounts
         }
@@ -47,7 +46,6 @@ export const useTransactionStore = create((set, get) => ({
             if (!transactions) throw new Error("error getting user")
             
             const sortedTransactions = transactions.sort((a, b) => new Date(b.date) - new Date(a.date))
-            console.log(sortedTransactions)
 
             set({ transactions: sortedTransactions })
             return transactions
@@ -78,10 +76,8 @@ export const useTransactionStore = create((set, get) => ({
             const transactions = [ ...get().transactions, transaction]
 
             const sortedTransactions = transactions.sort((a, b) => new Date(b.date) - new Date(a.date))
-            console.log(sortedTransactions)
             
             set({ transactions: sortedTransactions})
-            console.log("okay this is good")
         }
         catch(error){
             console.error("An error occurred while creating transaction: ", error)
@@ -108,7 +104,6 @@ export const useTransactionStore = create((set, get) => ({
 
             const transactions = get().transactions.map(item => item._id === transaction._id ? transaction : item)
 
-            console.log(transactions)
             
             set({ transactions: transactions})
         }
@@ -134,12 +129,9 @@ export const useTransactionStore = create((set, get) => ({
             if (!deletedTransaction) throw new Error("error deleting transaction")
             
             toast.success("Transaction deleted successfully")
-            console.log(get().transactions.map(item => item._id))
-            console.log(deletedTransaction._id)
 
             const transactions = get().transactions.filter(item => item._id !== deletedTransaction._id)
 
-            console.log(transactions)
             
             set({ transactions: transactions})
         }
@@ -163,7 +155,6 @@ export const useTransactionStore = create((set, get) => ({
             if (!rates) throw new Error("error getting rates")
 
             set({ rates: rates })
-            console.log(rates)
             return rates
         }
         catch (error){

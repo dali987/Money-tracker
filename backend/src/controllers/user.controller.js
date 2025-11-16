@@ -2,8 +2,6 @@
 export const getUser = async (req, res, next) =>{
     try{
 
-        console.log(req.user)
-
         if (!req.user) res.status(401).json({message: "Unauthorized"})
         res.status(200).json({ success: true, data: req.user})
     }  

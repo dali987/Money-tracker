@@ -16,10 +16,6 @@ const NetWorth = () => {
         getAccounts()
     }, [])
 
-    console.log("transactions from net worth: ",transactions)
-
-
-
     const calculateSum = (type?: string) => {
         let sumAccounts = accounts;
         if (type) {
@@ -27,7 +23,6 @@ const NetWorth = () => {
         }
 
         const sum = sumAccounts.reduce((acc: number, account: any) => acc + account.balance, 0);
-        console.log(sum);
         return sum;
     };
 
