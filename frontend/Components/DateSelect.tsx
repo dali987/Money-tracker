@@ -16,15 +16,15 @@ export default function DateSelect({ name } : { name: string }) {
         });
     }, []);
     return (
-        <div className="relative w-45   ">
+        <div className="relative w-full">
             <input
                 type="text"
-                className="input outline-0 pika-single"
+                className="input outline-0 pika-single w-full rounded"
                 defaultValue="Pick a date"
                 name={name}
                 ref={myDatepicker}
             />
-            <CalendarDays className="absolute right-2 top-1/2 -translate-y-1/2 z-100 pointer-events-none" />
+            <CalendarDays className="absolute right-2 top-1/2 -translate-y-1/2 z-1000 pointer-events-none" />
         </div>
     );
 }

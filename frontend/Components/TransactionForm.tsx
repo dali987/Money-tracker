@@ -3,7 +3,7 @@
 import DateSelect from '@/Components/DateSelect';
 import MultiSelectDropdown from '@/Components/MultiSelectDropdown';
 import NumberInput from '@/Components/NumberInput';
-import SelectDropdown from '@/Components/SelectDropdown';
+import SelectAccountDropdown from '@/Components/SelectAccountDropdown';
 import { transactionSchema } from '@/lib/validations';
 import { useActionState, useState } from 'react';
 import { useTransactionStore } from '@/store/useTransactionAuth.js';
@@ -28,7 +28,7 @@ const MoneyExchangeWithCurrency = ({
 
     return (
         <>
-            <SelectDropdown
+            <SelectAccountDropdown
                 className="w-full"
                 options={options}
                 onSelect={handleOnSelect}
@@ -204,7 +204,7 @@ const TransactionForm = ({
                                 onChange={e => setKeepFormData((prev) => ({...prev, note: e.target.value}))}
                             />
                         </div>
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-4 w-45">
                             <DateSelect name="date" />
                             <button className="btn btn-neutral btn-outline flex-1 p-2" onSubmit={e => e.preventDefault()}>
                                 {(action !== "create" && action.type) == "edit" ? "Update" : "Add"}{' '}

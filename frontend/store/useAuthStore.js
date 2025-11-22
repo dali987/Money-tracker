@@ -3,7 +3,7 @@ import { axiosInstance } from "@/lib/axios.js"
 
 export const useAuthStore = create((set, get) =>({
     authUser: null,
-    isCheckingAuth: false,
+    isCheckingAuth: true,
     isSigningUp: false,
     isLoggingIn: false,
     token: null,
@@ -34,8 +34,11 @@ export const useAuthStore = create((set, get) =>({
     },
 
     checkAuth: async () =>{
-        if (get().authUser) return get().authUser
         set({ isCheckingAuth: true })
+        if (get().authUser) {
+            set({ isCheckingAuth: false })
+            return get().authUser
+        }
 
         try{
             const token = await get().getToken()

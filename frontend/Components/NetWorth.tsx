@@ -52,15 +52,15 @@ const NetWorth = () => {
                                     </span>
                                 </div>
                                 <div className="collapse-content">
-                                    {accounts.filter((account: any) => account.type === type).map((account: any) => (
+                                    {accounts.filter((account: any) => account.type === type).map((account: any, i: number) => (
                                         <React.Fragment key={account._id}>
-                                            <div className="accounts-worth" key={i}>
+                                            <div className="accounts-worth">
                                                 <h3>{account.name}</h3>
                                                 <div className="flex flex-col items-end">
                                                     {account.currencies.map(
-                                                        (currency: string, i: number) => (
+                                                        (currency: string) => (
                                                             <h3
-                                                                key={i}
+                                                                key={currency}
                                                                 className={`${
                                                                     account.balance < 0
                                                                         ? 'text-red-500'

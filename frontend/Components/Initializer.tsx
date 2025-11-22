@@ -10,7 +10,6 @@ const Initializer = ({ rates, accounts, transactions } : {rates?: boolean, accou
 
     useEffect(() => {
         // Fetch all initial data from one place
-        checkAuth();
         rates && getRates()
         accounts && getAccounts();
         transactions && getTransactions();

@@ -114,6 +114,30 @@ export const getUserTransactions = async (req, res, next) => {
     }
 };
 
+export const getUserTransactionsWithDate = async (req, res, next) =>{
+    try{
+        const { start, end } = req.params
+        console.log(start, end)
+
+        const id = req.user._id
+
+        const transactions = await Transaction.find({
+            date: {
+                $gte: start,
+                $lte: end
+            }
+        })
+
+        console.log(transactions)
+
+        res.status(200).json({ success: true, data: transactions });
+    }
+    catch (error){
+        console.error('An error occurred while getting user transactions in period of time: ', error);
+        next(error);
+    }
+}
+
 export const getTransaction = async (req, res, next) => {
     try {
         if (req.user.id !== req.params.id) {

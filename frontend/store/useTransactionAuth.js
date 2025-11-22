@@ -56,6 +56,37 @@ export const useTransactionStore = create((set, get) => ({
             return []
         }
     },
+
+    getTransactionsWithDate: async ({ start, end }) =>{
+        try{
+            const token = await useAuthStore.getState().getToken()
+            console.log("startl: ", start)
+            console.log("end: ", end)
+            const res = await axiosInstance.get("/transaction/period", {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                params: {
+                    start,
+                    end
+                }
+            })
+            if (!res) throw new Error("error getting user")
+
+            const transactions = res.data.data
+            if (!transactions) throw new Error("error getting user")
+            
+            const sortedTransactions = transactions.sort((a, b) => new Date(b.date) - new Date(a.date))
+
+            set({ transactions: sortedTransactions })
+            return transactions
+        }
+        catch (error){
+            console.error("An error occurred while getting accounts: ", error)
+            set({ transactions: [] })
+            return []
+        }
+    },
     createTransaction: async (transactionData) =>{
         try{
             const token = await useAuthStore.getState().getToken()

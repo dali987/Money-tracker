@@ -2,8 +2,8 @@
 
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionAuth';
+import { format } from 'date-fns';
 import { ArrowRight, File, Pencil } from 'lucide-react';
-import { useEffect } from 'react';
 import TransactionForm from './TransactionForm';
 import React from 'react';
 
@@ -31,46 +31,41 @@ const fields = ['expense', 'transfer', 'income'];
 const TransactionsList = () => {
     const { transactions, accounts, deleteTransaction } = useTransactionStore();
     const { authUser } = useAuthStore();
-
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const day = date.getDate();
-        const month = date.toLocaleString('default', { month: 'short' });
-        const year = date.getFullYear();
-        return `${day} ${month}, ${year}`;
-    };
-
-    const findAccountName = (transactionId: any) => {
-        return accounts.find((account: any) => account._id == transactionId).name;
-    };
+    
+    const accountNameMap = React.useMemo(() => {
+        if (!accounts || accounts.length === 0) return {};
+        return accounts.reduce((map: Record<string, string>, account: any) => {
+            map[account._id] = account.name;
+            return map;
+        }, {});
+    }, [accounts]);
 
     return (
         <ul className="list rounded-box">
             {transactions.length > 0 &&
                 authUser &&
                 accounts.length > 0 &&
-                transactions.slice(0, 5).map((transaction: any, i: number) => (
-                    <li className="list-row !" key={i}>
+                transactions.slice(0, 5).map((transaction: any) => (
+                    <li className="list-row !" key={transaction._id}>
                         <div className="list-col-grow">
                             <div className="text-base">
                                 {transaction.type !== 'transfer' ? (
-                                    findAccountName(
+                                    accountNameMap[
                                         transaction[
                                             typeProperties[
                                                 transaction.type as keyof typeof typeProperties
                                             ].account
                                         ]
-                                    )
+                                    ]
                                 ) : (
                                     <div className="flex items-center gap-2">
-                                        {findAccountName(transaction.fromAccount)} <ArrowRight />{' '}
-                                        {findAccountName(transaction.toAccount)}{' '}
+                                        {accountNameMap[transaction.fromAccount]} <ArrowRight />{' '}
+                                        {accountNameMap[transaction.toAccount]}{' '}
                                     </div>
                                 )}
                             </div>
                             <div className="text-xs uppercase font-semibold opacity-60">
-                                {formatDate(transaction.date)}
+                                {format(new Date(transaction.date), 'dd MMM, yyyy')}
                             </div>
                             <p className="text-base-300">{transaction.note}</p>
                         </div>
