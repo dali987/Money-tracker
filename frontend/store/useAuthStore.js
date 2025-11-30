@@ -1,7 +1,7 @@
-import { create } from "zustand"
-import { axiosInstance } from "@/lib/axios.js"
+import { create } from 'zustand';
+import { axiosInstance } from '@/lib/axios.js';
 
-export const useAuthStore = create((set, get) =>({
+export const useAuthStore = create((set, get) => ({
     authUser: null,
     isCheckingAuth: true,
     isSigningUp: false,
@@ -9,62 +9,63 @@ export const useAuthStore = create((set, get) =>({
     token: null,
 
     getToken: async () => {
-        if (get().token) return get().token
+        if (get().token) return get().token;
 
-        try{
-            
-            const res = await axiosInstance.get("/auth/token", {withCredentials: true})
-            if (!res) throw new Error("error getting token")
+        try {
+            const res = await axiosInstance.get('/auth/token', { withCredentials: true });
+            if (!res) throw new Error('error getting token');
 
-            const accessToken = res?.data?.data
+            const accessToken = res?.data?.data;
 
-            if (!accessToken) throw new Error("error getting token")
+            if (!accessToken) throw new Error('error getting token');
 
-            set({ token: accessToken })
+            set({ token: accessToken });
 
-            return accessToken
-
+            return accessToken;
+        } catch (error) {
+            console.error('An error occurred while getting token: ', error);
+            set({ token: null });
+            return null;
         }
-        catch (error) {
-            console.error("An error occurred while getting token: ", error)
-            set({ token: null })
-            return null
-        }
-
     },
 
-    checkAuth: async () =>{
-        set({ isCheckingAuth: true })
+    checkAuth: async () => {
+        set({ isCheckingAuth: true });
         if (get().authUser) {
-            set({ isCheckingAuth: false })
-            return get().authUser
+            set({ isCheckingAuth: false });
+            return get().authUser;
         }
 
-        try{
-            const token = await get().getToken()
-            if (!token) return
+        try {
+            const token = await get().getToken();
+            if (!token) return;
 
-            const res = await axiosInstance.get("/user/", {
+            const res = await axiosInstance.get('/user/', {
                 headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
-            if (!res) throw new Error("error getting user")
+            if (!res) throw new Error('error getting user');
 
+            const user = res.data.data;
+            if (!user) throw new Error('error getting user');
 
-            const user = res.data.data
-            if (!user) throw new Error("error getting user")
-            
-            set({ authUser: user })
-        }  
-        catch (error){
-            console.error("An error occurred while checking auth: ", error)
-            set({ authUser: null})  
+            set({ authUser: user });
+        } catch (error) {
+            console.error('An error occurred while checking auth: ', error);
+            set({ authUser: null });
+        } finally {
+            set({ isCheckingAuth: false });
         }
-        finally{
-            set({ isCheckingAuth: false })
-        }
-    }
+    },
 
-}))
+    logout: async () => {
+        try {
+            await axiosInstance.post('/auth/sign-out');
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
+        set({ authUser: null, token: null });
+    },
+}));

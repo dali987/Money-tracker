@@ -12,7 +12,7 @@ const actions = {
     expense: async (transaction, factor, session) =>
         await Account.findByIdAndUpdate(
             transaction.fromAccount,
-            { $inc: { balance: (-transaction.amount) * factor } },
+            { $inc: { balance: -transaction.amount * factor } },
             { session }
         ),
     transfer: async (transaction, factor, session) => {
@@ -29,7 +29,7 @@ const actions = {
         );
         await Account.findByIdAndUpdate(
             transaction.fromAccount,
-            { $inc: { balance: (-transaction.amount) * factor } },
+            { $inc: { balance: -transaction.amount * factor } },
             { session }
         );
     },
@@ -88,7 +88,7 @@ export const getAccountTransactions = async (req, res, next) => {
 
 export const getUserTransactions = async (req, res, next) => {
     try {
-        const { _id: userId } = req.user._id;
+        const { _id: userId } = req.user;
 
         const accounts = await Account.find({ user: userId });
 
@@ -114,29 +114,44 @@ export const getUserTransactions = async (req, res, next) => {
     }
 };
 
-export const getUserTransactionsWithDate = async (req, res, next) =>{
-    try{
-        const { start, end } = req.params
-        console.log(start, end)
+export const getUserTransactionsWithDate = async (req, res, next) => {
+    try {
+        const { start, end } = req.query;
 
         const id = req.user._id
 
+        const accounts = await Account.find({ user: id });
+
         const transactions = await Transaction.find({
+            $or: [
+                {
+                    toAccount: {
+                        $in: accounts.map((account) => account._id),
+                    },
+                },
+                {
+                    fromAccount: {
+                        $in: accounts.map((account) => account._id),
+                    },
+                },
+            ],
             date: {
                 $gte: start,
-                $lte: end
-            }
-        })
+                $lte: end,
+            },
+        });
 
-        console.log(transactions)
+        console.log(transactions);
 
         res.status(200).json({ success: true, data: transactions });
-    }
-    catch (error){
-        console.error('An error occurred while getting user transactions in period of time: ', error);
+    } catch (error) {
+        console.error(
+            'An error occurred while getting user transactions in period of time: ',
+            error
+        );
         next(error);
     }
-}
+};
 
 export const getTransaction = async (req, res, next) => {
     try {
@@ -173,9 +188,13 @@ export const updateTransaction = async (req, res, next) => {
 
         await actions[transaction.type](transaction, -1, session);
 
-        const updatedTransaction = await Transaction.findByIdAndUpdate(transactionId, {
-            ...req.body,
-        }, {new: true});
+        const updatedTransaction = await Transaction.findByIdAndUpdate(
+            transactionId,
+            {
+                ...req.body,
+            },
+            { new: true }
+        );
 
         if (!updatedTransaction) {
             const error = new Error('updating transaction failed');
@@ -187,7 +206,6 @@ export const updateTransaction = async (req, res, next) => {
 
         await session.commitTransaction();
         res.status(200).json({ success: true, data: updatedTransaction });
-
     } catch (error) {
         await session.abortTransaction();
         console.error('An error occurred while updating the transaction: ', error);
@@ -198,28 +216,25 @@ export const updateTransaction = async (req, res, next) => {
 };
 
 export const deleteTransaction = async (req, res, next) => {
-
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
         const { id: transactionId } = req.params;
 
-
         const deletedTransaction = await Transaction.findByIdAndDelete(transactionId);
-        
+
         if (!deletedTransaction) {
             const error = new Error('failed to delete transaction');
             error.status = 401;
             throw error;
         }
-        
+
         await actions[deletedTransaction.type](deletedTransaction, -1, session);
 
         await session.commitTransaction();
 
         res.status(200).json({ success: true, data: deletedTransaction });
-
     } catch (error) {
         await session.abortTransaction();
         console.error('An error occurred while deleting the transaction: ', error);

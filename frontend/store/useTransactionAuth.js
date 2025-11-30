@@ -71,10 +71,10 @@ export const useTransactionStore = create((set, get) => ({
                     end
                 }
             })
-            if (!res) throw new Error("error getting user")
+            if (!res) throw new Error("error getting transactions")
 
             const transactions = res.data.data
-            if (!transactions) throw new Error("error getting user")
+            if (!transactions) throw new Error("error getting transactions")
             
             const sortedTransactions = transactions.sort((a, b) => new Date(b.date) - new Date(a.date))
 
