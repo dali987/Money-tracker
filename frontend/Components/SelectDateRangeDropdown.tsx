@@ -25,7 +25,7 @@ const SelectDropdown = ({ onRangeChange }: Props) => {
     const [dateRange, setDateRange] = useState<{
         start: { date: Date | undefined; label: string };
         end: { date: Date | undefined; label: string };
-    }>({ start: { date: undefined, label: '' }, end: { date: undefined, label: '' } });
+    }>({ start: { date: undefined, label: 'All Time' }, end: { date: undefined, label: 'All Time' } });
 
     const formatDate = useCallback((date: Date) => {
         return date.toLocaleDateString('en-GB', {

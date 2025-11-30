@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "USD"
     },
+    tags: {
+        type: Array,
+        default: ["Groceries", "Restaurant", "Rent", "Tax", "Health", "Clothes", "Transport", "Entertainment", "Salary", "Random", "Stationery", "Utilities", "Others"]
+    },
     profilePic: {
         type: String,
         default: ""

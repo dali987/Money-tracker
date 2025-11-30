@@ -5,7 +5,7 @@ import SelectDropdown from '@/Components/SelectDateRangeDropdown';
 import TransactionForm from '@/Components/TransactionForm';
 import TransactionsList from '@/Components/TransactionsList';
 import { useTransactionStore } from '@/store/useTransactionAuth';
-import { Plus, File } from 'lucide-react';
+import { Plus, File, Filter } from 'lucide-react';
 import React from 'react';
 import { useCallback } from 'react';
 
@@ -110,7 +110,7 @@ const page = () => {
                     </dialog>
                     <div className="join">
                         <SelectDropdown onRangeChange={handleRangeChange} />
-                        <button className="btn btn-outline text-base join-item p-3">eazeaz</button>
+                        <button className="btn btn-outline text-base join-item p-3"><Filter /></button>
                     </div>
                 </div>
                 <div className="font-mono">
