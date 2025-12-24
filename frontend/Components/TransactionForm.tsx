@@ -6,7 +6,7 @@ import NumberInput from '@/Components/NumberInput';
 import SelectAccountDropdown from '@/Components/SelectAccountDropdown';
 import { transactionSchema } from '@/lib/validations';
 import { useActionState, useState } from 'react';
-import { useTransactionStore } from '@/store/useTransactionAuth.js';
+import { useTransactionStore } from '@/store/useTransactionStore';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -17,10 +17,12 @@ const MoneyExchangeWithCurrency = ({
     options,
     onSelect,
     disabled,
+    name
 }: {
     options: { name: string; type: string; id: string }[];
     onSelect?: any;
     disabled?: boolean;
+    name?: string;
 }) => {
     const handleOnSelect = (option: any) => {
         onSelect(option);
@@ -28,7 +30,7 @@ const MoneyExchangeWithCurrency = ({
 
     return (
         <>
-            <SelectAccountDropdown className="w-full" options={options} onSelect={handleOnSelect} />
+            <SelectAccountDropdown name={name} className="w-full" options={options} onSelect={handleOnSelect} />
             <div className="join">
                 <NumberInput className="grow" name="amount" disabled={disabled} />
             </div>
@@ -59,8 +61,6 @@ const TransactionForm = ({
     const { authUser, isCheckingAuth } = useAuthStore();
 
     const [keepFormData, setKeepFormData] = useState({
-        toAccount: { name: '', type: '', id: '' },
-        fromAccount: { name: '', type: '', id: '' },
         note: '',
         tags: [],
     });
@@ -89,8 +89,8 @@ const TransactionForm = ({
 
             const formValues = {
                 type: type,
-                toAccount: keepFormData.toAccount.id,
-                fromAccount: keepFormData.fromAccount.id,
+                toAccount: formData.get('toAccount'),
+                fromAccount: formData.get('fromAccount'),
                 amount: Number(formData.get('amount')),
                 tags: keepFormData.tags,
                 note: keepFormData.note,
@@ -160,6 +160,7 @@ const TransactionForm = ({
                     <div className="flex gap-4">
                         <MoneyExchangeWithCurrency
                             options={options}
+                            name={type === 'income' ? 'toAccount' : 'fromAccount'}
                             onSelect={(option: any) =>
                                 type === 'income'
                                     ? setKeepFormData((prev) => ({ ...prev, toAccount: option }))
@@ -176,6 +177,7 @@ const TransactionForm = ({
                             <MoneyExchangeWithCurrency
                                 disabled={true}
                                 options={options}
+                                name="toAccount"
                                 onSelect={(option: any) =>
                                     setKeepFormData((prev) => ({ ...prev, toAccount: option }))
                                 }
@@ -187,7 +189,7 @@ const TransactionForm = ({
                             {type !== 'transfer' && (
                                 <MultiSelectDropdown
                                     formFieldName="tags"
-                                    options={['one', 'two', 'three']}
+                                    options={authUser?.tags}
                                     prompt="Choose or create tags"
                                     className="flex-1"
                                     onSelect={(tags: any) =>

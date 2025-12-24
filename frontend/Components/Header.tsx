@@ -1,7 +1,12 @@
+'use client';
 
-import Image from "next/image"
+import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
 const Header = () => {
+
+  const pathname = usePathname();
+  const title = pathname.slice(1).charAt(0).toUpperCase() + pathname.slice(2)
 
   return (
     <header className="sticky top-0 left-0 w-full bg-[#3f51b5] flex justify-between items-center px-12 py-4 z-30 shadow-xl h-(--header-height)">
@@ -10,7 +15,7 @@ const Header = () => {
             <h1 className="text-3xl text-neutral-50">Money Tracker</h1>
         </div>
         <div>
-          <h1 className="text-2xl text-neutral-50">Dashboard</h1>
+          <h1 className="text-2xl text-neutral-50">{title}</h1>
         </div>
     </header>
   )

@@ -8,7 +8,7 @@ export default function MultiSelectDropdown({
     prompt = 'Select one or more options',
     className,
     onSelect,
-    selected
+    selected,
 }: {
     formFieldName: string;
     options: string[];
@@ -36,13 +36,11 @@ export default function MultiSelectDropdown({
         const newSelectedOptions = Array.from(selectedOptionSet);
 
         setSelectedOptions(newSelectedOptions);
-        onSelect(newSelectedOptions)
+        onSelect && onSelect(newSelectedOptions);
     };
-
     const isSelectAllEnabled = selectedOptions.length < options.length;
 
     const handleSelectAllClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-
         // Ensure optionsListRef.current is not null before querying
         if (optionsListRef.current) {
             const optionsInputs = (optionsListRef.current as HTMLElement).querySelectorAll('input');
@@ -52,7 +50,9 @@ export default function MultiSelectDropdown({
         }
 
         // Cast options to never[] to satisfy the type checker
-        setSelectedOptions([...options] as never[]);
+        const newSelectedOptions = [...options];
+        setSelectedOptions(newSelectedOptions as never[]);
+        onSelect && onSelect(newSelectedOptions);
     };
 
     const isClearSelectionEnabled = selectedOptions.length > 0;
@@ -69,12 +69,12 @@ export default function MultiSelectDropdown({
         }
 
         setSelectedOptions([]);
+        onSelect && onSelect([]);
     };
 
     useEffect(() => {
         setIsJsEnabled(true);
     }, [selectedOptions]);
-
 
     return (
         <div className={`dropdown ${className}`}>
@@ -85,10 +85,7 @@ export default function MultiSelectDropdown({
                 )}
             </label> */}
 
-            <div
-                tabIndex={0}
-                role='button'
-                className="btn w-full justify-between">
+            <div tabIndex={0} role="button" className="btn w-full justify-between">
                 <span id="selectedText">{prompt}</span>
                 {isJsEnabled && selectedOptions.length > 0 && (
                     <span className="ml-1 text-blue-500">{`(${selectedOptions.length})`}</span>
@@ -108,7 +105,10 @@ export default function MultiSelectDropdown({
                 </svg>
             </div>
 
-            <ul className="dropdown-content menu none active:flex flex-col flex-nowrap w-full max-h-25 scroll-smooth overflow-y-scroll bg-base-100 shadow-sm rounded-box" ref={optionsListRef} tabIndex={-1}>
+            <ul
+                className="dropdown-content menu none active:flex flex-col flex-nowrap w-full max-h-25 scroll-smooth overflow-y-scroll bg-base-100 shadow-sm rounded-box"
+                ref={optionsListRef}
+                tabIndex={-1}>
                 {isJsEnabled && (
                     <>
                         <li>
@@ -141,11 +141,9 @@ export default function MultiSelectDropdown({
                                     <span className="ml-1 text-base">{option}</span>
                                 </label>
                             </li>
-                        )
-                    )}
+                        ))}
                     </>
                 )}
-
             </ul>
         </div>
     );

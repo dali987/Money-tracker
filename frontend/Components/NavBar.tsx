@@ -1,5 +1,7 @@
+'use client';
 
-
+import { usePathname } from 'next/navigation';
+import { lowerCase } from 'lodash';
 import {
     ArrowRightLeft,
     Newspaper,
@@ -11,24 +13,60 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-const NavElement = ({ name, icon }: { name: string; icon: LucideIcon }) => {
+const elements = [
+    {
+        name: 'Dashboard',
+        icon: Newspaper,
+    },
+    {
+        name: 'Transactions',
+        icon: ArrowRightLeft,
+    },
+    {
+        name: 'Accounts',
+        icon: CreditCard,
+    },
+    {
+        name: 'Reports',
+        icon: ChartSpline,
+    },
+    {
+        name: 'Budget',
+        icon: ShoppingBasket,
+    },
+    {
+        name: 'Settings',
+        icon: SlidersHorizontal,
+    },
+];
+
+const NavElement = ({
+    name,
+    icon,
+    active = false,
+}: {
+    name: string;
+    icon: LucideIcon;
+    active?: boolean;
+}) => {
     const IconComponent = icon;
     return (
         <li>
-            <button
-                className="is-drawer-close:tooltip is-drawer-close:tooltip-right gap-4"
-                data-tip={name}
-            >
-                <Link href={`/${name.toLowerCase()}`} >
-                    <IconComponent className="inline-block size-8 my-1.5" />
-                </Link>
+            <Link
+                href={`/${name.toLowerCase()}`}
+                className={`is-drawer-close:tooltip is-drawer-close:tooltip-right gap-4 ${
+                    active ? 'bg-neutral text-neutral-content' : ''
+                }`}
+                data-tip={name}>
+                <IconComponent className="inline-block size-8 my-1.5" />
                 <span className="is-drawer-close:hidden">{name}</span>
-            </button>
+            </Link>
         </li>
     );
 };
 
 const NavBar = ({ children }: { children: React.ReactNode }) => {
+    const pathname = usePathname();
 
     return (
         <nav className="drawer drawer-open">
@@ -39,35 +77,27 @@ const NavBar = ({ children }: { children: React.ReactNode }) => {
                 <label
                     htmlFor="my-drawer-4"
                     aria-label="close sidebar"
-                    className="drawer-overlay"
-                ></label>
+                    className="drawer-overlay"></label>
                 <div className="is-drawer-close:w-18 is-drawer-open:w-64 shadow-gray-500 shadow-xl bg-white flex flex-col items-start fixed h-[calc(100vh-var(--header-height))]">
                     {/* Sidebar content here */}
                     <ul className="menu w-full grow gap-2">
                         {/* list item */}
-                        <NavElement name="Dashboard" icon={Newspaper} />
-
-                        {/* list item */}
-                        <NavElement name="Transactions" icon={ArrowRightLeft} />
-
-                        <NavElement name="Accounts" icon={CreditCard} />
-
-                        <NavElement name="Reports" icon={ChartSpline} />
-
-                        <NavElement name="Budget" icon={ShoppingBasket} />
-
-                        <NavElement name="Settings" icon={SlidersHorizontal} />
+                        {elements.map((element) => (
+                            <NavElement
+                                key={element.name}
+                                active={pathname?.includes(element.name.toLowerCase())}
+                                {...element}
+                            />
+                        ))}
                     </ul>
 
                     {/* button to open/close drawer */}
                     <div
                         className="m-4 is-drawer-close:tooltip is-drawer-close:tooltip-right"
-                        data-tip="Open"
-                    >
+                        data-tip="Open">
                         <label
                             htmlFor="my-drawer-4"
-                            className="btn btn-ghost btn-circle drawer-button is-drawer-open:rotate-y-180"
-                        >
+                            className="btn btn-ghost btn-circle drawer-button is-drawer-open:rotate-y-180">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"
@@ -76,8 +106,7 @@ const NavBar = ({ children }: { children: React.ReactNode }) => {
                                 strokeWidth="2"
                                 fill="none"
                                 stroke="currentColor"
-                                className="inline-block size-6 my-1.5"
-                            >
+                                className="inline-block size-6 my-1.5">
                                 <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"></path>
                                 <path d="M9 4v16"></path>
                                 <path d="M14 10l2 2l-2 2"></path>

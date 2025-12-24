@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuthStore } from '@/store/useAuthStore';
-import { useTransactionStore } from '@/store/useTransactionAuth';
+import { useTransactionStore } from '@/store/useTransactionStore';
 import { LoaderIcon } from 'lucide-react';
 import React, { useMemo } from 'react';
 

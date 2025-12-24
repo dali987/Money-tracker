@@ -50,7 +50,7 @@ const page = () => {
                                 RECENT TRANSACTIONS
                             </div>
                             <div className="collapse-content">
-                                <TransactionsList />
+                                <TransactionsList maxCount={6} />
                             </div>
                         </div>
                     </div>

@@ -60,95 +60,53 @@ export const createTransaction = async (req, res, next) => {
     }
 };
 
-export const getAccountTransactions = async (req, res, next) => {
+export const getTransactionWithFilter = async (req, res, next) => {
     try {
-        const { id: accountId } = req.params;
+        const { startDate, endDate, account, tags, type, user } = req.query;
 
-        const transactions = await Transaction.find({
-            $or: [
-                {
-                    toAccount: {
-                        accountId: accountId,
-                    },
-                },
-                {
-                    fromAccount: {
-                        accountId: accountId,
-                    },
-                },
-            ],
-        });
+        let transactionFilter = {}
+
+        if (user == "true"){
+
+            const accounts = await Account.find({ user: req.user.id });
+
+            transactionFilter.$or = [
+                { toAccount: { $in: accounts.map(account => account._id) } },
+                { fromAccount: { $in: accounts.map(account => account._id) } },
+            ]
+        }
+
+        if (account){
+            transactionFilter.$or = [
+                { toAccount: account },
+                { fromAccount: account },
+            ]
+        }
+
+        if (startDate && endDate) {
+            transactionFilter.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate),
+            }
+        }
+
+        if (tags) {
+            transactionFilter.tags = { $in: tags }
+        }
+
+        if (type) {
+            transactionFilter.type = type
+        }
+
+        console.log("filter: ", transactionFilter)
+
+        const transactions = await Transaction.find(transactionFilter)
+
+        console.log("transactions: ", transactions)
 
         res.status(200).json({ success: true, data: transactions });
     } catch (error) {
         console.error('An error occurred while getting user transactions: ', error);
-        next(error);
-    }
-};
-
-export const getUserTransactions = async (req, res, next) => {
-    try {
-        const { _id: userId } = req.user;
-
-        const accounts = await Account.find({ user: userId });
-
-        const transactions = await Transaction.find({
-            $or: [
-                {
-                    toAccount: {
-                        $in: accounts.map((account) => account._id),
-                    },
-                },
-                {
-                    fromAccount: {
-                        $in: accounts.map((account) => account._id),
-                    },
-                },
-            ],
-        });
-
-        res.status(200).json({ success: true, data: transactions });
-    } catch (error) {
-        console.error('An error occurred while getting user transactions: ', error);
-        next(error);
-    }
-};
-
-export const getUserTransactionsWithDate = async (req, res, next) => {
-    try {
-        const { start, end } = req.query;
-
-        const id = req.user._id
-
-        const accounts = await Account.find({ user: id });
-
-        const transactions = await Transaction.find({
-            $or: [
-                {
-                    toAccount: {
-                        $in: accounts.map((account) => account._id),
-                    },
-                },
-                {
-                    fromAccount: {
-                        $in: accounts.map((account) => account._id),
-                    },
-                },
-            ],
-            date: {
-                $gte: start,
-                $lte: end,
-            },
-        });
-
-        console.log(transactions);
-
-        res.status(200).json({ success: true, data: transactions });
-    } catch (error) {
-        console.error(
-            'An error occurred while getting user transactions in period of time: ',
-            error
-        );
         next(error);
     }
 };

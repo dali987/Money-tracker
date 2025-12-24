@@ -37,7 +37,6 @@ const SelectDropdown = ({ onRangeChange }: Props) => {
 
     const getDateRange = useCallback(
         (option: string) => {
-            console.log(option);
 
             const today = new Date();
             let start = new Date();

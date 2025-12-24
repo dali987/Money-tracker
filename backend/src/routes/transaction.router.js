@@ -2,11 +2,9 @@ import { Router } from 'express';
 import {
     createTransaction,
     getTransaction,
-    getAccountTransactions,
-    getUserTransactions,
+    getTransactionWithFilter,
     updateTransaction,
     deleteTransaction,
-    getUserTransactionsWithDate,
 } from '../controllers/transaction.controller.js';
 import { authorizeToken } from '../middlewares/auth.middleware.js';
 
@@ -15,10 +13,8 @@ const transactionRouter = Router();
 transactionRouter.use(authorizeToken);
 
 transactionRouter.post('/create', createTransaction);
-transactionRouter.get('/account/:id', getAccountTransactions);
-transactionRouter.get('/period', getUserTransactionsWithDate);
 transactionRouter.get('/:id', getTransaction);
-transactionRouter.get('/', getUserTransactions);
+transactionRouter.get('/', getTransactionWithFilter);
 transactionRouter.put('/update/:id', updateTransaction);
 transactionRouter.delete('/delete/:id', deleteTransaction);
 
