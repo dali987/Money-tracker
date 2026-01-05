@@ -5,6 +5,9 @@ import {
     getTransactionWithFilter,
     updateTransaction,
     deleteTransaction,
+    calculateTransactionSum,
+    getTransactionChartData,
+    getNetWorthChartData,
 } from '../controllers/transaction.controller.js';
 import { authorizeToken } from '../middlewares/auth.middleware.js';
 
@@ -13,8 +16,11 @@ const transactionRouter = Router();
 transactionRouter.use(authorizeToken);
 
 transactionRouter.post('/create', createTransaction);
-transactionRouter.get('/:id', getTransaction);
+transactionRouter.get('/get/:id', getTransaction);
 transactionRouter.get('/', getTransactionWithFilter);
+transactionRouter.get('/summary', calculateTransactionSum);
+transactionRouter.get('/chart', getTransactionChartData);
+transactionRouter.get('/net-worth-chart', getNetWorthChartData);
 transactionRouter.put('/update/:id', updateTransaction);
 transactionRouter.delete('/delete/:id', deleteTransaction);
 

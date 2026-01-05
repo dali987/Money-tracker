@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { CalendarDays } from 'lucide-react';
 
-export default function DateSelect({ name } : { name: string }) {
+export default function DateSelect({ name }: { name: string }) {
     const myDatepicker = useRef(null);
     useEffect(() => {
         // Import Pikaday dynamically on client side
@@ -19,7 +19,7 @@ export default function DateSelect({ name } : { name: string }) {
         <div className="relative w-full">
             <input
                 type="text"
-                className="input outline-0 pika-single w-full rounded"
+                className="input outline-0 pika-single w-full rounded transition-all"
                 defaultValue="Pick a date"
                 name={name}
                 ref={myDatepicker}

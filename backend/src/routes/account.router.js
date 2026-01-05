@@ -1,13 +1,23 @@
-import { Router } from "express"
-import { createAccount, getAccount, getUserAccounts } from "../controllers/account.controller.js"
-import { authorizeToken } from "../middlewares/auth.middleware.js"
+import { Router } from 'express';
+import {
+    createAccount,
+    deleteAccount,
+    getAccount,
+    getUserAccounts,
+    updateAccount,
+    getAccountsSummary,
+} from '../controllers/account.controller.js';
+import { authorizeToken } from '../middlewares/auth.middleware.js';
 
-const accountRouter = Router()
+const accountRouter = Router();
 
-accountRouter.use(authorizeToken)
+accountRouter.use(authorizeToken);
 
-accountRouter.post("/create", createAccount)
-accountRouter.get("/", getUserAccounts)
-accountRouter.get("/:id", getAccount)
+accountRouter.post('/create', createAccount);
+accountRouter.put('/update/:id', updateAccount);
+accountRouter.delete('/delete/:id', deleteAccount);
+accountRouter.get('/summary', getAccountsSummary);
+accountRouter.get('/', getUserAccounts);
+accountRouter.get('/:id', getAccount);
 
-export default accountRouter
+export default accountRouter;

@@ -1,7 +1,6 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import { lowerCase } from 'lodash';
+import {usePathname } from 'next/navigation';
 import {
     ArrowRightLeft,
     Newspaper,
@@ -57,7 +56,8 @@ const NavElement = ({
                 className={`is-drawer-close:tooltip is-drawer-close:tooltip-right gap-4 ${
                     active ? 'bg-neutral text-neutral-content' : ''
                 }`}
-                data-tip={name}>
+                data-tip={name}
+                >
                 <IconComponent className="inline-block size-8 my-1.5" />
                 <span className="is-drawer-close:hidden">{name}</span>
             </Link>
@@ -69,16 +69,16 @@ const NavBar = ({ children }: { children: React.ReactNode }) => {
     const pathname = usePathname();
 
     return (
-        <nav className="drawer drawer-open">
+        <nav className="drawer lg:drawer-open">
             <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
             <div className="drawer-content">{children}</div>
 
-            <div className="drawer-side is-drawer-close:overflow-visible h-[calc(100vh-var(--header-height))]">
+            <div className="drawer-side z-999 lg:z-auto is-drawer-close:overflow-visible h-[calc(100vh-var(--header-height))] mt-(--header-height) lg:mt-0">
                 <label
                     htmlFor="my-drawer-4"
                     aria-label="close sidebar"
                     className="drawer-overlay"></label>
-                <div className="is-drawer-close:w-18 is-drawer-open:w-64 shadow-gray-500 shadow-xl bg-white flex flex-col items-start fixed h-[calc(100vh-var(--header-height))]">
+                <div className="w-64 lg:is-drawer-close:w-18 lg:is-drawer-open:w-64 shadow-gray-500 shadow-xl bg-white flex flex-col items-start lg:fixed h-full lg:h-[calc(100vh-var(--header-height))]">
                     {/* Sidebar content here */}
                     <ul className="menu w-full grow gap-2">
                         {/* list item */}
@@ -91,9 +91,10 @@ const NavBar = ({ children }: { children: React.ReactNode }) => {
                         ))}
                     </ul>
 
-                    {/* button to open/close drawer */}
+                    {/* button to open/close 
+                    drawer - hidden on mobile */}
                     <div
-                        className="m-4 is-drawer-close:tooltip is-drawer-close:tooltip-right"
+                        className="hidden lg:block m-4 is-drawer-close:tooltip is-drawer-close:tooltip-right"
                         data-tip="Open">
                         <label
                             htmlFor="my-drawer-4"

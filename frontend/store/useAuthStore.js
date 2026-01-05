@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { axiosInstance } from '@/lib/axios.js';
+import { add } from 'lodash';
 
 export const useAuthStore = create((set, get) => ({
     authUser: null,
@@ -37,14 +38,7 @@ export const useAuthStore = create((set, get) => ({
         }
 
         try {
-            const token = await get().getToken();
-            if (!token) return;
-
-            const res = await axiosInstance.get('/user/', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const res = await axiosInstance.get('/user/');
 
             if (!res) throw new Error('error getting user');
 
@@ -57,6 +51,67 @@ export const useAuthStore = create((set, get) => ({
             set({ authUser: null });
         } finally {
             set({ isCheckingAuth: false });
+        }
+    },
+
+    updateSetting: async (key, setting) => {
+        try {
+            const res = await axiosInstance.post('/user/update', { key, setting });
+
+            if (!res) throw new Error('error updating setting');
+
+            const updatedSetting = res.data.data;
+
+            const user = get().authUser;
+            if (!user) throw new Error('error updating setting');
+
+            const newUser = { ...user, [key]: updatedSetting };
+
+            set({ authUser: newUser });
+            return newUser;
+        } catch (error) {
+            console.error('An error occurred while updating setting: ', error);
+            return null;
+        }
+    },
+    addSetting: async (key, setting) => {
+        try {
+            const res = await axiosInstance.post('/user/add', { key, setting });
+
+            if (!res) throw new Error('error adding setting');
+
+            const updatedSetting = res.data.data;
+
+            const user = get().authUser;
+            if (!user) throw new Error('error adding setting');
+
+            const newUser = { ...user, [key]: updatedSetting };
+
+            set({ authUser: newUser });
+            return newUser;
+        } catch (error) {
+            console.error('An error occurred while adding setting: ', error);
+            return null;
+        }
+    },
+    removeSetting: async (key, setting) => {
+        try {
+            const res = await axiosInstance.post('/user/remove', { key, setting });
+
+            if (!res) throw new Error('error removing setting');
+
+            const updatedSetting = res.data.data;
+
+            const user = get().authUser;
+            if (!user) throw new Error('error removing setting');
+
+            const newUser = { ...user, [key]: updatedSetting };
+
+            set({ authUser: newUser });
+            return newUser;
+        } catch (error) {
+            console.error('An error occurred while removing setting: ', error);
+            return null;
         }
     },
 

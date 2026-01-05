@@ -2,97 +2,239 @@
 
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
-import { LoaderIcon } from 'lucide-react';
-import React, { useMemo } from 'react';
+import { CreditCard, Pencil } from 'lucide-react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import AccountForm from './AccountForm';
+import { motion, AnimatePresence, Variants } from 'motion/react';
+import AnimatedNumber from './AnimatedNumber';
 
-const types = ['Cash', 'Bank', 'Credit']
+const container: Variants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { staggerChildren: 0.1, delayChildren: 0.1, ease: 'easeOut', duration: 0.4 },
+    },
+};
 
-const NetWorth = () => {
-    const { accounts, rates, transactions } = useTransactionStore();
+const section: Variants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+};
+
+const SkeletonNetWorth = () => (
+    <div className="w-full font-mono bg-gray-100 rounded-box p-4">
+        <div className="flex justify-between items-center mb-6">
+            <div className="skeleton h-8 w-40"></div>
+            <div className="skeleton h-8 w-32"></div>
+        </div>
+        {[1, 2].map((i) => (
+            <div key={i} className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                    <div className="skeleton h-6 w-24"></div>
+                    <div className="skeleton h-6 w-28"></div>
+                </div>
+                <div className="space-y-2 ml-4">
+                    <div className="skeleton h-10 w-full"></div>
+                    <div className="skeleton h-10 w-full"></div>
+                </div>
+            </div>
+        ))}
+    </div>
+);
+
+import CustomCollapse from './Custom/CustomCollapse';
+
+const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?: boolean }) => {
+    const { accounts, rates, deleteAccount, getAccountsSummary } = useTransactionStore();
     const { authUser } = useAuthStore();
+    const [editAccount, setEditAccount] = useState<any>(null);
+    const [accountsSummary, setAccountsSummary] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const totalNetWorth = useMemo(() => {
-        if (!accounts) return 0;
-        return accounts.reduce((acc: number, account: any) => acc + account.balance, 0);
-    }, [accounts]);
+    useEffect(() => {
+        const fetchSummary = async () => {
+            const summary = await getAccountsSummary();
+            setAccountsSummary(summary);
+            setIsLoading(false);
+        };
+        fetchSummary();
+    }, [accounts, getAccountsSummary]);
+
+    const totalNetWorth = accountsSummary?.totalNetWorth ?? 0;
+    const groups = authUser?.groups || [];
 
     const sumsByType = useMemo(() => {
-        if (!accounts) return {};
-        return types.reduce((acc, type) => {
-            const sum = accounts
-                .filter((account: any) => account.type === type)
-                .reduce((sum: number, account: any) => sum + account.balance, 0);
-            acc[type] = sum;
+        const sums = accountsSummary?.sumsByGroup || {};
+        return groups.reduce((acc: Record<string, number>, group: string) => {
+            acc[group] = sums[group] || 0;
             return acc;
         }, {} as Record<string, number>);
-    }, [accounts]);
+    }, [accountsSummary, groups]);
+    if (!authUser || !rates || !accounts || isLoading) {
+        return <SkeletonNetWorth />;
+    }
 
     return (
-        <div className="collapse collapse-arrow font-mono bg-gray-100 p-2">
-            {authUser && rates && accounts ? (
-                <>
-                    <input type="checkbox" name="my-accordion" defaultChecked />
-                    <div className="collapse-title ml-5 flex justify-between items-center font-bold text-xl">
-                        <h1 className="inline">NET WORTH</h1>
-                        <span className={totalNetWorth < 0 ? 'text-red-700' : 'text-green-700'}>{totalNetWorth.toFixed(2)} {authUser.currency}</span>
+        <motion.div
+            layout
+            variants={container}
+            initial="hidden"
+            animate="visible"
+            className="w-full">
+            <CustomCollapse
+                title="NET WORTH"
+                defaultOpen={true}
+                rightContent={
+                    <div className="text-xl font-bold">
+                        <AnimatedNumber
+                            value={totalNetWorth}
+                            className={totalNetWorth < 0 ? 'text-red-700' : 'text-green-700'}
+                        />
+                        <span
+                            className={`ml-2 text-sm font-bold ${
+                                totalNetWorth < 0 ? 'text-red-700' : 'text-green-700'
+                            }`}>
+                            {authUser.baseCurrency}
+                        </span>
                     </div>
-                    <div className="collapse-content ml-2">
-                        {types.map((type: string, i: number) => (
-                            <div className="collapse" key={type}>
-                                <input type="checkbox" name="my-accordion-1" defaultChecked />
-                                <div className="collapse-title p-4 flex justify-between items-center font-bold text-lg">
-                                    <h1 className="inline">{type}</h1>
-                                    <span
-                                        className={
-                                            sumsByType[type] < 0
-                                                ? 'text-red-600'
-                                                : 'text-green-600'
-                                        }>
-                                        {sumsByType[type].toFixed(2)} {authUser.currency}
-                                    </span>
-                                </div>
-                                <div className="collapse-content">
-                                    {accounts.filter((account: any) => account.type === type).map((account: any, i: number) => (
-                                        <React.Fragment key={account._id}>
-                                            <div className="accounts-worth">
-                                                <h3>{account.name}</h3>
-                                                <div className="flex flex-col items-end">
-                                                    {account.currencies.map(
-                                                        (currency: string) => (
-                                                            <h3
-                                                                key={currency}
-                                                                className={`${
-                                                                    account.balance < 0
-                                                                        ? 'text-red-500'
-                                                                        : 'text-green-500'
-                                                                }`}>
-                                                                {(
-                                                                    (account.balance /
-                                                                        rates[authUser.currency]) *
-                                                                    rates[currency]
-                                                                ).toFixed(2)}{' '}
-                                                                {currency}
-                                                            </h3>
-                                                        )
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {accounts.length - 1 !== i && (
-                                                <div className="divider [--color-base-content:lab(27_0_0)]"></div>
-                                            )}
-                                        </React.Fragment>
-                                    ))}
-                                </div>
-                            </div>
+                }>
+                <motion.div
+                    variants={container}
+                    initial="hidden"
+                    animate="visible"
+                    className="flex flex-col gap-2">
+                    <AnimatePresence>
+                        {groups.map((group: string) => (
+                            <motion.div key={group} variants={section}>
+                                <CustomCollapse
+                                    layout
+                                    key={group}
+                                    title={group}
+                                    defaultOpen={true}
+                                    className="bg-transparent"
+                                    rightContent={
+                                        <div
+                                            className={`text-lg font-bold ${
+                                                sumsByType[group] < 0
+                                                    ? 'text-red-600'
+                                                    : 'text-green-600'
+                                            }`}>
+                                            <AnimatedNumber value={sumsByType[group]} />
+                                            <span className="ml-2 text-xs">
+                                                {authUser.baseCurrency}
+                                            </span>
+                                        </div>
+                                    }>
+                                    <motion.div
+                                        variants={container}
+                                        initial="hidden"
+                                        animate="visible"
+                                        className="flex flex-col gap-1">
+                                        {accounts &&
+                                            accounts
+                                                .filter((account: any) => account.group === group)
+                                                .map((account: any, i: number, filtered: any[]) => (
+                                                    <motion.div
+                                                        layout
+                                                        key={account._id}
+                                                        variants={section}
+                                                        className="group">
+                                                        <div className="flex justify-between items-start lg:gap-4 py-2 hover:bg-black/5 rounded-lg px-2 transition-colors min-w-0">
+                                                            <div className="flex flex-col lg:flex-row lg:items-center gap-2 min-w-0">
+                                                                <h3
+                                                                    className="text-[#4183c4] font-medium font-sans truncate"
+                                                                    title={account.name}>
+                                                                    {account.name}
+                                                                </h3>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setEditAccount(account._id);
+                                                                        (
+                                                                            document.getElementById(
+                                                                                'edit-account-modal'
+                                                                            ) as HTMLDialogElement
+                                                                        )?.showModal();
+                                                                    }}
+                                                                    className={
+                                                                        'btn btn-sm btn-square btn-ghost opacity-0 group-hover:opacity-100 transition-opacity shrink-0' +
+                                                                        (!editMode ? ' hidden' : '')
+                                                                    }>
+                                                                    <Pencil size={16} />
+                                                                </button>
+                                                            </div>
+                                                            <div className="flex flex-wrap flex-col items-end gap-1 shrink-0 ml-4">
+                                                                {[
+                                                                    authUser.baseCurrency,
+                                                                    ...authUser.currencies,
+                                                                ].map((currency: string) => (
+                                                                    <div
+                                                                        key={currency}
+                                                                        className="flex items-center gap-1 whitespace-nowrap">
+                                                                        <AnimatedNumber
+                                                                            value={
+                                                                                (account.balance /
+                                                                                    rates[
+                                                                                        authUser
+                                                                                            .baseCurrency
+                                                                                    ]) *
+                                                                                rates[currency]
+                                                                            }
+                                                                            className={
+                                                                                account.balance < 0
+                                                                                    ? 'text-red-500'
+                                                                                    : 'text-green-500'
+                                                                            }
+                                                                        />
+                                                                        <span
+                                                                            className={`ml-1 text-xs ${
+                                                                                account.balance < 0
+                                                                                    ? 'text-red-400'
+                                                                                    : 'text-green-400'
+                                                                            }`}>
+                                                                            {currency}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        {i !== filtered.length - 1 && (
+                                                            <div className="divider my-0 opacity-10"></div>
+                                                        )}
+                                                    </motion.div>
+                                                ))}
+                                    </motion.div>
+                                </CustomCollapse>
+                            </motion.div>
                         ))}
+                    </AnimatePresence>
+                </motion.div>
+            </CustomCollapse>
+
+            <dialog id="edit-account-modal" className="modal">
+                <div className="modal-box max-w-120 transition-all rounded-3xl">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-xl flex gap-3 items-center">
+                            <CreditCard className="text-primary" /> Edit Account
+                        </h3>
+                        <form method="dialog">
+                            <button className="btn btn-sm btn-circle btn-ghost">✕</button>
+                        </form>
                     </div>
-                </>
-            ) : (
-                <div className="flex items-center justify-center p-12 ">
-                    <LoaderIcon className="size-10 animate-spin" />
+                    {editAccount && <AccountForm action={{ type: 'edit', id: editAccount }} />}
+                    <div className="modal-action flex-col gap-2">
+                        <form method="dialog" className="w-full">
+                            <button
+                                className="btn btn-error btn-outline w-full"
+                                onClick={() => editAccount && deleteAccount(editAccount)}>
+                                Delete Account
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            )}
-        </div>
+            </dialog>
+        </motion.div>
     );
 };
 

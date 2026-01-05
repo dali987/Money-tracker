@@ -1,22 +1,50 @@
 'use client';
 
 import Initializer from '@/Components/Initializer';
-import MultiSelectDropdown from '@/Components/MultiSelectDropdown';
-import SelectAccountDropdown from '@/Components/SelectAccountDropdown';
+import MultiSelectDropdown from '@/Components/Custom/MultiSelectDropdown';
+import SelectAccountDropdown from '@/Components/Custom/SelectAccountDropdown';
 import SelectDropdown from '@/Components/SelectDateRangeDropdown';
 import TransactionForm from '@/Components/TransactionForm';
 import TransactionsList from '@/Components/TransactionsList';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { Plus, File, Filter, ListFilter } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import AnimatedNumber from '@/Components/AnimatedNumber';
 import React, { useEffect } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 const fields = ['expense', 'transfer', 'income'];
 
+const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.5,
+            staggerChildren: 0.1,
+        },
+    },
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { opacity: 1, scale: 1 },
+};
+
 const page = () => {
-    const { getTransactionsWithFilter, accounts, transactions } = useTransactionStore();
-    const { authUser } = useAuthStore();
+    const getTransactionsWithFilter = useTransactionStore(
+        (state) => state.getTransactionsWithFilter
+    );
+    const getTransactionsSummary = useTransactionStore((state) => state.getTransactionsSummary);
+    const accounts = useTransactionStore((state) => state.accounts);
+    const authUser = useAuthStore((state) => state.authUser);
+    const [summary, setSummary] = React.useState({
+        Expense: 0,
+        Income: 0,
+        netWorth: 0,
+    });
     const [selectedRange, setSelectedRange] = React.useState<{
         start: string | null;
         end: string | null;
@@ -50,12 +78,14 @@ const page = () => {
                 filters.endDate = end;
             }
             await getTransactionsWithFilter(filters);
+            const summary = await getTransactionsSummary(filters);
+            setSummary(summary);
         },
-        [getTransactionsWithFilter, currentFilters]
+        [getTransactionsWithFilter, currentFilters, getTransactionsSummary]
     );
 
     const createFormSubmit = useCallback(async () => {
-        (document.getElementById('edit') as HTMLDialogElement)?.close();
+        (document.getElementById('edit-transaction-modal') as HTMLDialogElement)?.close();
         const filters: any = { ...currentFilters };
         if (selectedRange.label !== 'All time' && selectedRange.start && selectedRange.end) {
             filters.startDate = selectedRange.start;
@@ -66,15 +96,22 @@ const page = () => {
 
     const handleOptions = (accounts: Array<any>) => {
         if (!accounts) return [];
-        const newAccounts = accounts.map((account) => ({
+        return accounts.map((account) => ({
             name: account.name,
             type: account.type,
             id: account._id,
         }));
-        return newAccounts;
     };
 
-    const options = handleOptions(accounts);
+    useEffect(() => {
+        const fetchTransactions = async () => {
+            const sum = await getTransactionsSummary(currentFilters);
+            setSummary(sum);
+        };
+        fetchTransactions();
+    }, [getTransactionsSummary, currentFilters]);
+
+    const options = useMemo(() => handleOptions(accounts), [accounts, handleOptions]);
 
     const handleFormSubmit = useCallback(
         async (e: React.FormEvent<HTMLFormElement>) => {
@@ -104,26 +141,37 @@ const page = () => {
     );
 
     return (
-        <main className="bg-white lg:bg-gray-200 flex justify-center items-center min-h-screen w-[calc(100%-var(--nav-width))] ml-(--nav-width) p-16">
+        <main className="bg-white lg:bg-gray-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
             <Initializer transactions accounts />
-            <section className="w-full lg:bg-white lg:rounded-lg lg:shadow-2xl lg:w-5xl p-4 flex flex-col gap-4">
-                <div className="flex justify-between">
+            <section className="w-full lg:bg-white lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 flex flex-col gap-4">
+                <div className="flex flex-wrap gap-2 justify-between">
                     <button
                         type="button"
                         className="btn btn-outline flex text-base gap-2 items-center justify-center p-3"
                         onClick={() =>
-                            (document.getElementById('add') as HTMLDialogElement)?.showModal()
+                            ((
+                                document.getElementById('new-modal-toggle') as HTMLInputElement
+                            ).checked = true)
                         }>
                         <Plus size={25} /> New
                     </button>
-                    <dialog id="add" className="modal">
-                        <div className="modal-box max-w-150 min-h-80 transition-all">
+                    <input type="checkbox" id="new-modal-toggle" className="modal-toggle" />
+                    <div role="dialoge" id="add" className="modal">
+                        <div className="modal-box max-w-150 min-h-80 transition-all overflow-visible">
                             <div className="flex justify-between items-center">
                                 <h3 className="font-bold text-lg flex gap-2 py-4">
                                     <File /> Add Transaction
                                 </h3>{' '}
                                 <form method="dialog">
-                                    <button className="btn p-3.5 text-lg font-black bg-red-600/70 text-white hover:bg-red-600">
+                                    <button
+                                        className="btn p-3.5 text-lg font-black bg-red-600/70 text-white hover:bg-red-600"
+                                        onClick={() =>
+                                            ((
+                                                document.getElementById(
+                                                    'new-modal-toggle'
+                                                ) as HTMLInputElement
+                                            ).checked = false)
+                                        }>
                                         X
                                     </button>
                                 </form>
@@ -158,11 +206,11 @@ const page = () => {
                                 ))}
                             </div>
                         </div>
-                    </dialog>
+                    </div>
                     <div className="join">
-                        <SelectDropdown onRangeChange={handleRangeChange} />
+                        <SelectDropdown className="join-item" onRangeChange={handleRangeChange} />
                         <button
-                            className="btn btn-outline text-base join-item p-3"
+                            className="btn btn-outline rounded-box rounded-l-none text-base join-item p-3"
                             onClick={() =>
                                 (
                                     document.getElementById('filter') as HTMLDialogElement
@@ -171,7 +219,7 @@ const page = () => {
                             <Filter />
                         </button>
                         <dialog id="filter" className="modal">
-                            <div className="modal-box max-w-150 min-h-90 transition-all">
+                            <div className="modal-box max-w-150 min-h-90 transition-all overflow-visible">
                                 <div className="flex justify-between items-center">
                                     <h3 className="font-bold text-lg flex gap-4 py-4 px-2">
                                         <ListFilter /> Filter
@@ -192,6 +240,7 @@ const page = () => {
                                                 name="account"
                                                 className="w-full"
                                                 options={options}
+                                                defaultValue={false}
                                             />
                                         </div>
                                         <div className="flex flex-col gap-2">
@@ -200,7 +249,12 @@ const page = () => {
                                             </label>
                                             <MultiSelectDropdown
                                                 formFieldName="tags"
-                                                options={authUser?.tags ? authUser.tags : []}
+                                                options={
+                                                    authUser?.tags?.map((tag: string) => ({
+                                                        label: tag,
+                                                        value: tag,
+                                                    })) || []
+                                                }
                                             />
                                         </div>
                                         <div className="modal-action justify-end">
@@ -221,48 +275,58 @@ const page = () => {
                 </div>
 
                 {/* Totals Footer */}
-                <div className="mt-4">
-                    <div className="stats shadow bg-base-100 border border-base-200 w-full">
-                        {(() => {
-                            const income = transactions
-                                .filter((t: any) => t.type === 'income')
-                                .reduce((acc: number, curr: any) => acc + curr.amount, 0);
-                            const expense = transactions
-                                .filter((t: any) => t.type === 'expense')
-                                .reduce((acc: number, curr: any) => acc + curr.amount, 0);
-                            const net = income - expense;
-
-                            return (
-                                <React.Fragment>
-                                    <div className="stat place-items-center">
-                                        <div className="stat-title">Total Income</div>
-                                        <div className="stat-value text-success text-2xl">
-                                            +{income.toFixed(2)} {authUser?.currency}
-                                        </div>
+                <AnimatePresence>
+                    {summary && (
+                        <motion.div
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="hidden"
+                            className="mt-6">
+                            <div className="stats stats-vertical lg:stats-horizontal shadow-xl bg-base-100 border border-base-200 w-full overflow-hidden rounded-2xl">
+                                <motion.div
+                                    variants={itemVariants}
+                                    className="stat place-items-center py-6">
+                                    <div className="stat-title font-medium">Total Income</div>
+                                    <div className="stat-value text-success text-3xl font-bold">
+                                        +<AnimatedNumber value={summary.Income} />{' '}
+                                        <span className="text-sm font-normal opacity-70">
+                                            {authUser?.currency}
+                                        </span>
                                     </div>
+                                </motion.div>
 
-                                    <div className="stat place-items-center">
-                                        <div className="stat-title">Total Expense</div>
-                                        <div className="stat-value text-error text-2xl">
-                                            -{expense.toFixed(2)} {authUser?.currency}
-                                        </div>
+                                <motion.div
+                                    variants={itemVariants}
+                                    className="stat place-items-center border-l border-base-200 py-6">
+                                    <div className="stat-title font-medium">Total Expense</div>
+                                    <div className="stat-value text-error text-3xl font-bold">
+                                        -<AnimatedNumber value={summary.Expense} />{' '}
+                                        <span className="text-sm font-normal opacity-70">
+                                            {authUser?.currency}
+                                        </span>
                                     </div>
+                                </motion.div>
 
-                                    <div className="stat place-items-center">
-                                        <div className="stat-title">Net Balance</div>
-                                        <div
-                                            className={`stat-value text-2xl ${
-                                                net >= 0 ? 'text-success' : 'text-error'
-                                            }`}>
-                                            {net >= 0 ? '+' : ''}
-                                            {net.toFixed(2)} {authUser?.currency}
-                                        </div>
+                                <motion.div
+                                    variants={itemVariants}
+                                    className="stat place-items-center border-l border-base-200 py-6">
+                                    <div className="stat-title font-medium">Net Balance</div>
+                                    <div
+                                        className={`stat-value text-3xl font-bold ${
+                                            summary.netWorth >= 0 ? 'text-success' : 'text-error'
+                                        }`}>
+                                        {summary.netWorth >= 0 ? '+' : ''}
+                                        <AnimatedNumber value={summary.netWorth} />{' '}
+                                        <span className="text-sm font-normal opacity-70">
+                                            {authUser?.currency}
+                                        </span>
                                     </div>
-                                </React.Fragment>
-                            );
-                        })()}
-                    </div>
-                </div>
+                                </motion.div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </section>
         </main>
     );

@@ -1,9 +1,10 @@
-import mongoose from "mongoose"
+import mongoose from 'mongoose';
 
 const accountSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
+        maxlength: 30,
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -11,21 +12,18 @@ const accountSchema = new mongoose.Schema({
         required: true,
         index: true,
     },
-    type: {
+    group: {
         type: String,
-        enum: ["Cash", "Bank", "Credit"],
-        required: true
+        required: true,
+        maxlength: 20,
     },
-    currencies:{
-        type: [String],
-        default: ["USD"]
-    },
+
     balance: {
         type: Number,
-        default: 0
-    }
-})
+        default: 0,
+    },
+});
 
-const Account = mongoose.model("Account", accountSchema)
+const Account = mongoose.model('Account', accountSchema);
 
-export default Account
+export default Account;

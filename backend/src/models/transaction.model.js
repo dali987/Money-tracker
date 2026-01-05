@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose from 'mongoose';
 
 const transactionSchema = new mongoose.Schema({
     type: {
@@ -14,29 +14,31 @@ const transactionSchema = new mongoose.Schema({
     },
     amount: {
         type: Number,
-        required: true
+        required: true,
     },
     note: {
         type: String,
-        default: ""
+        default: '',
+        maxlength: 200,
     },
     tags: {
-        type: [{ type: String }],
-        default: []
+        type: [{ type: String, maxlength: 20 }],
+        default: [],
     },
+
     date: {
         type: Date,
-        default: Date.now
-    }
-})
-
-transactionSchema.pre("validate", function (next) {
-  if (!this.fromAccount && !this.toAccount) {
-    return next(new Error("Transaction must have either from account  or to account."));
-  }
-  next();
+        default: Date.now,
+    },
 });
 
-const Transaction = mongoose.model("Transaction", transactionSchema)
+transactionSchema.pre('validate', function (next) {
+    if (!this.fromAccount && !this.toAccount) {
+        return next(new Error('Transaction must have either from account  or to account.'));
+    }
+    next();
+});
 
-export default Transaction
+const Transaction = mongoose.model('Transaction', transactionSchema);
+
+export default Transaction;

@@ -1,11 +1,15 @@
-'use client';
-
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
+import { useAccounts } from '@/hooks/useAccounts';
+import { useTransactions } from '@/hooks/useTransactions';
 import { format } from 'date-fns';
 import { ArrowRight, File, Pencil } from 'lucide-react';
 import TransactionForm from './TransactionForm';
+import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
+import TranscationsSkeleton from './skeletons/TranscationsSkeleton';
+import EmptyState from './EmptyState';
 
 const typeProperties = {
     transfer: {
@@ -28,18 +32,26 @@ const typeProperties = {
 const fields = ['expense', 'transfer', 'income'];
 
 const TransactionsList = ({ maxCount }: { maxCount: number }) => {
-    const { transactions, accounts, deleteTransaction } = useTransactionStore();
-    const { authUser } = useAuthStore();
+    const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
+    const { data: transactionsRaw = [], isLoading: isTransactionsLoading } = useTransactions({});
 
-    const [currentPage, setCurrentPage] = React.useState(1);
-    const [inputMode, setInputMode] = React.useState<'left' | 'right' | null>(null);
+    const accounts = accountsRaw || [];
+    const transactions = transactionsRaw || [];
+
+    const deleteTransaction = useTransactionStore((state) => state.deleteTransaction);
+
+    const authUser = useAuthStore((state) => state.authUser);
+    const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [inputMode, setInputMode] = useState<'left' | 'right' | null>(null);
     const itemsPerPage = 10;
 
-    React.useEffect(() => {
+    useEffect(() => {
         setCurrentPage(1);
     }, [transactions]);
 
-    const accountNameMap = React.useMemo(() => {
+    const accountNameMap = useMemo(() => {
         if (!accounts || accounts.length === 0) return {};
         return accounts.reduce((map: Record<string, string>, account: any) => {
             map[account._id] = account.name;
@@ -47,7 +59,7 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
         }, {});
     }, [accounts]);
 
-    const displayedTransactions = React.useMemo(() => {
+    const displayedTransactions = useMemo(() => {
         if (maxCount !== -1) {
             return transactions.slice(0, maxCount);
         }
@@ -61,129 +73,208 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
         setCurrentPage(page);
     };
 
+    const [editingTransaction, setEditingTransaction] = useState<any>(null);
+
     return (
         <div className="flex flex-col gap-4">
-            <ul className="list rounded-box">
-                {displayedTransactions.length > 0 &&
-                    authUser &&
-                    accounts.length > 0 &&
-                    displayedTransactions.map((transaction: any) => (
-                        <li className="list-row !" key={transaction._id}>
-                            <div className="list-col-grow flex gap-6 items-center">
-                                <div>
-                                    <div className="text-base">
-                                        {transaction.type !== 'transfer' ? (
-                                            accountNameMap[
-                                                transaction[
+            <AnimatePresence mode="popLayout" initial={false}>
+                {isCheckingAuth ||
+                (isTransactionsLoading && transactions.length < 1) ||
+                (isAccountsLoading && accounts.length < 1) ? (
+                    <motion.div
+                        key="skeleton"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex flex-col gap-8 p-4">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <TranscationsSkeleton key={i} />
+                        ))}
+                    </motion.div>
+                ) : (
+                    <motion.ul
+                        key="list"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="list rounded-box overflow-clip">
+                        {displayedTransactions.length > 0 ? (
+                            <AnimatePresence mode="popLayout">
+                                {authUser &&
+                                    accounts.length > 0 &&
+                                    displayedTransactions.map((transaction: any) => (
+                                        <motion.li
+                                            className="list-row !"
+                                            key={transaction._id}
+                                            layout
+                                            transition={{ duration: 0.35, ease: 'easeOut' }}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}>
+                                            <div className="list-col-grow flex flex-col max-lg:max-w-30 lg:flex-row gap-2 lg:gap-6 items-start lg:items-center">
+                                                <div className="min-w-0">
+                                                    <div className="text-sm lg:text-base truncate max-w-30 lg:max-w-md">
+                                                        {transaction.type !== 'transfer' ? (
+                                                            accountNameMap[
+                                                                transaction[
+                                                                    typeProperties[
+                                                                        transaction.type as keyof typeof typeProperties
+                                                                    ].account
+                                                                ]
+                                                            ]
+                                                        ) : (
+                                                            <div className="flex flex-col lg:flex-row lg:items-center lg:gap-2">
+                                                                <div className="flex items-center lg:gap-2 truncate">
+                                                                    {
+                                                                        accountNameMap[
+                                                                            transaction.fromAccount
+                                                                        ]
+                                                                    }{' '}
+                                                                    <ArrowRight
+                                                                        className="shrink-0"
+                                                                        size={16}
+                                                                    />{' '}
+                                                                </div>
+                                                                <div className="truncate">
+                                                                    {
+                                                                        accountNameMap[
+                                                                            transaction.toAccount
+                                                                        ]
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-xs uppercase font-semibold opacity-60">
+                                                        {format(
+                                                            new Date(transaction.date),
+                                                            'dd MMM, yyyy'
+                                                        )}
+                                                    </div>
+                                                    <p className="text-base-300 text-sm wrap-break-word lg:max-w-sm">
+                                                        {transaction.note}
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1 lg:gap-2 w-full min-w-0">
+                                                    {transaction.tags.map((tag: string) => (
+                                                        <div
+                                                            key={tag}
+                                                            className="badge badge-soft text-xs lg:text-sm">
+                                                            {tag}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div
+                                                className={`text-base lg:text-lg flex justify-center text-center items-center shrink-0 ${
                                                     typeProperties[
                                                         transaction.type as keyof typeof typeProperties
-                                                    ].account
-                                                ]
-                                            ]
-                                        ) : (
-                                            <div className="flex items-center gap-2">
-                                                {accountNameMap[transaction.fromAccount]}{' '}
-                                                <ArrowRight />{' '}
-                                                {accountNameMap[transaction.toAccount]}{' '}
+                                                    ].color
+                                                }`}>
+                                                {`${
+                                                    typeProperties[
+                                                        transaction.type as keyof typeof typeProperties
+                                                    ].symbol
+                                                }${transaction.amount.toFixed(2)} ${
+                                                    authUser.baseCurrency
+                                                }`}
                                             </div>
-                                        )}
-                                    </div>
-                                    <div className="text-xs uppercase font-semibold opacity-60">
-                                        {format(new Date(transaction.date), 'dd MMM, yyyy')}
-                                    </div>
-                                    <p className="text-base-300">{transaction.note}</p>
-                                </div>
-                                <div className="flex gap-2">
-                                    {transaction.tags.map((tag: string) => (
-                                        <div key={tag} className="badge badge-soft">
-                                            {tag}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div
-                                className={`text-lg flex justify-center items-center ${
-                                    typeProperties[transaction.type as keyof typeof typeProperties]
-                                        .color
-                                }`}>
-                                {`${
-                                    typeProperties[transaction.type as keyof typeof typeProperties]
-                                        .symbol
-                                }${transaction.amount.toFixed(2)} ${authUser.currency}`}
-                            </div>
-                            <button
-                                type="button"
-                                className="btn btn-square btn-ghost self-center"
-                                onClick={() =>
-                                    (
-                                        document.getElementById('edit') as HTMLDialogElement
-                                    )?.showModal()
-                                }>
-                                <Pencil />
-                            </button>
-                            <dialog id="edit" className="modal">
-                                <div className="modal-box max-w-150 min-h-80 transition-all">
-                                    <div className="flex justify-between items-center">
-                                        <h3 className="font-bold text-lg flex gap-2 py-4">
-                                            <File /> Edit Transaction
-                                        </h3>{' '}
-                                        <form method="dialog">
-                                            <button className="btn p-3.5 text-lg font-black bg-red-600/70 text-white hover:bg-red-600">
-                                                X
-                                            </button>
-                                        </form>
-                                    </div>
-                                    <div className="tabs tabs-lift">
-                                        {fields.map((type: string, i: number) => (
-                                            <React.Fragment key={type}>
-                                                <input
-                                                    type="radio"
-                                                    name="edit-tabs"
-                                                    style={{
-                                                        //@ts-ignore
-                                                        '--color-base-content':
-                                                            type === 'expense'
-                                                                ? '#fb2c36'
-                                                                : type === 'income'
-                                                                ? 'oklch(72.3% 0.219 149.579)'
-                                                                : '',
-                                                    }}
-                                                    className="tab grow font-bold"
-                                                    aria-label={type}
-                                                    defaultChecked
-                                                />
-                                                <div className="tab-content bg-gray-50 border-gray-300 p-6">
-                                                    <TransactionForm
-                                                        type={
-                                                            type as
-                                                                | 'expense'
-                                                                | 'income'
-                                                                | 'transfer'
-                                                        }
-                                                        action={{
-                                                            type: 'edit',
-                                                            id: transaction._id,
-                                                        }}
-                                                    />
-                                                </div>
-                                            </React.Fragment>
-                                        ))}
-                                    </div>
-                                    <div className="modal-action">
-                                        <form method="dialog">
                                             <button
-                                                className="btn bg-red-500 text-white hover:bg-red-700"
-                                                onClick={() => deleteTransaction(transaction._id)}>
-                                                Delete
+                                                type="button"
+                                                className="btn btn-square btn-ghost self-center max-lg:btn-sm "
+                                                onClick={() => {
+                                                    setEditingTransaction(transaction);
+                                                    (
+                                                        document.getElementById(
+                                                            'edit-transaction-modal'
+                                                        ) as HTMLDialogElement
+                                                    )?.showModal();
+                                                }}>
+                                                <Pencil size={22} />
                                             </button>
-                                        </form>
+                                        </motion.li>
+                                    ))}
+                            </AnimatePresence>
+                        ) : (
+                            <EmptyState
+                                action={{
+                                    label: 'Add Transaction',
+                                    onClick: () => {
+                                        const toggle = document.getElementById(
+                                            'new-modal-toggle'
+                                        ) as HTMLInputElement;
+                                        if (toggle) toggle.checked = true;
+                                    },
+                                }}
+                            />
+                        )}
+                    </motion.ul>
+                )}
+            </AnimatePresence>
+            <dialog id="edit-transaction-modal" className="modal">
+                <div className="modal-box max-w-150 min-h-80 transition-all">
+                    <div className="flex justify-between items-center">
+                        <h3 className="font-bold text-lg flex gap-2 py-4">
+                            <File /> Edit Transaction
+                        </h3>{' '}
+                        <form method="dialog">
+                            <button className="btn p-3.5 text-lg font-black bg-red-600/70 text-white hover:bg-red-600">
+                                X
+                            </button>
+                        </form>
+                    </div>
+                    {editingTransaction && (
+                        <div className="tabs tabs-lift">
+                            {fields.map((type: string, i: number) => (
+                                <React.Fragment key={type}>
+                                    <input
+                                        type="radio"
+                                        name="edit-tabs"
+                                        style={{
+                                            //@ts-ignore
+                                            '--color-base-content':
+                                                type === 'expense'
+                                                    ? '#fb2c36'
+                                                    : type === 'income'
+                                                    ? 'oklch(72.3% 0.219 149.579)'
+                                                    : '',
+                                        }}
+                                        className="tab grow font-bold"
+                                        aria-label={type}
+                                        defaultChecked={editingTransaction.type === type}
+                                    />
+                                    <div className="tab-content bg-gray-50 border-gray-300 p-6">
+                                        <TransactionForm
+                                            type={type as 'expense' | 'income' | 'transfer'}
+                                            action={{
+                                                type: 'edit',
+                                                id: editingTransaction._id,
+                                            }}
+                                        />
                                     </div>
-                                </div>
-                            </dialog>
-                        </li>
-                    ))}
-            </ul>
-            {transactions.length > 10 && (
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    )}
+                    <div className="modal-action">
+                        <form method="dialog">
+                            <button
+                                className="btn bg-red-500 text-white hover:bg-red-700"
+                                onClick={() => {
+                                    if (editingTransaction) {
+                                        deleteTransaction(editingTransaction._id);
+                                    }
+                                }}>
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </dialog>
+
+            {(maxCount > 10 || maxCount == -1) && transactions.length > 10 && (
                 <div className="flex justify-center mt-4">
                     <div className="join">
                         <button

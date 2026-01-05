@@ -26,18 +26,13 @@ export default async function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-
     return (
         <html lang="en">
-            <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-            >
+            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <Provider>
                     <Header />
                     <Toaster richColors />
-                    <NavBar>
-                        {children}
-                    </NavBar>
+                    <NavBar>{children}</NavBar>
                 </Provider>
             </body>
         </html>

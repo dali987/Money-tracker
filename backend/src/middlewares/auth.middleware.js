@@ -1,70 +1,66 @@
-import jwt from "jsonwebtoken"
-import { ENV } from "../lib/env.js"
-import User from "../models/user.model.js"
-import redisClient from "../database/redisClient.js"
+import jwt from 'jsonwebtoken';
+import { ENV } from '../lib/env.js';
+import User from '../models/user.model.js';
+import redisClient from '../database/redisClient.js';
 
-export const authorizeToken = async (req, res, next) =>{
-    try{
-        let token
+export const authorizeToken = async (req, res, next) => {
+    try {
+        let token;
 
-        if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")){
-            token = req.headers.authorization.split(" ")[1]
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+            token = req.headers.authorization.split(' ')[1];
         }
 
-        if (!token) return res.status(401).json({message: "Unauthorized"})
+        if (!token) return res.status(401).json({ message: 'Unauthorized' });
 
+        const decoded = jwt.verify(token, ENV.JWT_ACCESS_TOKEN_SECRET);
 
-        const decoded = jwt.verify(token, ENV.JWT_ACCESS_TOKEN_SECRET)
+        const user = await User.findById(decoded.userId).select('-password');
 
+        if (!user) return res.status(401).json({ message: 'Unauthorized' });
 
-        const user = await User.findById(decoded.userId).select("-password")
+        req.user = user;
 
-        if (!user) return res.status(401).json({message: "Unauthorized"})
-
-            
-        req.user = user
-            
-        next()
+        next();
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Unauthorized: Token has expired' });
+        }
+        console.error('Error while authorizing the token: ', error);
+        next(error);
     }
-    catch (error){
-        console.error("Error while authorizing the token: ", error)
-        next(error)
-    }
-}
+};
 
-export const verifyRefreshToken = async (req, res, next) =>{
-
-
+export const verifyRefreshToken = async (req, res, next) => {
     const token = req.cookies.refreshToken;
 
     if (!token) {
-        return res.status(401).json({ message: "Unauthorized: No refresh token provided." });
+        return res.status(401).json({ message: 'Unauthorized: No refresh token provided.' });
     }
 
-    try{
-        
-        const decoded = jwt.verify(token, ENV.JWT_REFRESH_TOKEN_SECRET)
+    try {
+        const decoded = jwt.verify(token, ENV.JWT_REFRESH_TOKEN_SECRET);
 
-        const storedRefreshTokenData = await redisClient.get(decoded.userId.toString())
+        const storedRefreshTokenData = await redisClient.get(decoded.userId.toString());
         if (!storedRefreshTokenData) {
-            return res.status(401).json({ message: "Unauthorized: Invalid session." });
+            return res.status(401).json({ message: 'Unauthorized: Invalid session.' });
         }
 
-        req.userId = decoded.userId
+        req.userId = decoded.userId;
 
-        const { refreshToken : storedRefreshToken } = JSON.parse(storedRefreshTokenData)
+        const { refreshToken: storedRefreshToken } = JSON.parse(storedRefreshTokenData);
 
-        if (storedRefreshToken != token){
-            return res.status(401).json({message: "Unauthorized: Invalid token." });
+        if (storedRefreshToken != token) {
+            return res.status(401).json({ message: 'Unauthorized: Invalid token.' });
         }
 
-        req.cookies.refreshToken = token
+        req.cookies.refreshToken = token;
 
-        next()
-
+        next();
+    } catch (error) {
+        console.error(error);
+        return res
+            .status(401)
+            .json({ message: 'Unauthorized: Session has expired or is invalid.' });
     }
-    catch (error){
-        console.error(error)
-        return res.status(401).json({ message: "Unauthorized: Session has expired or is invalid." });
-    }
-}
+};
