@@ -100,17 +100,17 @@ const Steps = () => {
             className="relative pt-24 lg:pt-48 bg-transparent overflow-hidden">
             <div className="max-w-7xl mx-auto px-6 md:px-12">
                 {/* Section Header */}
-                <div className="flex items-center mb-24 lg:mb-40">
+                <div className="flex justify-center mb-24 lg:mb-40">
                     <div className="flex flex-col">
                         <div className="flex items-center gap-4 mb-6 lg:mb-8">
                             <div className="w-8 lg:w-12 h-[2px] bg-indigo-500" />
-                            <span className="text-sm lg:text-xl font-black tracking-[0.4em] lg:tracking-[0.6em] uppercase text-indigo-500 text-nowrap">
+                            <span className="text-sm lg:text-lg font-black tracking-[0.4em] lg:tracking-[0.6em] uppercase text-indigo-500 text-nowrap">
                                 How it works
                             </span>
                         </div>
-                        <h2 className="text-4xl sm:text-6xl md:text-8xl lg:text-[9rem] font-black text-white tracking-tighter uppercase italic leading-[0.8] mb-12">
+                        <h2 className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black text-white uppercase leading-[0.8] mb-12">
                             The{' '}
-                            <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-500 to-blue-400 pr-4">
+                            <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-400 via-white to-indigo-400 pr-4">
                                 Process
                             </span>
                         </h2>
@@ -122,7 +122,7 @@ const Steps = () => {
                     <div
                         ref={indicatorColRef}
                         className="min-w-10 lg:w-28 flex flex-col items-center">
-                        <div className="relative w-full flex flex-col items-center h-[500px] lg:h-[700px]">
+                        <div className="relative w-full flex flex-col items-center h-[500px] lg:h-[600px]">
                             {/* Active Fill Layer (Indigo) */}
                             <div
                                 ref={indicatorFillRef}
@@ -164,10 +164,10 @@ const Steps = () => {
                                     }}
                                     className="flex flex-col justify-center min-h-[30vh] lg:min-h-[50vh] perspective-1000">
                                     <div
-                                        className="h-14 w-14 lg:w-28 lg:h-28 rounded-xl lg:rounded-2xl mb-12 lg:mb-16 flex items-center justify-center bg-white/5 border border-white/10 relative group hover:border-indigo-500/50 transition-colors duration-500"
+                                        className="h-14 w-14 lg:w-24 lg:h-24 rounded-xl lg:rounded-2xl mb-12 lg:mb-16 flex items-center justify-center bg-white/5 border border-white/10 relative group hover:border-indigo-500/50 transition-colors duration-500"
                                         style={{ backdropFilter: 'blur(20px)' }}>
                                         <Icon
-                                            className="w-8 h-8 lg:w-14 lg:h-14 transition-all duration-700 group-hover:scale-110 group-hover:rotate-6"
+                                            className="w-8 h-8 lg:w-12 lg:h-12 transition-all duration-700 group-hover:scale-110 group-hover:rotate-6"
                                             style={{ color: step.color }}
                                         />
                                         <div
@@ -178,23 +178,23 @@ const Steps = () => {
 
                                     <div className="flex items-center gap-6 lg:gap-8 mb-8 lg:mb-10">
                                         <span
-                                            className="text-sm lg:text-2xl font-black tracking-[0.4em] lg:tracking-[0.6em] uppercase"
+                                            className="text-sm lg:text-lg font-black tracking-[0.4em] lg:tracking-[0.6em] uppercase"
                                             style={{ color: step.color }}>
                                             Phase {step.number}
                                         </span>
                                         <div className="h-px lg:h-[2px] flex-1 bg-linear-to-r from-white/20 to-transparent" />
                                     </div>
 
-                                    <h3 className="text-3xl lg:text-8xl font-black mb-10 lg:mb-12 text-white leading-[0.85] tracking-tighter uppercase italic">
+                                    <h3 className="text-3xl lg:text-6xl font-black mb-10 lg:mb-12 text-white leading-[0.85] uppercase">
                                         {step.title}
                                     </h3>
-                                    <p className="text-lg lg:text-4xl leading-snug text-gray-500 font-medium max-w-full lg:max-w-4xl mb-12 lg:mb-16">
+                                    <p className="text-lg lg:text-xl leading-snug text-gray-500 font-medium max-w-full lg:max-w-4xl mb-12 lg:mb-16">
                                         {step.description}
                                     </p>
 
                                     <div className="flex items-center gap-4 lg:gap-6 group cursor-pointer w-fit">
                                         <div className="w-10 lg:w-14 h-[2px] bg-indigo-500 group-hover:w-20 lg:group-hover:w-24 transition-all duration-700" />
-                                        <span className="text-sm lg:text-lg font-black tracking-widest uppercase text-white/40 group-hover:text-white transition-colors duration-500">
+                                        <span className="text-sm lg:text-base font-black tracking-widest uppercase text-white/40 group-hover:text-white transition-colors duration-500">
                                             Explore Phase
                                         </span>
                                     </div>

@@ -56,7 +56,9 @@ const Hero = () => {
     useGSAP(() => {
         const splitTitle = new SplitText('.title', { type: 'words' });
         const splitSubtitle = new SplitText('#heroSubtitle', { type: 'words' });
-        const titleBounds = document.querySelector('.title').getBoundingClientRect();
+        const titleElement = document.querySelector('.title');
+        if (!titleElement) return;
+        const titleBounds = titleElement.getBoundingClientRect();
 
         splitTitle.words.forEach((word) => {
             const wordBounds = word.getBoundingClientRect();
@@ -77,7 +79,6 @@ const Hero = () => {
         // REVEAL HERE: Now that styles are set, make the container visible and start animation
         gsap.set('.title', { opacity: 1 });
 
-
         gsap.from(splitTitle.words, {
             opacity: 0,
             y: 80,
@@ -93,22 +94,22 @@ const Hero = () => {
             duration: 1.4,
             ease: 'expo.out',
             stagger: 0.05,
-            delay: 0.6
-        })
+            delay: 0.6,
+        });
     }, []);
 
     useGSAP(() => {
         // Button animations
         const magneticBtn = document.querySelector('.magnetic');
         const demoBtn = document.querySelector('.demo');
-        
+
         gsap.from('.demo', {
             opacity: 0,
             scale: 0.8,
             y: 50,
             duration: 0.5,
             delay: 1.2,
-            ease: 'expo.out'
+            ease: 'expo.out',
         });
 
         gsap.from('.magnetic', {
@@ -117,9 +118,9 @@ const Hero = () => {
             scale: 0.8,
             duration: 1,
             delay: 1.2,
-            ease: 'expo.out'
+            ease: 'expo.out',
         });
-         
+
         if (magneticBtn) {
             // Magnetic effect for primary button
             magneticBtn.addEventListener('mousemove', (e: Event) => {
@@ -127,27 +128,27 @@ const Hero = () => {
                 const rect = magneticBtn.getBoundingClientRect();
                 const x = mouseEvent.clientX - rect.left - rect.width / 2;
                 const y = mouseEvent.clientY - rect.top - rect.height / 2;
-                
+
                 gsap.to(magneticBtn, {
                     x: x * 0.15,
                     y: y * 0.15,
                     rotation: x * 0.02,
                     duration: 0.3,
-                    ease: 'power2.out'
+                    ease: 'power2.out',
                 });
             });
-            
+
             magneticBtn.addEventListener('mouseleave', () => {
                 gsap.to(magneticBtn, {
                     x: 0,
                     y: 0,
                     rotation: 0,
                     duration: 0.5,
-                    ease: 'power1.inOut'
+                    ease: 'power1.inOut',
                 });
             });
         }
-        
+
         if (demoBtn) {
             // Hover effect for demo button
             demoBtn.addEventListener('mouseenter', () => {
@@ -156,17 +157,17 @@ const Hero = () => {
                     borderColor: colors.secondary,
                     backgroundColor: `${colors.primary}20`,
                     duration: 0.3,
-                    ease: 'power2.out'
+                    ease: 'power2.out',
                 });
             });
-            
+
             demoBtn.addEventListener('mouseleave', () => {
                 gsap.to(demoBtn, {
                     scale: 1,
                     borderColor: colors.primary,
                     backgroundColor: 'rgba(255, 255, 255, 0.05)',
                     duration: 0.3,
-                    ease: 'power2.out'
+                    ease: 'power2.out',
                 });
             });
         }
@@ -176,7 +177,10 @@ const Hero = () => {
         <section
             id="hero"
             className="relative min-h-screen flex items-center justify-center px-4 lg:px-12 py-20"
-            style={{ background: 'radial-gradient(ellipse at top, #1a1a2e, #000000)' }}>
+            style={{
+                // Using a semi-transparent gradient to let some particles show through at the edges
+                background: 'radial-gradient(ellipse at top, #1a1a2eE6, #000000 80%)',
+            }}>
             {/* Animated gradient orbs with parallax */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div

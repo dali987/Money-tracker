@@ -106,7 +106,8 @@ const Showcase = () => {
             ref={sectionRef}
             className="min-h-screen py-24 relative flex items-center justify-center overflow-hidden"
             style={{
-                background: `linear-gradient(to bottom, #000000, #0a0a0a)`,
+                // Semi-transparent to show global particles
+                background: `linear-gradient(to bottom, transparent, rgba(0,0,0,0.8) 20%, rgba(0,0,0,0.8) 80%, transparent)`,
             }}>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(var(--primary-rgb),0.05),transparent_50%)] pointer-events-none" />
 

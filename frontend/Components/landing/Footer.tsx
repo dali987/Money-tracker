@@ -3,9 +3,7 @@ import React from 'react';
 
 const Footer = () => {
     return (
-        <footer
-            className="py-16 px-4 lg:px-12 border-t border-white/10"
-            style={{ background: '#000000' }}>
+        <footer className="py-16 px-4 lg:px-12 border-t border-white/5 bg-black/50 backdrop-blur-md relative z-10">
             <div className="max-w-6xl mx-auto">
                 <div className="flex flex-col md:flex-row justify-between items-center mb-8">
                     <div className="mb-4 md:mb-0 text-center md:text-left">
