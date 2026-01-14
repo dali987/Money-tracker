@@ -3,7 +3,7 @@
 import Initializer from '@/Components/Initializer';
 import MultiSelectDropdown from '@/Components/Custom/MultiSelectDropdown';
 import SelectAccountDropdown from '@/Components/Custom/SelectAccountDropdown';
-import SelectDropdown from '@/Components/SelectDateRangeDropdown';
+import SelectDropdown from '@/Components/Custom/SelectDateRangeDropdown';
 import TransactionForm from '@/Components/TransactionForm';
 import TransactionsList from '@/Components/TransactionsList';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import AnimatedNumber from '@/Components/AnimatedNumber';
 import React, { useEffect } from 'react';
 import { useCallback, useMemo } from 'react';
+import { useAccounts } from '@/hooks/useAccounts';
 
 const fields = ['expense', 'transfer', 'income'];
 
@@ -38,7 +39,6 @@ const page = () => {
         (state) => state.getTransactionsWithFilter
     );
     const getTransactionsSummary = useTransactionStore((state) => state.getTransactionsSummary);
-    const accounts = useTransactionStore((state) => state.accounts);
     const authUser = useAuthStore((state) => state.authUser);
     const [summary, setSummary] = React.useState({
         Expense: 0,
@@ -60,6 +60,15 @@ const page = () => {
         tags: '',
     });
 
+    const [tempFilters, setTempFilters] = React.useState({
+        account: '',
+        tags: '',
+    });
+
+    const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
+
+    const accounts = accountsRaw || [];
+
     const handleRangeChange = useCallback(
         async ({
             start,
@@ -71,17 +80,8 @@ const page = () => {
             label: string;
         }) => {
             setSelectedRange({ start, end, label });
-
-            const filters: any = { ...currentFilters };
-            if (label !== 'All time' && start && end) {
-                filters.startDate = start;
-                filters.endDate = end;
-            }
-            await getTransactionsWithFilter(filters);
-            const summary = await getTransactionsSummary(filters);
-            setSummary(summary);
         },
-        [getTransactionsWithFilter, currentFilters, getTransactionsSummary]
+        []
     );
 
     const createFormSubmit = useCallback(async () => {
@@ -105,44 +105,43 @@ const page = () => {
 
     useEffect(() => {
         const fetchTransactions = async () => {
-            const sum = await getTransactionsSummary(currentFilters);
+            const filters: any = { ...currentFilters };
+            if (selectedRange.label !== 'All time' && selectedRange.start && selectedRange.end) {
+                filters.startDate = selectedRange.start;
+                filters.endDate = selectedRange.end;
+            }
+            await getTransactionsWithFilter(filters);
+            const sum = await getTransactionsSummary(filters);
             setSummary(sum);
         };
         fetchTransactions();
-    }, [getTransactionsSummary, currentFilters]);
+    }, [getTransactionsSummary, getTransactionsWithFilter, currentFilters, selectedRange]);
+
+    useEffect(() => {
+        setTempFilters(currentFilters);
+    }, [currentFilters]);
 
     const options = useMemo(() => handleOptions(accounts), [accounts, handleOptions]);
 
-    const handleFormSubmit = useCallback(
-        async (e: React.FormEvent<HTMLFormElement>) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
+    const handleFormSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
 
-            const account = formData.get('account') as string;
-            const tags = formData.getAll('tags').join(',');
+        const account = formData.get('account') as string;
+        const tags = formData.get('tags') as string;
 
-            const newFilters = {
-                account: account || '',
-                tags: tags || '',
-            };
+        const newFilters = {
+            account: account || '',
+            tags: tags || '',
+        };
 
-            setCurrentFilters(newFilters);
-
-            const filtersToSend: any = { ...newFilters };
-            if (selectedRange.label !== 'All time' && selectedRange.start && selectedRange.end) {
-                filtersToSend.startDate = selectedRange.start;
-                filtersToSend.endDate = selectedRange.end;
-            }
-
-            await getTransactionsWithFilter(filtersToSend);
-            (document.getElementById('filter') as HTMLDialogElement)?.close();
-        },
-        [getTransactionsWithFilter, selectedRange]
-    );
+        setCurrentFilters(newFilters);
+        (document.getElementById('filter') as HTMLDialogElement)?.close();
+    }, []);
 
     return (
         <main className="bg-white lg:bg-gray-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
-            <Initializer transactions accounts />
+            <Initializer />
             <section className="w-full lg:bg-white lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 flex flex-col gap-4">
                 <div className="flex flex-wrap gap-2 justify-between">
                     <button
@@ -211,11 +210,12 @@ const page = () => {
                         <SelectDropdown className="join-item" onRangeChange={handleRangeChange} />
                         <button
                             className="btn btn-outline rounded-box rounded-l-none text-base join-item p-3"
-                            onClick={() =>
+                            onClick={() => {
+                                setTempFilters(currentFilters);
                                 (
                                     document.getElementById('filter') as HTMLDialogElement
-                                )?.showModal()
-                            }>
+                                )?.showModal();
+                            }}>
                             <Filter />
                         </button>
                         <dialog id="filter" className="modal">
@@ -230,7 +230,7 @@ const page = () => {
                                         </button>
                                     </form>
                                 </div>
-                                <form onSubmit={(e) => handleFormSubmit(e)} id="filter">
+                                <form onSubmit={(e) => handleFormSubmit(e)} id="filterForm">
                                     <div className="flex flex-col gap-4">
                                         <div className="flex flex-col gap-2">
                                             <label className="label text-base text-base-content">
@@ -241,11 +241,18 @@ const page = () => {
                                                 className="w-full"
                                                 options={options}
                                                 defaultValue={false}
+                                                selectedId={tempFilters.account}
+                                                onSelect={(option: any) =>
+                                                    setTempFilters({
+                                                        ...tempFilters,
+                                                        account: option.id,
+                                                    })
+                                                }
                                             />
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <label className="label text-base text-base-content">
-                                                End Date
+                                                Tags
                                             </label>
                                             <MultiSelectDropdown
                                                 formFieldName="tags"
@@ -255,9 +262,29 @@ const page = () => {
                                                         value: tag,
                                                     })) || []
                                                 }
+                                                selected={
+                                                    tempFilters.tags
+                                                        ? tempFilters.tags.split(',')
+                                                        : []
+                                                }
+                                                onSelect={(tags: string[]) =>
+                                                    setTempFilters({
+                                                        ...tempFilters,
+                                                        tags: tags.join(','),
+                                                    })
+                                                }
                                             />
                                         </div>
                                         <div className="modal-action justify-end">
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline btn-error rounded"
+                                                onClick={() => {
+                                                    setTempFilters({ account: '', tags: '' });
+                                                    
+                                                }}>
+                                                Reset
+                                            </button>
                                             <button
                                                 type="submit"
                                                 className="btn btn-outline btn-success rounded">

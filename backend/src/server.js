@@ -21,18 +21,20 @@ const handle = nextApp.getRequestHandler();
 const PORT = ENV.PORT;
 
 const limiter = rateLimit({
-    windowMs: 10 * 1000, // 10 seconds
-    max: 15, // 5 requests per window
-    standardHeaders: true,
-    legacyHeaders: false,
-    skip: (req, res) => {
-        // ✅ Ignore Next.js internal/static requests
-        return (
-            req.url.startsWith('/_next/') || // Next.js internals
-            req.url.startsWith('/static/') || // Static files (if you have any)
-            req.url.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|webp)$/i) // Static assets
-        );
-    },
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 150, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: "Too many requests, please try again later.",
+  skip: (req, res) => {
+    // Skip OPTIONS requests
+    if (req.method === 'OPTIONS') return true;
+    
+    // Optional: Skip specific "lightweight" health check routes
+    if (req.path === '/api/health') return true;
+    
+    return false;
+  }
 });
 
 nextApp.prepare().then(() => {

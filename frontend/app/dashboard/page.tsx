@@ -15,7 +15,7 @@ const page = () => {
 
     return (
         <main className="bg-white lg:bg-gray-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
-            <Initializer rates transactions accounts />
+            <Initializer rates/>
             <motion.section className="w-full lg:bg-white lg:rounded-lg lg:shadow-2xl lg:max-w-6xl lg:p-4 flex flex-col lg:flex-row gap-4">
                 <div className="w-full lg:w-2/5 flex justify-center">
                     <NetWorth />

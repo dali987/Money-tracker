@@ -6,7 +6,13 @@ export const useTransactions = (filters: any) => {
         queryKey: ['transactions', filters],
         queryFn: async () => {
             const res = await axiosInstance.get('/transaction/', { params: filters });
-            return res.data.data;
+            const transactions = res.data.data;
+
+            // Sort by date descending (newest first)
+            return transactions.sort(
+                (a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()
+            );
         },
+        staleTime: 1000 * 60 * 5, // 5 minutes
     });
 };

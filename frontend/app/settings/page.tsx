@@ -51,7 +51,15 @@ const page = () => {
 
     const itemVariants = {
         hidden: { opacity: 0, y: 10 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
+        visible: (i?: number) => ({
+            opacity: 1,
+            y: 0,
+            transition: {
+                delay: i ? i * 0.15 : 0,
+                duration: 0.25,
+                ease: 'easeOut',
+            },
+        }),
         exit: { opacity: 0, scale: 0.95, transition: { duration: 0.3, ease: 'easeOut' } },
     };
 
@@ -270,19 +278,21 @@ const page = () => {
                                     </tr>
                                 </thead>
                                 <motion.tbody
-                                    key={`table-${newCurrencies.length}`}
                                     initial="hidden"
                                     animate="visible"
                                     variants={containerVariants}>
-                                    <AnimatePresence mode="popLayout">
+                                    <AnimatePresence>
                                         {authUser &&
                                             [authUser.baseCurrency, ...newCurrencies].map(
-                                                (currency: string) => (
+                                                (currency: string, i: number) => (
                                                     <motion.tr
                                                         key={currency}
+                                                        custom={i}
                                                         layout
-                                                        variants={itemVariants}
-                                                        transition={{ duration: 0.3 }}>
+                                                        initial="hidden"
+                                                        animate="visible"
+                                                        exit="exit"
+                                                        variants={itemVariants}>
                                                         <th className="font-bold text-neutral">
                                                             {currency}
                                                         </th>
@@ -307,10 +317,13 @@ const page = () => {
                                 animate="visible">
                                 <AnimatePresence mode="popLayout">
                                     {authUser &&
-                                        newCurrencies.map((currency: string) => (
+                                        newCurrencies.map((currency: string, i: number) => (
                                             <motion.li
                                                 key={currency}
+                                                custom={i}
                                                 layout
+                                                initial="hidden"
+                                                animate="visible"
                                                 variants={itemVariants}
                                                 className="list-row">
                                                 <div className="flex flex-col">
@@ -343,15 +356,21 @@ const page = () => {
                             onDragOver={handleDragOverGroups}
                             onDragCancel={() => setActiveId(null)}
                             onDragEnd={() => setActiveId(null)}>
-                            <div className="flex flex-wrap gap-3">
+                            <motion.div
+                                variants={containerVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className="flex flex-wrap gap-3">
                                 <SortableContext items={currGroups} strategy={() => null}>
                                     <AnimatePresence>
-                                        {currGroups.map((group) => (
+                                        {currGroups.map((group, i) => (
                                             <motion.div
                                                 key={group}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, scale: 0.95 }}
+                                                custom={i}
+                                                initial="hidden"
+                                                animate="visible"
+                                                exit="exit"
+                                                variants={itemVariants}
                                                 transition={{ duration: 0.35, ease: 'easeOut' }}>
                                                 <SortableBadge
                                                     name={group}
@@ -371,7 +390,7 @@ const page = () => {
                                         />
                                     ) : null}
                                 </DragOverlay>
-                            </div>
+                            </motion.div>
                         </DndContext>
                         <div className="flex gap-2 mt-2">
                             <input
@@ -411,15 +430,21 @@ const page = () => {
                             onDragOver={handleDragOverTags}
                             onDragCancel={() => setActiveId(null)}
                             onDragEnd={() => setActiveId(null)}>
-                            <div className="flex flex-wrap gap-3">
+                            <motion.div
+                                variants={containerVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className="flex flex-wrap gap-3">
                                 <SortableContext items={currTags} strategy={() => null}>
                                     <AnimatePresence>
-                                        {(currTags || []).map((tag) => (
+                                        {(currTags || []).map((tag, i) => (
                                             <motion.div
                                                 key={tag}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, scale: 0.95 }}
+                                                custom={i}
+                                                initial="hidden"
+                                                animate="visible"
+                                                exit="exit"
+                                                variants={itemVariants}
                                                 transition={{ duration: 0.35, ease: 'easeOut' }}>
                                                 <SortableBadge
                                                     name={tag}
@@ -439,7 +464,7 @@ const page = () => {
                                         />
                                     ) : null}
                                 </DragOverlay>
-                            </div>
+                            </motion.div>
                         </DndContext>
                         <div className="flex gap-2 mt-2">
                             <input

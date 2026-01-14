@@ -13,6 +13,8 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { formatISO } from 'date-fns';
 import { useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useAccounts } from '@/hooks/useAccounts';
+import { useTransactions } from '@/hooks/useTransactions';
 
 const MoneyExchangeWithCurrency = ({
     options,
@@ -81,13 +83,16 @@ const TransactionForm = ({
 }) => {
     const createTransaction = useTransactionStore((state) => state.createTransaction);
     const getAccounts = useTransactionStore((state) => state.getAccounts);
-    const accounts = useTransactionStore((state) => state.accounts);
     const updateTransaction = useTransactionStore((state) => state.updateTransaction);
 
     const authUser = useAuthStore((state) => state.authUser);
     const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
 
-    const transactions = useTransactionStore((state) => state.transactions);
+    const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
+    const { data: transactionsRaw = [], isLoading: isTransactionsLoading } = useTransactions({});
+
+    const accounts = accountsRaw || [];
+    const transactions = transactionsRaw || [];
 
     const [keepFormData, setKeepFormData] = useState({
         note: '',

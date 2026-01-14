@@ -76,6 +76,7 @@ export default function MultiSelectDropdown({
 
     return (
         <div className={`relative w-full ${className}`} ref={dropdownRef}>
+            <input type="hidden" name={formFieldName} value={selectedValues.join(',')} />
             <div
                 tabIndex={0}
                 role="button"
@@ -121,7 +122,6 @@ export default function MultiSelectDropdown({
                                     <label className="flex items-center gap-3 py-2 px-3 hover:bg-base-200 cursor-pointer active:bg-base-300 rounded-lg">
                                         <input
                                             type="checkbox"
-                                            name={formFieldName}
                                             value={option.value}
                                             checked={isChecked}
                                             onChange={() => handleToggle(option.value)}

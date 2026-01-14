@@ -11,6 +11,7 @@ import { Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import SelectDropdown from '@/Components/Custom/SelectDropdown';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { useAccounts } from '@/hooks/useAccounts';
 
 const periods = ['Yearly', 'Monthly'];
 
@@ -127,7 +128,7 @@ const processNetWorthTrend = (response: any, config: any, currentDate: Date): Ch
 };
 
 const Page = () => {
-    const { getTransactionsChart, getNetWorthChart, accounts } = useTransactionStore();
+    const { getTransactionsChart, getNetWorthChart } = useTransactionStore();
     const { authUser } = useAuthStore();
 
     const [selectedAccount, setSelectedAccount] = useState<string>('');
@@ -137,6 +138,10 @@ const Page = () => {
     const [chartType, setChartType] = useState<string>('expenseIncome');
     const [chartData, setChartData] = useState<ChartEntry[]>([]);
     const [loading, setLoading] = useState(false);
+
+    const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
+
+    const accounts = accountsRaw || [];
 
     const handleOptions = (accounts: Array<any>) => {
         if (!accounts) return [];
@@ -259,7 +264,6 @@ const Page = () => {
             transition: {
                 duration: 0.45,
                 ease: 'easeOut',
-                when: 'beforeChildren',
                 staggerChildren: 0.3,
                 delayChildren: 0.4,
             },
@@ -273,7 +277,7 @@ const Page = () => {
 
     return (
         <main className="bg-white lg:bg-gray-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
-            <Initializer rates transactions accounts />
+            <Initializer rates />
             <motion.section
                 variants={containerVariants}
                 initial="hidden"

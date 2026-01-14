@@ -7,6 +7,7 @@ import { accountSchema } from '../lib/validations';
 import { useTransactionStore } from '@/store/useTransactionStore';
 
 import SelectDropdown from './Custom/SelectDropdown';
+import { useAccounts } from '@/hooks/useAccounts';
 
 const AccountForm = ({
     action = 'create',
@@ -14,9 +15,13 @@ const AccountForm = ({
     action: 'create' | { type: 'edit'; id: string };
 }) => {
     const { authUser } = useAuthStore();
-    const { createAccount, updateAccount, accounts } = useTransactionStore();
+    const { createAccount, updateAccount } = useTransactionStore();
     const [name, setName] = useState('');
     const [group, setGroup] = useState(authUser?.groups[0] || '');
+
+    const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
+
+    const accounts = accountsRaw || [];
 
     useEffect(() => {
         if (typeof action === 'object' && action.type === 'edit') {

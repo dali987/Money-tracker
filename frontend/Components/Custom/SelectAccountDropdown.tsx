@@ -10,6 +10,7 @@ const SelectAccountDropdown = ({
     name,
     defaultValue,
     placeholder,
+    selectedId
 }: {
     options: { name: string; type: string; id: string }[];
     className?: string;
@@ -18,6 +19,7 @@ const SelectAccountDropdown = ({
     name?: string;
     defaultValue?: boolean;
     placeholder?: string;
+    selectedId?: string;
 }) => {
     const [selected, setSelected] = useState({ name: '', type: '', id: '' });
     const [isOpen, setIsOpen] = useState(false);
@@ -55,6 +57,18 @@ const SelectAccountDropdown = ({
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        if (selectedId !== undefined) {
+            const found = options.find((o) => o.id === selectedId);
+            if (found) {
+                setSelected(found);
+            } else {
+                setSelected({ name: '', type: '', id: '' });
+            }
+        }
+    }, [selectedId, options]);
+
 
     const toggleDropdown = () => {
         if (disabled) return;

@@ -44,13 +44,18 @@ const SkeletonNetWorth = () => (
 );
 
 import CustomCollapse from './Custom/CustomCollapse';
+import { useAccounts } from '@/hooks/useAccounts';
 
 const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?: boolean }) => {
-    const { accounts, rates, deleteAccount, getAccountsSummary } = useTransactionStore();
+    const { rates, deleteAccount, getAccountsSummary } = useTransactionStore();
     const { authUser } = useAuthStore();
     const [editAccount, setEditAccount] = useState<any>(null);
     const [accountsSummary, setAccountsSummary] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
+
+    const accounts = accountsRaw || [];
 
     useEffect(() => {
         const fetchSummary = async () => {

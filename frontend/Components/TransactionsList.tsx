@@ -33,10 +33,11 @@ const fields = ['expense', 'transfer', 'income'];
 
 const TransactionsList = ({ maxCount }: { maxCount: number }) => {
     const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
-    const { data: transactionsRaw = [], isLoading: isTransactionsLoading } = useTransactions({});
 
     const accounts = accountsRaw || [];
-    const transactions = transactionsRaw || [];
+    const transactions = useTransactionStore((state) => state.transactions);
+    const getTransactionsWithFilter = useTransactionStore((state) => state.getTransactionsWithFilter);
+    const isTransactionsLoading = useTransactionStore((state) => state.isTransactionsLoading);
 
     const deleteTransaction = useTransactionStore((state) => state.deleteTransaction);
 
@@ -46,6 +47,10 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [inputMode, setInputMode] = useState<'left' | 'right' | null>(null);
     const itemsPerPage = 10;
+
+    useEffect(() => {
+        getTransactionsWithFilter()   
+    }, [getTransactionsWithFilter])
 
     useEffect(() => {
         setCurrentPage(1);

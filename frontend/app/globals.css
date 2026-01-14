@@ -136,6 +136,52 @@ body {
     .menu > *:hover {
         @apply bg-gray-200 rounded-md;
     }
+
+    .skeleton {
+        @apply relative overflow-hidden bg-gray-200 dark:bg-gray-700;
+    }
+
+    .skeleton::after {
+        @apply absolute inset-0 content-[''];
+        @apply animate-shimmer;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    }
+}
+
+/* 3D Tilt Card Effect */
+.three-d-tilt {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+.three-d-tilt .card {
+    transform-style: preserve-3d;
+    transition: transform 0.1s ease-out;
+    position: relative;
+}
+
+.three-d-tilt .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+        circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.1) 0%,
+        transparent 50%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.three-d-tilt:hover .card::before {
+    opacity: 1;
+}
+
+.three-d-tilt .card-body {
+    transform: translateZ(20px);
 }
 
 .last {
@@ -239,15 +285,4 @@ select:not(:-internal-list-box):not([multiple]) {
     --animate-slide: slide 2s linear infinite;
 }
 
-/* Create the skeleton class */
-@layer components {
-    .skeleton {
-        @apply relative overflow-hidden bg-gray-200 dark:bg-gray-700;
-    }
 
-    .skeleton::after {
-        @apply absolute inset-0 content-[''];
-        @apply animate-[shimmer_2s_infinite];
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    }
-}
