@@ -85,8 +85,8 @@ const TransactionForm = ({
     const getAccounts = useTransactionStore((state) => state.getAccounts);
     const updateTransaction = useTransactionStore((state) => state.updateTransaction);
 
-    const authUser = useAuthStore((state) => state.authUser);
-    const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
+    const authUser = useAuthStore((state: any) => state.authUser);
+    const isCheckingAuth = useAuthStore((state: any) => state.isCheckingAuth);
 
     const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
     const { data: transactionsRaw = [], isLoading: isTransactionsLoading } = useTransactions({});
@@ -304,9 +304,13 @@ const TransactionForm = ({
                                 <div className="flex flex-col gap-4 w-full lg:w-45">
                                     <DateSelect name="date" />
                                     <button
-                                        className={`btn btn-outline flex-1 p-2 ${(action !== 'create' && action.type) == 'edit'
+                                        className={`btn btn-outline flex-1 p-2 ${
+                                            (action !== 'create' && action.type) == 'edit'
                                                 ? 'btn-info'
-                                                : type === "expense" ? "btn-error" : "btn-accent"}`}
+                                                : type === 'expense'
+                                                ? 'btn-error'
+                                                : 'btn-accent'
+                                        }`}
                                         onSubmit={(e) => e.preventDefault()}>
                                         {(action !== 'create' && action.type) == 'edit'
                                             ? 'Update'

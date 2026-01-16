@@ -12,7 +12,16 @@ export const getUser = async (req, res, next) => {
     }
 };
 
-const ALLOWED_SETTINGS = ['currencies', 'baseCurrency', 'tags', 'groups'];
+const ALLOWED_SETTINGS = [
+    'currencies',
+    'baseCurrency',
+    'tags',
+    'groups',
+    'username',
+    'name',
+    'image',
+    'profilePic',
+];
 export const getSetting = async (req, res, next) => {
     try {
         const { key } = req.params; // Changed to params to match your router :key

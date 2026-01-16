@@ -14,7 +14,7 @@ const CTA = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const glowRef = useRef<HTMLDivElement>(null);
-    const magneticBtn = useRef<HTMLButtonElement>(null);
+    const magneticBtn = useRef<HTMLAnchorElement>(null);
 
     useGSAP(
         () => {

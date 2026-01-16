@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { axiosInstance } from '@/lib/axios.js';
-import { useAuthStore } from '@/store/useAuthStore.js';
+import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from 'sonner';
 import { filter } from 'lodash';
 

@@ -43,8 +43,8 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
 
     const deleteTransaction = useTransactionStore((state) => state.deleteTransaction);
 
-    const authUser = useAuthStore((state) => state.authUser);
-    const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
+    const authUser = useAuthStore((state: any) => state.authUser);
+    const isCheckingAuth = useAuthStore((state: any) => state.isCheckingAuth);
 
     const [currentPage, setCurrentPage] = useState(1);
     const [inputMode, setInputMode] = useState<'left' | 'right' | null>(null);

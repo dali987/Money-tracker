@@ -1,59 +1,41 @@
 import axios from 'axios';
 
+/**
+ * Axios instance configured for the money tracker API.
+ *
+ * Better Auth handles authentication via HTTP-only cookies automatically,
+ * so we just need to ensure credentials are included in requests.
+ */
 export const axiosInstance = axios.create({
     baseURL: process.env.NODE_ENV === 'development' ? 'http://localhost:3000/api/v1' : '/api/v1',
-    withCredentials: true,
+    withCredentials: true, // Required for Better Auth session cookies
 });
 
-axiosInstance.interceptors.request.use(
-    async (config) => {
-        // Skip adding token for the refresh token and public auth endpoints
-        const publicEndpoints = ['/auth/token', '/auth/sign-in', '/auth/sign-up'];
-        if (publicEndpoints.some((endpoint) => config.url.includes(endpoint))) {
-            return config;
-        }
-
-        const { useAuthStore } = await import('../store/useAuthStore.js');
-        const token = await useAuthStore.getState().getToken();
-
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
+/**
+ * Response interceptor for handling authentication errors.
+ *
+ * If the server returns 401, the session has expired or is invalid.
+ * Better Auth handles session refresh automatically via cookies,
+ * so we just need to handle the case where the session is truly invalid.
+ */
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
-        if (originalRequest.url.includes('/auth/token') || originalRequest._retry) {
+        // Avoid infinite loops by checking if we've already retried
+        if (originalRequest._retry) {
             return Promise.reject(error);
         }
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-
-            try {
-                const res = await axiosInstance.get('/auth/token');
-                const newToken = res.data.data;
-
-                const { useAuthStore } = await import('../store/useAuthStore.js');
-                useAuthStore.setState({ token: newToken });
-
-                originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                return axiosInstance(originalRequest);
-            } catch (refreshError) {
-                // If refresh fails, log out the user
-                const { useAuthStore } = await import('../store/useAuthStore.js');
-                useAuthStore.getState().logout();
-                return Promise.reject(refreshError);
-            }
+        // Handle 401 Unauthorized errors
+        if (error.response?.status === 401) {
+            // Better Auth should have automatically refreshed the session
+            // If we still get 401, the session is truly invalid
+            // Redirect to login (handled by the calling component)
+            console.error('Session expired or invalid');
         }
+
         return Promise.reject(error);
     }
 );

@@ -39,7 +39,7 @@ const page = () => {
         (state) => state.getTransactionsWithFilter
     );
     const getTransactionsSummary = useTransactionStore((state) => state.getTransactionsSummary);
-    const authUser = useAuthStore((state) => state.authUser);
+    const authUser = useAuthStore((state: any) => state.authUser);
     const [summary, setSummary] = React.useState({
         Expense: 0,
         Income: 0,
@@ -281,7 +281,6 @@ const page = () => {
                                                 className="btn btn-outline btn-error rounded"
                                                 onClick={() => {
                                                     setTempFilters({ account: '', tags: '' });
-                                                    
                                                 }}>
                                                 Reset
                                             </button>

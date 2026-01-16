@@ -9,13 +9,7 @@ import {
     ChartLegendContent,
 } from '@/Components/ui/chart';
 
-export function LineChart({
-    data,
-    chartConfig,
-}: {
-    data: Array<any>;
-    chartConfig: ChartConfig;
-}) {
+export function LineChart({ data, chartConfig }: { data: Array<any>; chartConfig: ChartConfig }) {
     console.log('data : ', data);
 
     if (!data || data.length === 0) {
@@ -47,13 +41,17 @@ export function LineChart({
                         <stop offset="85%" stopColor="var(--color-worth)" stopOpacity={0.15} />
                     </linearGradient>
                 </defs>
-                <Area type="monotone" dataKey="worth" stroke="var(--color-worth)" fill="url(#worth)" />
+                <Area
+                    type="monotone"
+                    dataKey="worth"
+                    stroke="var(--color-worth)"
+                    fill="url(#worth)"
+                />
                 <ChartLegend content={<ChartLegendContent />} />
             </AreaChart>
         </ChartContainer>
     );
 }
-
 
 // {dataKeys
 //                         .filter((key) => key !== dataKeys[0])

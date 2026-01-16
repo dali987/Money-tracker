@@ -1,66 +1,78 @@
-import jwt from 'jsonwebtoken';
-import { ENV } from '../lib/env.js';
+import { auth } from '../lib/auth.js';
+import { fromNodeHeaders } from 'better-auth/node';
 import User from '../models/user.model.js';
-import redisClient from '../database/redisClient.js';
 
+/**
+ * Middleware to authorize requests using Better Auth sessions.
+ * Replaces the old JWT-based authorization.
+ *
+ * Attaches the authenticated user to `req.user` for use in route handlers.
+ */
 export const authorizeToken = async (req, res, next) => {
     try {
-        let token;
+        // Get session from Better Auth using the request headers
+        const session = await auth.api.getSession({
+            headers: fromNodeHeaders(req.headers),
+        });
 
-        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-            token = req.headers.authorization.split(' ')[1];
+        if (!session || !session.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Unauthorized: No valid session',
+            });
         }
 
-        if (!token) return res.status(401).json({ message: 'Unauthorized' });
+        // Fetch the full user document from MongoDB
+        // Better Auth stores minimal user data, we need full user with settings
+        const user = await User.findById(session.user.id).select('-password');
 
-        const decoded = jwt.verify(token, ENV.JWT_ACCESS_TOKEN_SECRET);
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Unauthorized: User not found',
+            });
+        }
 
-        const user = await User.findById(decoded.userId).select('-password');
-
-        if (!user) return res.status(401).json({ message: 'Unauthorized' });
-
+        // Attach user to request for use in route handlers
         req.user = user;
+        req.session = session;
 
         next();
     } catch (error) {
-        if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({ message: 'Unauthorized: Token has expired' });
+        console.error('Authorization error:', error);
+
+        // Handle specific error cases
+        if (error.message?.includes('session')) {
+            return res.status(401).json({
+                success: false,
+                message: 'Unauthorized: Session expired or invalid',
+            });
         }
-        console.error('Error while authorizing the token: ', error);
+
         next(error);
     }
 };
 
-export const verifyRefreshToken = async (req, res, next) => {
-    const token = req.cookies.refreshToken;
-
-    if (!token) {
-        return res.status(401).json({ message: 'Unauthorized: No refresh token provided.' });
-    }
-
+/**
+ * Optional middleware that checks for authentication but doesn't require it.
+ * Useful for routes that should work for both authenticated and anonymous users.
+ */
+export const optionalAuth = async (req, res, next) => {
     try {
-        const decoded = jwt.verify(token, ENV.JWT_REFRESH_TOKEN_SECRET);
+        const session = await auth.api.getSession({
+            headers: fromNodeHeaders(req.headers),
+        });
 
-        const storedRefreshTokenData = await redisClient.get(decoded.userId.toString());
-        if (!storedRefreshTokenData) {
-            return res.status(401).json({ message: 'Unauthorized: Invalid session.' });
+        if (session?.user) {
+            const user = await User.findById(session.user.id).select('-password');
+            req.user = user;
+            req.session = session;
         }
-
-        req.userId = decoded.userId;
-
-        const { refreshToken: storedRefreshToken } = JSON.parse(storedRefreshTokenData);
-
-        if (storedRefreshToken != token) {
-            return res.status(401).json({ message: 'Unauthorized: Invalid token.' });
-        }
-
-        req.cookies.refreshToken = token;
 
         next();
     } catch (error) {
-        console.error(error);
-        return res
-            .status(401)
-            .json({ message: 'Unauthorized: Session has expired or is invalid.' });
+        // For optional auth, we don't fail on errors
+        console.warn('Optional auth check failed:', error.message);
+        next();
     }
 };

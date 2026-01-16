@@ -1,7 +1,7 @@
-import "dotenv/config"
+import 'dotenv/config';
 
 export const ENV = {
-    PORT : process.env.PORT,
+    PORT: process.env.PORT,
     NODE_ENV: process.env.NODE_ENV,
     MONGO_URI: process.env.MONGO_URI,
     JWT_ACCESS_TOKEN_SECRET: process.env.JWT_ACCESS_TOKEN_SECRET,
@@ -11,4 +11,7 @@ export const ENV = {
     JWT_REFRESH_TOKEN_EXPIRE_REMEMBER_ME: process.env.JWT_REFRESH_TOKEN_EXPIRE_REMEMBER_ME,
     CLIENT_URL: process.env.CLIENT_URL,
     EXCHANGE_RATE_API_KEY: process.env.EXCHANGE_RATE_API_KEY,
-}
+    // Better Auth configuration
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+};

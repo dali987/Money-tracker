@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
+import { Plus, User, Link as LinkIcon } from 'lucide-react';
 import {
     useSensors,
     useSensor,
@@ -20,7 +20,7 @@ import {
 import { arrayMove, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { SortableBadge } from '@/Components/Custom/SortableBadge';
 import CustomCollapse from '@/Components/Custom/CustomCollapse';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, Variants } from 'motion/react';
 const flagUrl = (countryCode: string) =>
     `https://flagcdn.com/16x12/${countryCode.toLowerCase()}.png`;
 const flagSet = (countryCode: string) =>
@@ -34,10 +34,12 @@ const page = () => {
     const [newCurrencies, setNewCurrencies] = useState<any>([]);
     const [newTag, setNewTag] = useState('');
     const [newGroup, setNewGroup] = useState('');
+    const [username, setUsername] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
     const [currGroups, setCurrGroups] = useState<string[]>([]);
     const [currTags, setCurrTags] = useState<string[]>([]);
     const [activeId, setActiveId] = useState(null);
-    const containerVariants = {
+    const containerVariants: Variants = {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
@@ -49,7 +51,7 @@ const page = () => {
         },
     };
 
-    const itemVariants = {
+    const itemVariants: Variants = {
         hidden: { opacity: 0, y: 10 },
         visible: (i?: number) => ({
             opacity: 1,
@@ -119,6 +121,8 @@ const page = () => {
             );
             setCurrGroups(authUser.groups || []);
             setCurrTags(authUser.tags || []);
+            setUsername(authUser.username || authUser.name || '');
+            setImageUrl(authUser.image || authUser.profilePic || '');
         }
     }, [authUser]);
 
@@ -215,6 +219,61 @@ const page = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, ease: 'easeOut' }}
                 className="w-full lg:bg-base-100/50 lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 flex flex-col gap-4">
+                {/* Profile Section */}
+                <CustomCollapse title="Profile">
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-2">
+                            <label
+                                htmlFor="username"
+                                className="text-sm font-semibold text-gray-600">
+                                Username
+                            </label>
+                            <label className="input input-bordered flex items-center gap-2">
+                                <User className="w-4 h-4 opacity-70" />
+                                <input
+                                    type="text"
+                                    id="username"
+                                    className="grow"
+                                    placeholder="Username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                />
+                            </label>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="image" className="text-sm font-semibold text-gray-600">
+                                Profile Picture URL
+                            </label>
+                            <label className="input input-bordered flex items-center gap-2">
+                                <LinkIcon className="w-4 h-4 opacity-70" />
+                                <input
+                                    type="text"
+                                    id="image"
+                                    className="grow"
+                                    placeholder="https://example.com/avatar.png"
+                                    value={imageUrl}
+                                    onChange={(e) => setImageUrl(e.target.value)}
+                                />
+                            </label>
+                        </div>
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="btn btn-primary self-start w-3/8 cursor-pointer"
+                            onClick={async () => {
+                                await handleSave('username', username);
+                                // Also update name as fallback
+                                await updateSetting('name', username);
+                                if (imageUrl) {
+                                    await updateSetting('image', imageUrl);
+                                    await updateSetting('profilePic', imageUrl);
+                                }
+                            }}>
+                            Save
+                        </motion.button>
+                    </div>
+                </CustomCollapse>
+
                 <CustomCollapse title="Currencies">
                     <div className="flex flex-col gap-4">
                         <AnimatePresence>
@@ -459,7 +518,7 @@ const page = () => {
                                     {activeId ? (
                                         <SortableBadge
                                             name={activeId}
-                                            type="neutral"
+                                            type="info"
                                             onRemove={handleRemoveTag}
                                         />
                                     ) : null}

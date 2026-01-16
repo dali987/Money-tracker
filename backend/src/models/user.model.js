@@ -1,23 +1,44 @@
 import mongoose from 'mongoose';
 
+/**
+ * User schema for the money tracker application.
+ *
+ * Note: Better Auth manages authentication fields (email, password, sessions).
+ * This model extends the user with application-specific fields.
+ *
+ * Better Auth will create its own 'user' collection with auth fields,
+ * and we use additionalFields in the auth config to store these custom fields.
+ */
 const userSchema = new mongoose.Schema(
     {
-        username: {
+        // Core fields managed by Better Auth
+        name: {
             type: String,
             required: true,
-            unique: true,
         },
         email: {
             type: String,
             required: true,
             unique: true,
         },
-        password: {
+        emailVerified: {
+            type: Boolean,
+            default: false,
+        },
+        image: {
             type: String,
-            required: true,
+            default: '',
+        },
+
+        // Application-specific fields (configured in Better Auth additionalFields)
+        username: {
+            type: String,
+            required: false,
+            unique: true,
+            sparse: true, // Allow null/undefined values to not conflict
         },
         currencies: {
-            type: Array,
+            type: [String],
             default: ['EUR'],
         },
         baseCurrency: {
@@ -46,14 +67,20 @@ const userSchema = new mongoose.Schema(
                 'Others',
             ],
         },
-
         profilePic: {
             type: String,
             default: '',
         },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        // Use 'user' collection to match Better Auth's default
+        collection: 'user',
+    }
 );
+
+// Index for efficient lookups (email already has unique: true in schema)
+userSchema.index({ username: 1 });
 
 const User = mongoose.model('User', userSchema);
 

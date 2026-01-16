@@ -8,8 +8,9 @@ import { Toaster } from 'sonner';
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const isLandingPage = pathname === '/';
+    const isAuthPage = pathname === '/login' || pathname === '/signup';
 
-    if (isLandingPage) {
+    if (isLandingPage || isAuthPage) {
         return (
             <>
                 <Toaster richColors />
