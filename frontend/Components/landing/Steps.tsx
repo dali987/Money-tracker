@@ -101,16 +101,17 @@ const Steps = () => {
             <div className="max-w-7xl mx-auto px-6 md:px-12">
                 {/* Section Header */}
                 <div className="flex justify-center mb-24 lg:mb-40">
-                    <div className="flex flex-col">
+                    <div className="flex flex-col text-center items-center">
                         <div className="flex items-center gap-4 mb-6 lg:mb-8">
-                            <div className="w-8 lg:w-12 h-[2px] bg-indigo-500" />
-                            <span className="text-sm lg:text-lg font-black tracking-[0.4em] lg:tracking-[0.6em] uppercase text-indigo-500 text-nowrap">
+                            <div className="w-8 lg:w-12 h-[2px] bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
+                            <span className="text-sm lg:text-lg font-black tracking-[0.4em] lg:tracking-[0.6em] uppercase text-indigo-400 text-nowrap drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]">
                                 How it works
                             </span>
+                            <div className="w-8 lg:w-12 h-[2px] bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
                         </div>
-                        <h2 className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black text-white uppercase leading-[0.8] mb-12">
+                        <h2 className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black text-white uppercase leading-[0.8] mb-12 mix-blend-overlay opacity-50">
                             The{' '}
-                            <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-400 via-white to-indigo-400 pr-4">
+                            <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-400 via-white to-indigo-400 pr-4 animate-pulse">
                                 Process
                             </span>
                         </h2>
@@ -123,12 +124,16 @@ const Steps = () => {
                         ref={indicatorColRef}
                         className="min-w-10 lg:w-28 flex flex-col items-center">
                         <div className="relative w-full flex flex-col items-center h-[500px] lg:h-[600px]">
-                            {/* Active Fill Layer (Indigo) */}
+                            {/* Base Line */}
+                            <div className="absolute inset-y-0 w-1 bg-white/5 rounded-full" />
+
+                            {/* Active Fill Layer (Indigo) with Glow */}
                             <div
                                 ref={indicatorFillRef}
                                 className="indicator-fill absolute inset-0 flex flex-col items-center pointer-events-none overflow-hidden"
                                 style={{ clipPath: 'inset(0% 0% 100% 0%)' }}>
-                                <div className="w-2.5 lg:w-4 h-full bg-indigo-500 rounded-full" />
+                                <div className="w-1 lg:w-1.5 h-full bg-indigo-500 rounded-full shadow-[0_0_20px_4px_rgba(99,102,241,0.6)]" />
+
                                 {steps.map((step, index) => {
                                     const topPos =
                                         index === 0 ? '0%' : index === 1 ? '50%' : '100%';
@@ -137,7 +142,7 @@ const Steps = () => {
                                     return (
                                         <div
                                             key={`fill-circle-${index}`}
-                                            className="absolute left-1/2  w-12 h-12 lg:w-24 lg:h-24 rounded-full bg-indigo-500 flex items-center justify-center border-4 lg:border-8 border-black"
+                                            className="absolute left-1/2  w-12 h-12 lg:w-24 lg:h-24 rounded-full bg-indigo-500 flex items-center justify-center border-4 lg:border-8 border-black shadow-[0_0_30px_rgba(99,102,241,0.5)]"
                                             style={{
                                                 top: topPos,
                                                 transform: `translate(-50%, ${translate})`,
@@ -162,42 +167,42 @@ const Steps = () => {
                                     ref={(el) => {
                                         stepsContentRefs.current[index] = el;
                                     }}
-                                    className="flex flex-col justify-center min-h-[30vh] lg:min-h-[50vh] perspective-1000">
+                                    className="flex flex-col justify-center min-h-[30vh] lg:min-h-[50vh] perspective-1000 pl-4 lg:pl-0">
                                     <div
-                                        className="h-14 w-14 lg:w-24 lg:h-24 rounded-xl lg:rounded-2xl mb-12 lg:mb-16 flex items-center justify-center bg-white/5 border border-white/10 relative group hover:border-indigo-500/50 transition-colors duration-500"
-                                        style={{ backdropFilter: 'blur(20px)' }}>
+                                        className="h-16 w-16 lg:w-24 lg:h-24 rounded-2xl mb-8 lg:mb-12 flex items-center justify-center bg-transparent border border-white/20 relative group hover:border-indigo-500/50 transition-colors duration-500"
+                                        style={{ backdropFilter: 'blur(0px)' }}>
+                                        {' '}
+                                        {/* Clean look */}
                                         <Icon
-                                            className="w-8 h-8 lg:w-12 lg:h-12 transition-all duration-700 group-hover:scale-110 group-hover:rotate-6"
+                                            className="w-8 h-8 lg:w-12 lg:h-12 transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
                                             style={{ color: step.color }}
                                         />
                                         <div
-                                            className="absolute inset-0 rounded-full blur-2xl lg:blur-[60px] opacity-0 group-hover:opacity-40 transition-opacity duration-1000"
-                                            style={{ backgroundColor: step.color }}
+                                            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                                            style={{
+                                                boxShadow: `inset 0 0 20px ${step.color}20, 0 0 20px ${step.color}20`,
+                                            }}
                                         />
                                     </div>
 
-                                    <div className="flex items-center gap-6 lg:gap-8 mb-8 lg:mb-10">
+                                    <div className="flex items-center gap-6 lg:gap-8 mb-6 lg:mb-8">
                                         <span
                                             className="text-sm lg:text-lg font-black tracking-[0.4em] lg:tracking-[0.6em] uppercase"
-                                            style={{ color: step.color }}>
+                                            style={{
+                                                color: step.color,
+                                                textShadow: `0 0 10px ${step.color}40`,
+                                            }}>
                                             Phase {step.number}
                                         </span>
-                                        <div className="h-px lg:h-[2px] flex-1 bg-linear-to-r from-white/20 to-transparent" />
+                                        <div className="h-px lg:h-[2px] w-20 bg-linear-to-r from-white/20 to-transparent" />
                                     </div>
 
-                                    <h3 className="text-3xl lg:text-6xl font-black mb-10 lg:mb-12 text-white leading-[0.85] uppercase">
+                                    <h3 className="text-4xl lg:text-7xl font-black mb-8 lg:mb-10 text-white leading-[0.9] uppercase tracking-tight">
                                         {step.title}
                                     </h3>
-                                    <p className="text-lg lg:text-xl leading-snug text-gray-500 font-medium max-w-full lg:max-w-4xl mb-12 lg:mb-16">
+                                    <p className="text-lg lg:text-2xl leading-relaxed text-gray-400 font-light max-w-full lg:max-w-4xl mb-12">
                                         {step.description}
                                     </p>
-
-                                    <div className="flex items-center gap-4 lg:gap-6 group cursor-pointer w-fit">
-                                        <div className="w-10 lg:w-14 h-[2px] bg-indigo-500 group-hover:w-20 lg:group-hover:w-24 transition-all duration-700" />
-                                        <span className="text-sm lg:text-base font-black tracking-widest uppercase text-white/40 group-hover:text-white transition-colors duration-500">
-                                            Explore Phase
-                                        </span>
-                                    </div>
                                 </div>
                             );
                         })}
@@ -206,8 +211,8 @@ const Steps = () => {
             </div>
 
             {/* Premium Decorative Strokes */}
-            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+            <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-indigo-500/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-blue-500/20 to-transparent" />
         </section>
     );
 };

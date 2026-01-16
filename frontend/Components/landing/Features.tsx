@@ -126,9 +126,11 @@ const Features = () => {
     );
 
     useEffect(() => {
-        const handleMouseMove = (e: MouseEvent, tiltElement: HTMLDivElement) => {
+        const handleMouseMove = (e: MouseEvent, tiltElement: HTMLDivElement, index: number) => {
             const card = tiltElement.querySelector('.card') as HTMLElement;
             const cardContent = tiltElement.querySelector('.card-content') as HTMLElement;
+            const isLarge = index % 4 === 0 || index % 4 === 3;
+
             if (!card) return;
 
             const rect = card.getBoundingClientRect();
@@ -138,8 +140,8 @@ const Features = () => {
             const centerX = rect.width / 2;
             const centerY = rect.height / 2;
 
-            const rotateX = (y - centerY) / 8;
-            const rotateY = (centerX - x) / 8;
+            const rotateX = (y - centerY) / (isLarge ? 80 : 8);
+            const rotateY = (centerX - x) / (isLarge ? 80 : 8);
 
             const mouseXPercent = (x / rect.width) * 100;
             const mouseYPercent = (y / rect.height) * 100;
@@ -170,17 +172,17 @@ const Features = () => {
         };
 
         const tiltElements = tiltRefs.current;
-        tiltElements.forEach((element) => {
+        tiltElements.forEach((element, index) => {
             if (element) {
-                element.addEventListener('mousemove', (e) => handleMouseMove(e, element));
+                element.addEventListener('mousemove', (e) => handleMouseMove(e, element, index));
                 element.addEventListener('mouseleave', () => handleMouseLeave(element));
             }
         });
 
         return () => {
-            tiltElements.forEach((element) => {
+            tiltElements.forEach((element, index) => {
                 if (element) {
-                    element.removeEventListener('mousemove', (e) => handleMouseMove(e, element));
+                    element.removeEventListener('mousemove', (e) => handleMouseMove(e, element, index));
                     element.removeEventListener('mouseleave', () => handleMouseLeave(element));
                 }
             });
@@ -217,9 +219,12 @@ const Features = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
                     {features.map((feature, index) => {
                         const Icon = feature.icon;
+                        // Bento Grid Logic: Zig-Zag pattern (2+1, 1+2, 2+1)
+                        const isLarge = index % 4 === 0 || index % 4 === 3;
+                        const colSpanClass = isLarge ? 'md:col-span-2' : 'md:col-span-1';
 
                         return (
                             <div
@@ -228,48 +233,63 @@ const Features = () => {
                                     cardRefs.current[index] = el;
                                     tiltRefs.current[index] = el;
                                 }}
-                                className="three-d-tilt relative">
+                                className={`three-d-tilt relative ${colSpanClass}`}>
                                 <div
-                                    className="card group relative rounded-3xl p-8 backdrop-blur-2xl border border-white/10 hover:border-white/20 transition-all duration-500 overflow-hidden"
+                                    className="card group relative h-full rounded-3xl p-8 lg:p-10 backdrop-blur-3xl border border-white/10 hover:border-white/20 transition-all duration-500 overflow-hidden"
                                     style={{
                                         backgroundColor: feature.bgColor,
                                         boxShadow: `
                                             0 0 0 1px ${feature.color}10,
-                                            0 4px 20px -4px ${feature.color}20,
-                                            inset 0 1px 0 1px ${feature.color}30,
-                                            inset 1px 0 0 1px ${feature.color}30
+                                            0 10px 40px -10px ${feature.color}20,
+                                            inset 0 1px 0 1px ${feature.color}30
                                         `,
                                         background: `
                                             linear-gradient(135deg, ${feature.bgColor}, transparent),
                                             linear-gradient(225deg, ${feature.color}05, transparent)
                                         `,
                                     }}>
-                                    <div className="card-content relative z-10 transform-gpu transition-transform duration-200 ease-out">
-                                        <div
-                                            className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-700 group-hover:scale-110 group-hover:rotate-12"
-                                            style={{
-                                                background: `linear-gradient(135deg, ${feature.color}30, ${feature.color}15)`,
-                                                border: `1px solid ${feature.color}40`,
-                                                boxShadow: `0 10px 30px -10px ${feature.color}50`,
-                                            }}>
-                                            <Icon
-                                                className="w-10 h-10 transition-transform duration-700 group-hover:scale-110"
-                                                style={{ color: feature.color }}
-                                            />
+                                    <div className="card-content relative z-10 flex flex-col h-full transform-gpu transition-transform duration-200 ease-out">
+                                        <div className="flex items-start justify-between mb-8">
+                                            <div
+                                                className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-700 group-hover:scale-110 group-hover:rotate-12 bg-white/5 border border-white/10"
+                                                style={{
+                                                    boxShadow: `0 0 30px -5px ${feature.color}40`,
+                                                }}>
+                                                <Icon
+                                                    className="w-8 h-8 transition-transform duration-700 group-hover:scale-110"
+                                                    style={{ color: feature.color }}
+                                                />
+                                            </div>
+                                            {isLarge && (
+                                                <div className="hidden lg:block">
+                                                    <span className="text-xs font-mono uppercase tracking-widest text-white/20 border border-white/10 px-3 py-1 rounded-full">
+                                                        Feature {index + 1}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
+
                                         <h3
-                                            className="text-white text-2xl font-black mb-4 tracking-tight"
+                                            className="text-white text-2xl lg:text-3xl font-black mb-4 tracking-tight"
                                             style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                                             {feature.title}
                                         </h3>
                                         <p
-                                            className="text-gray-400 leading-relaxed"
+                                            className="text-gray-400 leading-relaxed text-base lg:text-lg"
                                             style={{
-                                                opacity: 0.7,
+                                                opacity: 0.8,
                                                 fontFamily: 'Inter, system-ui, sans-serif',
+                                                maxWidth: isLarge ? '80%' : '100%',
                                             }}>
                                             {feature.description}
                                         </p>
+
+                                        {/* Decorative elements for large cards */}
+                                        {isLarge && (
+                                            <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none transform translate-x-1/4 translate-y-1/4">
+                                                <Icon size={300} color={feature.color} />
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Gradient bleed effect */}
@@ -277,7 +297,7 @@ const Features = () => {
                                         className="absolute -inset-4 rounded-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-700 pointer-events-none"
                                         style={{
                                             background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), ${feature.color}20, transparent 60%)`,
-                                            filter: 'blur(30px)',
+                                            filter: 'blur(40px)',
                                             zIndex: -1,
                                         }}
                                     />

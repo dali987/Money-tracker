@@ -14,9 +14,39 @@ const CTA = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const glowRef = useRef<HTMLDivElement>(null);
+    const magneticBtn = useRef<HTMLButtonElement>(null);
 
     useGSAP(
         () => {
+            if (magneticBtn.current) {
+                // Magnetic effect for primary button
+
+                magneticBtn.current.addEventListener('mousemove', (e: MouseEvent) => {
+                    const mouseEvent = e as MouseEvent;
+                    const rect = magneticBtn.current!.getBoundingClientRect();
+                    const x = mouseEvent.clientX - rect.left - rect.width / 2;
+                    const y = mouseEvent.clientY - rect.top - rect.height / 2;
+
+                    gsap.to(magneticBtn.current!, {
+                        x: x * 0.15,
+                        y: y * 0.15,
+                        rotation: x * 0.02,
+                        duration: 0.3,
+                        ease: 'power2.out',
+                    });
+                });
+
+                magneticBtn.current.addEventListener('mouseleave', () => {
+                    gsap.to(magneticBtn.current, {
+                        x: 0,
+                        y: 0,
+                        rotation: 0,
+                        duration: 0.5,
+                        ease: 'power1.inOut',
+                    });
+                });
+            }
+
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: containerRef.current,
@@ -104,7 +134,8 @@ const CTA = () => {
                         <div className="flex flex-col sm:flex-row gap-6 items-center w-full justify-center">
                             <Link
                                 href="/dashboard"
-                                className="group relative px-10 py-6 rounded-2xl bg-white text-black font-bold text-lg overflow-hidden transition-transform hover:scale-105 active:scale-95">
+                                ref={magneticBtn}
+                                className="group relative px-10 py-6 rounded-2xl bg-white text-black font-bold text-lg overflow-hidden">
                                 <span className="relative z-10 flex items-center gap-2">
                                     Get Started Free
                                     <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />

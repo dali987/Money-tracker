@@ -78,7 +78,7 @@ const NavBar = ({ children }: { children: React.ReactNode }) => {
                     htmlFor="my-drawer-4"
                     aria-label="close sidebar"
                     className="drawer-overlay"></label>
-                <div className="w-64 lg:is-drawer-close:w-18 lg:is-drawer-open:w-64 shadow-gray-500 shadow-xl bg-white flex flex-col items-start lg:fixed h-full lg:h-[calc(100vh-var(--header-height))]">
+                <div className="w-64 lg:is-drawer-close:w-18 lg:is-drawer-open:w-64 shadow-neutral shadow-xl bg-base-100 flex flex-col items-start lg:fixed h-full lg:h-[calc(100vh-var(--header-height))]">
                     {/* Sidebar content here */}
                     <ul className="menu w-full grow gap-2">
                         {/* list item */}

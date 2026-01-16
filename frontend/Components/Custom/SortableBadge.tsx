@@ -14,7 +14,7 @@ export const SortableBadge = ({name, type, onRemove}: {name: string, type: strin
   } = useSortable({ id: name });
 
   const style = {
-    position: 'relative',
+    position: 'relative' as 'relative',
     opacity: isDragging ? 0.6 : 1,
     transform: CSS.Translate.toString(transform),
     zIndex: isDragging ? 999 : 1,

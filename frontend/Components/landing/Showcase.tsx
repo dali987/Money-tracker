@@ -62,31 +62,38 @@ const Showcase = () => {
             const handleMouseMove = (e: MouseEvent) => {
                 if (!sectionRef.current) return;
                 const { clientX, clientY } = e;
-                const x = (clientX / window.innerWidth - 0.5) * 20;
-                const y = (clientY / window.innerHeight - 0.5) * 20;
+                const x = (clientX / window.innerWidth - 0.5) * 2; // Normalize -1 to 1
+                const y = (clientY / window.innerHeight - 0.5) * 2;
 
+                // Move mockup content
                 gsap.to(mockupRef.current, {
-                    rotateY: x,
-                    rotateX: -y,
+                    rotationY: x * 15, // Increased rotation
+                    rotationX: -y * 10,
+                    x: x * 20,
                     duration: 1,
                     ease: 'power2.out',
+                    transformPerspective: 1000,
                 });
 
+                // Move cards with parallax
                 gsap.to(card1Ref.current, {
-                    x: x * 1.5,
-                    y: y * 1.5,
+                    x: x * 40,
+                    y: y * 40,
+                    rotation: x * 5,
                     duration: 1.2,
                     ease: 'power2.out',
                 });
                 gsap.to(card2Ref.current, {
-                    x: x * -1.2,
-                    y: y * -1.2,
+                    x: x * -30,
+                    y: y * -30,
+                    rotation: -x * 5,
                     duration: 1.2,
                     ease: 'power2.out',
                 });
                 gsap.to(card3Ref.current, {
-                    x: x * 0.8,
-                    y: y * 0.8,
+                    x: x * 20,
+                    y: y * 20,
+                    rotation: x * 2,
                     duration: 1.2,
                     ease: 'power2.out',
                 });
@@ -122,43 +129,57 @@ const Showcase = () => {
                     </p>
                 </div>
 
-                <div className="relative max-w-5xl mx-auto perspective-1000">
+                <div
+                    className="relative max-w-5xl mx-auto perspective-1000"
+                    style={{ perspective: '1200px' }}>
                     {/* Main Dashboard Mockup */}
                     <div
                         ref={mockupRef}
-                        className="mockup-browser border border-white/10 bg-base-300 w-full shadow-2xl shadow-(--color-primary)/20 transform-style-3d"
+                        className="mockup-browser border border-white/10 bg-base-300 w-full shadow-2xl shadow-indigo-500/20 transform-style-3d relative z-10"
                         style={{ transformStyle: 'preserve-3d' }}>
                         <div className="mockup-browser-toolbar">
                             <div className="input border border-white/10">
                                 https://money-tracker.app
                             </div>
                         </div>
-                        <div className="flex justify-center px-4 py-16 bg-base-200/50 backdrop-blur-sm relative overflow-hidden">
-                            {/* Abstract UI representation within the mockup for "Skeleton" look */}
-                            <div className="w-full h-96 flex flex-col gap-4">
-                                <div className="flex gap-4 h-1/3">
-                                    <div className="w-2/3 bg-white/5 rounded-xl animate-pulse"></div>
-                                    <div className="w-1/3 bg-white/5 rounded-xl animate-pulse"></div>
-                                </div>
-                                <div className="flex gap-4 h-2/3">
-                                    <div className="w-1/3 bg-white/5 rounded-xl animate-pulse"></div>
-                                    <div className="w-2/3 bg-white/5 rounded-xl animate-pulse"></div>
-                                </div>
-                            </div>
-
-                            {/* Overlay Text for the Mockup */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-3xl font-bold opacity-20 rotate-[-15deg]">
-                                    Dashboard Preview
-                                </span>
-                            </div>
+                        <div className="relative bg-base-200/50 backdrop-blur-sm overflow-hidden aspect-video group">
+                            <img
+                                src="/exampleOfSite.png"
+                                alt="Money Tracker Dashboard"
+                                className="w-full h-full object-cover object-top transition-transform duration-700"
+                            />
+                            {/* Subtle overlay for depth */}
+                            <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                         </div>
+                    </div>
+
+                    {/* Reflection */}
+                    <div
+                        className="absolute top-full left-0 w-full h-full opacity-30 pointer-events-none -scale-y-100 origin-top blur-sm transition-transform duration-100" // Added transition for smoothness
+                        style={{
+                            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1), transparent)',
+                            WebkitMaskImage:
+                                'linear-gradient(to bottom, rgba(0,0,0,1), transparent)',
+                            transform: 'scaleY(-1) translateY(0px)', // Adjust gap as needed
+                            zIndex: 0,
+                        }}>
+                        {/* We duplicate the visual content for reflection - simplified for performance */}
+                        <div className="w-full h-full bg-linear-to-b from-indigo-900/50 to-transparent rounded-xl" />
+                        {/* Note: Real reflection requires duplicating the image element which can be heavy. 
+                             Using a gradient block simulates the 'presence' of a reflection often enough for dark modes, 
+                             or we can duplicate the img tag if needed. Let's try duplicating the img for higher quality if permitted.
+                          */}
+                        <img
+                            src="/exampleOfSite.png"
+                            alt=""
+                            className="w-full h-full object-cover object-top opacity-50"
+                        />
                     </div>
 
                     {/* Floating Stats Cards */}
                     <div
                         ref={card1Ref}
-                        className="absolute -top-10 -right-10 md:-right-20 bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl z-20 w-64">
+                        className="absolute -top-10 -right-10 md:-right-20 bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl z-20 w-64 transform-gpu">
                         <div className="flex items-center gap-4 mb-2">
                             <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
                                 ↗
@@ -175,7 +196,7 @@ const Showcase = () => {
 
                     <div
                         ref={card2Ref}
-                        className="absolute top-1/2 -left-10 md:-left-20 bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl z-20 w-56">
+                        className="absolute top-1/2 -left-10 md:-left-20 bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl z-20 w-56 transform-gpu">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
                                 📊
@@ -189,7 +210,7 @@ const Showcase = () => {
 
                     <div
                         ref={card3Ref}
-                        className="absolute -bottom-10 -right-5 md:right-10 bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl z-20 w-60">
+                        className="absolute -bottom-10 -right-5 md:right-10 bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl z-20 w-60 transform-gpu">
                         <div className="flex justify-between items-end mb-2">
                             <div className="text-sm text-gray-400">Expenses</div>
                             <div className="text-red-400 font-mono">- $1,250</div>

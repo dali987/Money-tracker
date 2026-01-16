@@ -36,7 +36,9 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
 
     const accounts = accountsRaw || [];
     const transactions = useTransactionStore((state) => state.transactions);
-    const getTransactionsWithFilter = useTransactionStore((state) => state.getTransactionsWithFilter);
+    const getTransactionsWithFilter = useTransactionStore(
+        (state) => state.getTransactionsWithFilter
+    );
     const isTransactionsLoading = useTransactionStore((state) => state.isTransactionsLoading);
 
     const deleteTransaction = useTransactionStore((state) => state.deleteTransaction);
@@ -49,8 +51,8 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
     const itemsPerPage = 10;
 
     useEffect(() => {
-        getTransactionsWithFilter()   
-    }, [getTransactionsWithFilter])
+        getTransactionsWithFilter();
+    }, [getTransactionsWithFilter]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -118,37 +120,41 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: 20 }}>
-                                            <div className="list-col-grow flex flex-col max-lg:max-w-30 lg:flex-row gap-2 lg:gap-6 items-start lg:items-center">
-                                                <div className="min-w-0">
-                                                    <div className="text-sm lg:text-base truncate max-w-30 lg:max-w-md">
+                                            <div className="list-col-grow flex flex-col lg:flex-row gap-2 lg:gap-6 items-start lg:items-center min-w-0">
+                                                <div className="min-w-0 w-full">
+                                                    <div className="text-sm lg:text-base lg:max-w-lg w-full">
                                                         {transaction.type !== 'transfer' ? (
-                                                            accountNameMap[
-                                                                transaction[
-                                                                    typeProperties[
-                                                                        transaction.type as keyof typeof typeProperties
-                                                                    ].account
-                                                                ]
-                                                            ]
+                                                            <div className="truncate">
+                                                                {
+                                                                    accountNameMap[
+                                                                        transaction[
+                                                                            typeProperties[
+                                                                                transaction.type as keyof typeof typeProperties
+                                                                            ].account
+                                                                        ]
+                                                                    ]
+                                                                }
+                                                            </div>
                                                         ) : (
-                                                            <div className="flex flex-col lg:flex-row lg:items-center lg:gap-2">
-                                                                <div className="flex items-center lg:gap-2 truncate">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="truncate shrink">
                                                                     {
                                                                         accountNameMap[
                                                                             transaction.fromAccount
                                                                         ]
-                                                                    }{' '}
-                                                                    <ArrowRight
-                                                                        className="shrink-0"
-                                                                        size={16}
-                                                                    />{' '}
-                                                                </div>
-                                                                <div className="truncate">
+                                                                    }
+                                                                </span>
+                                                                <ArrowRight
+                                                                    className="shrink-0 opacity-50"
+                                                                    size={16}
+                                                                />
+                                                                <span className="truncate shrink">
                                                                     {
                                                                         accountNameMap[
                                                                             transaction.toAccount
                                                                         ]
                                                                     }
-                                                                </div>
+                                                                </span>
                                                             </div>
                                                         )}
                                                     </div>
@@ -219,13 +225,13 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                 )}
             </AnimatePresence>
             <dialog id="edit-transaction-modal" className="modal">
-                <div className="modal-box max-w-150 min-h-80 transition-all">
+                <div className="modal-box max-w-150 min-h-80 transition-all bg-base-200">
                     <div className="flex justify-between items-center">
                         <h3 className="font-bold text-lg flex gap-2 py-4">
                             <File /> Edit Transaction
                         </h3>{' '}
                         <form method="dialog">
-                            <button className="btn p-3.5 text-lg font-black bg-red-600/70 text-white hover:bg-red-600">
+                            <button className="btn p-3.5 text-lg font-black btn-error text-white">
                                 X
                             </button>
                         </form>
@@ -246,11 +252,11 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                                                     ? 'oklch(72.3% 0.219 149.579)'
                                                     : '',
                                         }}
-                                        className="tab grow font-bold"
+                                        className="tab grow font-bold transition-all duration-300"
                                         aria-label={type}
                                         defaultChecked={editingTransaction.type === type}
                                     />
-                                    <div className="tab-content bg-gray-50 border-gray-300 p-6">
+                                    <div className="tab-content bg-base-100 border-base-300 p-6">
                                         <TransactionForm
                                             type={type as 'expense' | 'income' | 'transfer'}
                                             action={{
@@ -266,7 +272,7 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                     <div className="modal-action">
                         <form method="dialog">
                             <button
-                                className="btn bg-red-500 text-white hover:bg-red-700"
+                                className="btn btn-error text-white"
                                 onClick={() => {
                                     if (editingTransaction) {
                                         deleteTransaction(editingTransaction._id);

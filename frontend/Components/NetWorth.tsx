@@ -23,7 +23,7 @@ const section: Variants = {
 };
 
 const SkeletonNetWorth = () => (
-    <div className="w-full font-mono bg-gray-100 rounded-box p-4">
+    <div className="w-full font-mono bg-base-100 rounded-box p-4">
         <div className="flex justify-between items-center mb-6">
             <div className="skeleton h-8 w-40"></div>
             <div className="skeleton h-8 w-32"></div>

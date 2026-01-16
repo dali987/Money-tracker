@@ -140,9 +140,9 @@ const page = () => {
     }, []);
 
     return (
-        <main className="bg-white lg:bg-gray-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
+        <main className="bg-base-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
             <Initializer />
-            <section className="w-full lg:bg-white lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 flex flex-col gap-4">
+            <section className="w-full lg:bg-base-100/50 lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 flex flex-col gap-4">
                 <div className="flex flex-wrap gap-2 justify-between">
                     <button
                         type="button"
@@ -163,7 +163,7 @@ const page = () => {
                                 </h3>{' '}
                                 <form method="dialog">
                                     <button
-                                        className="btn p-3.5 text-lg font-black bg-red-600/70 text-white hover:bg-red-600"
+                                        className="btn p-3.5 text-lg font-black btn-error text-white"
                                         onClick={() =>
                                             ((
                                                 document.getElementById(
@@ -190,11 +190,11 @@ const page = () => {
                                                         ? 'oklch(72.3% 0.219 149.579)'
                                                         : '',
                                             }}
-                                            className="tab grow font-bold"
+                                            className="tab grow font-bold transition-all duration-300"
                                             aria-label={type}
                                             defaultChecked
                                         />
-                                        <div className="tab-content bg-gray-50 border-gray-300 p-6">
+                                        <div className="tab-content bg-base-100 border-base-300 p-6">
                                             <TransactionForm
                                                 type={type as 'expense' | 'income' | 'transfer'}
                                                 action="create"

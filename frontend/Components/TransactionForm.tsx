@@ -223,7 +223,7 @@ const TransactionForm = ({
                     variants={formContainer}
                     initial="hidden"
                     animate="visible"
-                    className="w-full flex flex-col gap-4">
+                    className="w-full flex flex-col gap-3">
                     <motion.div variants={formItem} className="flex flex-col gap-1">
                         <label className="label text-base text-base-content">
                             {type === 'income' ? 'To' : 'From'}
@@ -251,7 +251,7 @@ const TransactionForm = ({
                         <label className="label text-base text-base-content">
                             {type === 'transfer' ? 'To' : 'Tags'}
                         </label>
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-3">
                             {type === 'transfer' && (
                                 <div className="flex flex-col lg:flex-row lg:gap-4">
                                     <MoneyExchangeWithCurrency
@@ -304,7 +304,9 @@ const TransactionForm = ({
                                 <div className="flex flex-col gap-4 w-full lg:w-45">
                                     <DateSelect name="date" />
                                     <button
-                                        className="btn btn-neutral btn-outline flex-1 p-2"
+                                        className={`btn btn-outline flex-1 p-2 ${(action !== 'create' && action.type) == 'edit'
+                                                ? 'btn-info'
+                                                : type === "expense" ? "btn-error" : "btn-accent"}`}
                                         onSubmit={(e) => e.preventDefault()}>
                                         {(action !== 'create' && action.type) == 'edit'
                                             ? 'Update'

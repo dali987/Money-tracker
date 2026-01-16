@@ -276,13 +276,14 @@ const Page = () => {
     };
 
     return (
-        <main className="bg-white lg:bg-gray-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
+        <main className="bg-base-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
             <Initializer rates />
             <motion.section
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="w-full lg:bg-white lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 lg:px-6 flex flex-col gap-4">
+                exit="hidden"
+                className="w-full lg:bg-base-100/50 lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 lg:px-6 flex flex-col gap-4">
                 <motion.div
                     variants={itemVariants}
                     className="flex flex-wrap justify-center lg:justify-between p-4 w-full gap-4">

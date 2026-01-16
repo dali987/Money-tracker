@@ -2,7 +2,10 @@
 
 @custom-variant light (&:is(.light *));
 
-@plugin "daisyui";
+@plugin "daisyui" {
+    /* List the two themes you want to toggle between */
+    themes: light --default, dark;
+}
 @plugin "daisyui/theme" {
     name: 'mostlyextreme';
     default: true;
@@ -19,15 +22,15 @@
     --color-accent: oklch(77% 0.152 181.912);
     --color-accent-content: oklch(27% 0.046 192.524);
     --color-neutral: oklch(37% 0.034 259.733);
-    --color-neutral-content: oklch(98% 0.002 247.839);
-    --color-info: oklch(70% 0.165 254.624);
-    --color-info-content: oklch(28% 0.091 267.935);
+    --color-neutral-content: oklch(92% 0.004 286.32);
+    --color-info: oklch(74% 0.16 232.661);
+    --color-info-content: oklch(29% 0.066 243.157);
     --color-success: oklch(76% 0.177 163.223);
     --color-success-content: oklch(26% 0.051 172.552);
     --color-warning: oklch(82% 0.189 84.429);
     --color-warning-content: oklch(27% 0.077 45.635);
-    --color-error: oklch(71% 0.202 349.761);
-    --color-error-content: oklch(28% 0.109 3.907);
+    --color-error: oklch(71% 0.194 13.428);
+    --color-error-content: oklch(27% 0.105 12.094);
     --radius-selector: 0.5rem;
     --radius-field: 0.5rem;
     --radius-box: 0.5rem;
@@ -38,15 +41,80 @@
     --noise: 0;
 }
 
+@plugin "daisyui/theme" {
+    name: 'darkmode';
+    default: false;
+    prefersdark: false;
+    color-scheme: 'dark';
+    --color-base-100: oklch(25.33% 0.016 252.42);
+    --color-base-200: oklch(23.26% 0.014 253.1);
+    --color-base-300: oklch(21.15% 0.012 254.09);
+    --color-base-content: oklch(97.807% 0.029 256.847);
+    --color-primary: oklch(58% 0.233 277.117);
+    --color-primary-content: oklch(96% 0.018 272.314);
+    --color-secondary: oklch(65% 0.241 354.308);
+    --color-secondary-content: oklch(94% 0.028 342.258);
+    --color-accent: oklch(77% 0.152 181.912);
+    --color-accent-content: oklch(38% 0.063 188.416);
+    --color-neutral: oklch(14% 0.005 285.823);
+    --color-neutral-content: oklch(92% 0.004 286.32);
+    --color-info: oklch(74% 0.16 232.661);
+    --color-info-content: oklch(29% 0.066 243.157);
+    --color-success: oklch(76% 0.177 163.223);
+    --color-success-content: oklch(37% 0.077 168.94);
+    --color-warning: oklch(82% 0.189 84.429);
+    --color-warning-content: oklch(41% 0.112 45.904);
+    --color-error: oklch(71% 0.194 13.428);
+    --color-error-content: oklch(27% 0.105 12.094);
+    --radius-selector: 0.5rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.5rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 1;
+    --noise: 0;
+}
+
+[data-theme='dark'] {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+}
+
 :root {
     --header-height: 80px;
     --nav-width: 0;
     box-sizing: border-box;
     scrollbar-gutter: stable;
-    --color-base-100: #f9fafb;
-    --color-base-200: oklch(0.949 0.002 247.8);
-    --color-base-300: #bdc0c7;
-    --color-base-content: oklch(0.03 0.003 264.5);
     --radius: 0.625rem;
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
@@ -81,6 +149,19 @@
     --sidebar-ring: oklch(0.708 0 0);
 }
 
+@layer base {
+    :root [data-theme='mostlyextreme'] {
+        @insert daisyui-light; /* Or define custom colors here */
+    }
+    :root [data-theme='darkmode'] {
+        @insert daisyui-dark;
+    }
+}
+
+@daisyui {
+    themes: mostlyextreme, darkmode;
+}
+
 @media (min-width: 1024px) {
     :root {
         --nav-width: 4.5rem;
@@ -107,7 +188,7 @@
     --color-chart-2: var(--chart-2);
     --color-chart-1: var(--chart-1);
     --color-ring: var(--ring);
-    --color-input: var(--input);
+    --color-input: var(--color-base-100);
     --color-border: var(--border);
     --color-destructive: var(--destructive);
     --color-accent-foreground: var(--accent-foreground);
@@ -134,11 +215,11 @@ body {
 
 @layer components {
     .menu > *:hover {
-        @apply bg-gray-200 rounded-md;
+        @apply bg-base-200 rounded-md;
     }
 
     .skeleton {
-        @apply relative overflow-hidden bg-gray-200 dark:bg-gray-700;
+        @apply relative overflow-hidden bg-base-200;
     }
 
     .skeleton::after {
@@ -188,7 +269,7 @@ body {
     border-start-end-radius: 0rem;
 }
 
-.select option > h5 {
+/* .select option > h5 {
     color: var(--color-base-300);
 }
 
@@ -198,11 +279,8 @@ select:not(:-internal-list-box):not([multiple]) {
 
 select:not(:-internal-list-box):not([multiple]) {
     background-color: #171717;
-}
+} */
 
-.list-row::after {
-    border-color: color-mix(in lab, var(--color-base-content) 30%, white);
-}
 .remove-outline:focus,
 .remove-outline:focus-within {
     outline-offset: 0;
@@ -211,46 +289,12 @@ select:not(:-internal-list-box):not([multiple]) {
     box-shadow: none;
 }
 
-.dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
-}
-
 @layer base {
     * {
         @apply border-border outline-ring/50;
     }
     body {
-        @apply bg-background text-foreground;
+        @apply bg-base-200 text-base-content;
     }
 }
 
@@ -284,5 +328,3 @@ select:not(:-internal-list-box):not([multiple]) {
     --animate-shimmer: shimmer 2s infinite;
     --animate-slide: slide 2s linear infinite;
 }
-
-

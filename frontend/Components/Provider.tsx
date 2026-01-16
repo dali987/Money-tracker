@@ -1,5 +1,6 @@
 'use client';
 
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
@@ -22,9 +23,14 @@ const Provider = ({ children }: { children: React.ReactNode }) => {
     }, [isCheckingAuth, authUser, router]);
 
     return (
-        <QueryClientProvider client={queryClient}>
-            <ViewTransitions>{children}</ViewTransitions>
-        </QueryClientProvider>
+        <NextThemesProvider
+            attribute="data-theme"
+            defaultTheme="dark"
+            enableSystem={false}>
+            <QueryClientProvider client={queryClient}>
+                <ViewTransitions>{children}</ViewTransitions>
+            </QueryClientProvider>
+        </NextThemesProvider>
     );
 };
 

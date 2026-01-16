@@ -18,7 +18,7 @@ import {
     DragOverlay,
 } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { SortableBadge } from '@/Components/SortableBadge';
+import { SortableBadge } from '@/Components/Custom/SortableBadge';
 import CustomCollapse from '@/Components/Custom/CustomCollapse';
 import { motion, AnimatePresence } from 'motion/react';
 const flagUrl = (countryCode: string) =>
@@ -208,13 +208,13 @@ const page = () => {
     );
 
     return (
-        <main className="bg-white lg:bg-gray-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-4 lg:p-16">
+        <main className="bg-base-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-4 lg:p-16">
             <Initializer rates currencies />
             <motion.section
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, ease: 'easeOut' }}
-                className="w-full lg:bg-white lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 flex flex-col gap-4">
+                className="w-full lg:bg-base-100/50 lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 flex flex-col gap-4">
                 <CustomCollapse title="Currencies">
                     <div className="flex flex-col gap-4">
                         <AnimatePresence>
@@ -270,7 +270,7 @@ const page = () => {
                                                 (currency: string) => (
                                                     <th
                                                         key={currency}
-                                                        className="font-bold text-neutral">
+                                                        className="font-bold text-base-content">
                                                         {currency}
                                                     </th>
                                                 )
@@ -293,7 +293,7 @@ const page = () => {
                                                         animate="visible"
                                                         exit="exit"
                                                         variants={itemVariants}>
-                                                        <th className="font-bold text-neutral">
+                                                        <th className="font-bold text-base-content">
                                                             {currency}
                                                         </th>
                                                         {[
@@ -449,7 +449,7 @@ const page = () => {
                                                 <SortableBadge
                                                     name={tag}
                                                     onRemove={handleRemoveTag}
-                                                    type="neutral"
+                                                    type="info"
                                                 />
                                             </motion.div>
                                         ))}

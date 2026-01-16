@@ -16,7 +16,7 @@ const CustomCollapse = ({
     rightContent,
     children,
     defaultOpen = true,
-    className = 'bg-gray-100 rounded-box shadow-sm',
+    className = 'bg-base-200 rounded-box shadow-sm',
     layout,
 }: CustomCollapseProps) => {
     const [isCollapseOpen, setIsCollapseOpen] = useState(defaultOpen);
@@ -30,7 +30,7 @@ const CustomCollapse = ({
                 layout="position"
                 type="button"
                 onClick={() => setIsCollapseOpen(!isCollapseOpen)}
-                className={`w-full flex justify-between items-center p-4 lg:p-6 font-bold text-xl text-left hover:bg-gray-200 transition-colors cursor-pointer ${
+                className={`w-full flex justify-between bg-base-200 items-center p-4 lg:p-6 font-bold text-xl text-left hover:bg-base-300 transition-colors cursor-pointer ${
                     isCollapseOpen ? 'rounded-t-box' : 'rounded-box'
                 }`}>
                 <span className="ps-8 relative">{title}</span>
@@ -65,7 +65,7 @@ const CustomCollapse = ({
                         exit="hidden">
                         <motion.div
                             style={{ overflow: isCollapseOpen ? 'visible' : 'hidden' }}
-                            className="p-4 lg:p-6 pt-0">
+                            className="p-4 lg:p-6 pt-0 bg-base-200">
                             {children}
                         </motion.div>
                     </motion.div>

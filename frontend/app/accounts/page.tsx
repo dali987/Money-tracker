@@ -7,9 +7,9 @@ import { Plus, File } from 'lucide-react';
 
 const page = () => {
     return (
-        <main className="bg-white lg:bg-gray-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
+        <main className="bg-base-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
             <Initializer rates />
-            <section className="w-full lg:bg-white lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 flex flex-col gap-4">
+            <section className="w-full lg:bg-base-100/50 lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 flex flex-col gap-4">
                 <div className="flex justify-between">
                     <button
                         type="button"
@@ -26,7 +26,7 @@ const page = () => {
                                     <File /> Add Transaction
                                 </h3>{' '}
                                 <form method="dialog">
-                                    <button className="btn p-3.5 text-lg font-black bg-red-600/70 text-white hover:bg-red-600">
+                                    <button className="btn p-3.5 text-lg font-black btn-error text-white">
                                         X
                                     </button>
                                 </form>

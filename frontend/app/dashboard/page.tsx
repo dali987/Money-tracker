@@ -14,9 +14,9 @@ const page = () => {
     const [activeTab, setActiveTab] = React.useState('expense');
 
     return (
-        <main className="bg-white lg:bg-gray-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
+        <main className="bg-base-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:6 xl:p-16">
             <Initializer rates/>
-            <motion.section className="w-full lg:bg-white lg:rounded-lg lg:shadow-2xl lg:max-w-6xl lg:p-4 flex flex-col lg:flex-row gap-4">
+            <motion.section className="w-full lg:bg-base-100/50 lg:rounded-lg lg:shadow-2xl lg:max-w-6xl lg:p-4 flex flex-col lg:flex-row gap-4">
                 <div className="w-full lg:w-2/5 flex justify-center">
                     <NetWorth />
                 </div>
@@ -44,7 +44,7 @@ const page = () => {
                                             checked={activeTab === type}
                                             onChange={() => setActiveTab(type)}
                                         />
-                                        <div className="tab-content bg-gray-50 border-gray-300 min-h-[300px] overflow-visible">
+                                        <div className="tab-content bg-base-100 border-base-300 min-h-65 overflow-visible">
                                             <AnimatePresence mode="wait">
                                                 {activeTab === type && (
                                                     <motion.div
