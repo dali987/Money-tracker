@@ -4,6 +4,8 @@ import DateSelect from '@/Components/Custom/DateSelect';
 import MultiSelectDropdown from '@/Components/Custom/MultiSelectDropdown';
 import NumberInput from '@/Components/Custom/NumberInput';
 import SelectAccountDropdown from '@/Components/Custom/SelectAccountDropdown';
+import SelectDropdown from '@/Components/Custom/SelectDropdown';
+import { recurringApi } from '@/lib/api/recurring';
 import { transactionSchema } from '@/lib/validations';
 import { useActionState, useState, useMemo } from 'react';
 import { useTransactionStore } from '@/store/useTransactionStore';
@@ -12,22 +14,26 @@ import { z } from 'zod';
 import { useAuthStore } from '@/store/useAuthStore';
 import { formatISO } from 'date-fns';
 import { useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, Variants } from 'motion/react';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useQueryClient } from '@tanstack/react-query';
+import { Account } from '@/types';
 
 const MoneyExchangeWithCurrency = ({
     options,
     onSelect,
     disabled,
     name,
+    selectedId,
 }: {
     options: { name: string; type: string; id: string }[];
-    onSelect?: any;
+    onSelect: (option: { name: string; type: string; id: string }) => void;
     disabled?: boolean;
     name?: string;
+    selectedId?: string;
 }) => {
-    const handleOnSelect = (option: any) => {
+    const handleOnSelect = (option: { name: string; type: string; id: string }) => {
         onSelect(option);
     };
 
@@ -37,7 +43,8 @@ const MoneyExchangeWithCurrency = ({
                 name={name}
                 className="w-full"
                 options={options}
-                defaultValue={true}
+                defaultValue={!selectedId}
+                selectedId={selectedId}
                 onSelect={handleOnSelect}
             />
             <div className="join">
@@ -47,16 +54,37 @@ const MoneyExchangeWithCurrency = ({
     );
 };
 
-const handleOptions = (accounts: Array<any>) => {
+const RecurringField = ({ initialData }: { initialData: string }) => {
+    return (
+        <div className="flex flex-col gap-1 w-full">
+            <label htmlFor="frequency" className="label text-base text-base-content">
+                Frequency
+            </label>
+            <SelectDropdown
+                name="frequency"
+                options={[
+                    { label: 'Daily', value: 'daily' },
+                    { label: 'Weekly', value: 'weekly' },
+                    { label: 'Monthly', value: 'monthly' },
+                    { label: 'Yearly', value: 'yearly' },
+                ]}
+                defaultValue={initialData || 'monthly'}
+                className="w-full"
+            />
+        </div>
+    );
+};
+
+const handleOptions = (accounts: Account[]) => {
     if (!accounts) return [];
     return accounts.map((account) => ({
         name: account.name,
-        type: account.type,
+        type: account.group, // Changed from type to group based on Account interface
         id: account._id,
     }));
 };
 
-const formContainer: any = {
+const formContainer: Variants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
@@ -67,26 +95,39 @@ const formContainer: any = {
     },
 };
 
-const formItem: any = {
+const formItem: Variants = {
     hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.3,
+            ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+        },
+    },
 };
 
 const TransactionForm = ({
     type,
     action = 'create',
     onSuccess,
+    isRecurring = false,
+    initialData,
 }: {
     type: 'expense' | 'transfer' | 'income';
     action?: 'create' | { type: 'edit'; id: string };
     onSuccess?: () => void;
+    isRecurring?: boolean;
+    initialData?: any;
 }) => {
     const createTransaction = useTransactionStore((state) => state.createTransaction);
     const getAccounts = useTransactionStore((state) => state.getAccounts);
     const updateTransaction = useTransactionStore((state) => state.updateTransaction);
+    const queryClient = useQueryClient();
 
-    const authUser = useAuthStore((state: any) => state.authUser);
-    const isCheckingAuth = useAuthStore((state: any) => state.isCheckingAuth);
+    const authUser = useAuthStore((state) => state.authUser);
+    const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
+    const setAction = useTransactionStore((state) => (state as any).setAction); // Some special internal state might still need cast if not in interface
 
     const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
     const { data: transactionsRaw = [], isLoading: isTransactionsLoading } = useTransactions({});
@@ -94,22 +135,36 @@ const TransactionForm = ({
     const accounts = accountsRaw || [];
     const transactions = transactionsRaw || [];
 
-    const [keepFormData, setKeepFormData] = useState({
+    const account =
+        initialData ||
+        (typeof action !== 'string' && action.type === 'edit'
+            ? transactions.find((t) => t._id === action.id)
+            : null);
+
+    const [keepFormData, setKeepFormData] = useState<{
+        note: string;
+        tags: string[];
+    }>({
         note: '',
         tags: [],
     });
 
     useEffect(() => {
-        if (typeof action !== 'string' && action.type === 'edit') {
+        if (initialData) {
+            setKeepFormData({
+                note: initialData.description || '', // Recurring usually calls it description
+                tags: initialData.tags || [],
+            });
+        } else if (typeof action !== 'string' && action.type === 'edit') {
             const transaction = transactions.find((t: any) => t._id === action.id);
             if (transaction) {
                 setKeepFormData({
-                    note: transaction.note || '',
-                    tags: transaction.tags || [],
+                    note: (transaction as any).note || '',
+                    tags: (transaction as any).tags || [],
                 });
             }
         }
-    }, [action, transactions]);
+    }, [action, transactions, initialData]);
 
     const handleFormSubmit = async (prevState: any, formData: FormData) => {
         try {
@@ -128,10 +183,12 @@ const TransactionForm = ({
                     now.getHours(),
                     now.getMinutes(),
                     now.getSeconds(),
-                    now.getMilliseconds()
+                    now.getMilliseconds(),
                 );
                 date = formatISO(newDate);
             }
+
+            const frequency = formData.get('frequency');
 
             const formValues = {
                 type: type,
@@ -143,10 +200,40 @@ const TransactionForm = ({
                 date: date,
             };
 
+            // Basic validation for recurring since transactionSchema might fail on missing 'frequency' or extra field
+            // if we use same schema. But recurring has different fields (description vs note).
+            // Let's adapt values.
+
+            if (isRecurring) {
+                const recurringPayload: any = {
+                    type,
+                    amount: formValues.amount,
+                    description: formValues.note,
+                    tags: formValues.tags,
+                    frequency: frequency || 'monthly',
+                    startDate: date ? new Date(date).toISOString() : new Date().toISOString(),
+                    active: true,
+                };
+
+                if (type === 'expense' || type === 'transfer')
+                    recurringPayload.fromAccount = formValues.fromAccount;
+                if (type === 'income' || type === 'transfer')
+                    recurringPayload.toAccount = formValues.toAccount;
+
+                if (action !== 'create' && action.type === 'edit') {
+                    await recurringApi.update(action.id, recurringPayload);
+                } else {
+                    await recurringApi.create(recurringPayload);
+                }
+
+                if (onSuccess) onSuccess();
+                return; // Skip normal transaction flow
+            }
+
             await transactionSchema.parseAsync(formValues);
 
             const cleanFormValues = Object.fromEntries(
-                Object.entries(formValues).filter(([_, v]) => v !== '' && v != null)
+                Object.entries(formValues).filter(([_, v]) => v !== '' && v != null),
             );
 
             if (action === 'create') {
@@ -159,6 +246,10 @@ const TransactionForm = ({
                 await updateTransaction({ id: action.id, data: cleanFormValues });
             }
             await getAccounts();
+
+            await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+            await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
             if (onSuccess) {
                 onSuccess();
             }
@@ -232,6 +323,15 @@ const TransactionForm = ({
                             <MoneyExchangeWithCurrency
                                 options={memoizedOptions}
                                 name={type === 'income' ? 'toAccount' : 'fromAccount'}
+                                selectedId={
+                                    type === 'income'
+                                        ? (typeof account?.toAccount === 'object'
+                                              ? account?.toAccount?._id
+                                              : account?.toAccount) || account?.accountId
+                                        : (typeof account?.fromAccount === 'object'
+                                              ? account?.fromAccount?._id
+                                              : account?.fromAccount) || account?.accountId
+                                }
                                 onSelect={(option: any) =>
                                     type === 'income'
                                         ? setKeepFormData((prev) => ({
@@ -247,6 +347,10 @@ const TransactionForm = ({
                         </div>
                     </motion.div>
 
+                    {isRecurring && type !== 'transfer' && (
+                        <RecurringField initialData={initialData?.frequency} />
+                    )}
+
                     <motion.div variants={formItem} className="flex flex-col gap-1">
                         <label className="label text-base text-base-content">
                             {type === 'transfer' ? 'To' : 'Tags'}
@@ -258,6 +362,11 @@ const TransactionForm = ({
                                         disabled={true}
                                         options={memoizedOptions}
                                         name="toAccount"
+                                        selectedId={
+                                            typeof account?.toAccount === 'object'
+                                                ? account?.toAccount?._id
+                                                : account?.toAccount
+                                        }
                                         onSelect={(option: any) =>
                                             setKeepFormData((prev) => ({
                                                 ...prev,
@@ -266,6 +375,9 @@ const TransactionForm = ({
                                         }
                                     />
                                 </div>
+                            )}
+                            {isRecurring && type === 'transfer' && (
+                                <RecurringField initialData={initialData?.frequency} />
                             )}
                             <div className="flex flex-col lg:flex-row gap-4">
                                 <div className="flex flex-col gap-4 flex-1">
@@ -308,10 +420,10 @@ const TransactionForm = ({
                                             (action !== 'create' && action.type) == 'edit'
                                                 ? 'btn-info'
                                                 : type === 'expense'
-                                                ? 'btn-error'
-                                                : 'btn-accent'
+                                                  ? 'btn-error'
+                                                  : 'btn-accent'
                                         }`}
-                                        onSubmit={(e) => e.preventDefault()}>
+                                        type="submit">
                                         {(action !== 'create' && action.type) == 'edit'
                                             ? 'Update'
                                             : 'Add'}{' '}

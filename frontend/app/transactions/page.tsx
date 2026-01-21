@@ -8,12 +8,13 @@ import TransactionForm from '@/Components/TransactionForm';
 import TransactionsList from '@/Components/TransactionsList';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
-import { Plus, File, Filter, ListFilter } from 'lucide-react';
+import { Plus, FilePlusCorner, Filter, ListFilter } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AnimatedNumber from '@/Components/AnimatedNumber';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCallback, useMemo } from 'react';
 import { useAccounts } from '@/hooks/useAccounts';
+import CustomModal from '@/Components/Custom/CustomModal';
 
 const fields = ['expense', 'transfer', 'income'];
 
@@ -36,16 +37,18 @@ const itemVariants = {
 
 const page = () => {
     const getTransactionsWithFilter = useTransactionStore(
-        (state) => state.getTransactionsWithFilter
+        (state) => state.getTransactionsWithFilter,
     );
     const getTransactionsSummary = useTransactionStore((state) => state.getTransactionsSummary);
+    const transactions = useTransactionStore((state) => state.transactions);
+    const isTransactionsLoading = useTransactionStore((state) => state.isTransactionsLoading);
     const authUser = useAuthStore((state: any) => state.authUser);
-    const [summary, setSummary] = React.useState({
+    const [summary, setSummary] = useState({
         Expense: 0,
         Income: 0,
         netWorth: 0,
     });
-    const [selectedRange, setSelectedRange] = React.useState<{
+    const [selectedRange, setSelectedRange] = useState<{
         start: string | null;
         end: string | null;
         label: string;
@@ -55,15 +58,19 @@ const page = () => {
         label: 'All time',
     });
 
-    const [currentFilters, setCurrentFilters] = React.useState({
+    const [currentFilters, setCurrentFilters] = useState({
         account: '',
         tags: '',
     });
 
-    const [tempFilters, setTempFilters] = React.useState({
+    const [tempFilters, setTempFilters] = useState({
         account: '',
         tags: '',
     });
+
+    // Modal states
+    const [isNewTransactionModalOpen, setIsNewTransactionModalOpen] = useState(false);
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
     const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
 
@@ -81,11 +88,11 @@ const page = () => {
         }) => {
             setSelectedRange({ start, end, label });
         },
-        []
+        [],
     );
 
     const createFormSubmit = useCallback(async () => {
-        (document.getElementById('edit-transaction-modal') as HTMLDialogElement)?.close();
+        setIsNewTransactionModalOpen(false);
         const filters: any = { ...currentFilters };
         if (selectedRange.label !== 'All time' && selectedRange.start && selectedRange.end) {
             filters.startDate = selectedRange.start;
@@ -112,7 +119,13 @@ const page = () => {
             }
             await getTransactionsWithFilter(filters);
             const sum = await getTransactionsSummary(filters);
-            setSummary(sum);
+            if (sum) {
+                setSummary({
+                    Expense: (sum as any).Expense ?? (sum as any).totalExpense ?? 0,
+                    Income: (sum as any).Income ?? (sum as any).totalIncome ?? 0,
+                    netWorth: (sum as any).netWorth ?? (sum as any).netBalance ?? 0,
+                });
+            }
         };
         fetchTransactions();
     }, [getTransactionsSummary, getTransactionsWithFilter, currentFilters, selectedRange]);
@@ -136,168 +149,138 @@ const page = () => {
         };
 
         setCurrentFilters(newFilters);
-        (document.getElementById('filter') as HTMLDialogElement)?.close();
+        setIsFilterModalOpen(false);
     }, []);
 
     return (
-        <main className="bg-base-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
+        <main className="bg-base-200 min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-6 lg:p-12 transition-all duration-300">
             <Initializer />
-            <section className="w-full lg:bg-base-100/50 lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 flex flex-col gap-4">
+            <section className="w-full lg:p-4 flex flex-col gap-4">
                 <div className="flex flex-wrap gap-2 justify-between">
                     <button
                         type="button"
                         className="btn btn-outline flex text-base gap-2 items-center justify-center p-3"
-                        onClick={() =>
-                            ((
-                                document.getElementById('new-modal-toggle') as HTMLInputElement
-                            ).checked = true)
-                        }>
+                        onClick={() => setIsNewTransactionModalOpen(true)}>
                         <Plus size={25} /> New
                     </button>
-                    <input type="checkbox" id="new-modal-toggle" className="modal-toggle" />
-                    <div role="dialoge" id="add" className="modal">
-                        <div className="modal-box max-w-150 min-h-80 transition-all overflow-visible">
-                            <div className="flex justify-between items-center">
-                                <h3 className="font-bold text-lg flex gap-2 py-4">
-                                    <File /> Add Transaction
-                                </h3>{' '}
-                                <form method="dialog">
-                                    <button
-                                        className="btn p-3.5 text-lg font-black btn-error text-white"
-                                        onClick={() =>
-                                            ((
-                                                document.getElementById(
-                                                    'new-modal-toggle'
-                                                ) as HTMLInputElement
-                                            ).checked = false)
-                                        }>
-                                        X
-                                    </button>
-                                </form>
-                            </div>
-                            <div className="tabs tabs-lift">
-                                {fields.map((type: string, i: number) => (
-                                    <React.Fragment key={type}>
-                                        <input
-                                            type="radio"
-                                            name="edit-tabs"
-                                            style={{
-                                                //@ts-ignore
-                                                '--color-base-content':
-                                                    type === 'expense'
-                                                        ? '#fb2c36'
-                                                        : type === 'income'
-                                                        ? 'oklch(72.3% 0.219 149.579)'
-                                                        : '',
-                                            }}
-                                            className="tab grow font-bold transition-all duration-300"
-                                            aria-label={type}
-                                            defaultChecked
+
+                    <CustomModal
+                        isOpen={isNewTransactionModalOpen}
+                        onClose={() => setIsNewTransactionModalOpen(false)}
+                        title="Add Transaction"
+                        Icon={FilePlusCorner}>
+                        <div className="tabs tabs-lift p-6">
+                            {fields.map((type: string, i: number) => (
+                                <React.Fragment key={type}>
+                                    <input
+                                        type="radio"
+                                        name="edit-tabs"
+                                        style={{
+                                            //@ts-ignore
+                                            '--color-base-content':
+                                                type === 'expense'
+                                                    ? '#fb2c36'
+                                                    : type === 'income'
+                                                      ? 'oklch(72.3% 0.219 149.579)'
+                                                      : '',
+                                        }}
+                                        className="tab grow font-bold transition-all duration-300"
+                                        aria-label={type}
+                                        defaultChecked={i == 0}
+                                    />
+                                    <div className="tab-content bg-base-100 border-base-300 p-6">
+                                        <TransactionForm
+                                            type={type as 'expense' | 'income' | 'transfer'}
+                                            action="create"
+                                            onSuccess={createFormSubmit}
                                         />
-                                        <div className="tab-content bg-base-100 border-base-300 p-6">
-                                            <TransactionForm
-                                                type={type as 'expense' | 'income' | 'transfer'}
-                                                action="create"
-                                                onSuccess={createFormSubmit}
-                                            />
-                                        </div>
-                                    </React.Fragment>
-                                ))}
-                            </div>
+                                    </div>
+                                </React.Fragment>
+                            ))}
                         </div>
-                    </div>
+                    </CustomModal>
+
                     <div className="join">
                         <SelectDropdown className="join-item" onRangeChange={handleRangeChange} />
                         <button
                             className="btn btn-outline rounded-box rounded-l-none text-base join-item p-3"
                             onClick={() => {
                                 setTempFilters(currentFilters);
-                                (
-                                    document.getElementById('filter') as HTMLDialogElement
-                                )?.showModal();
+                                setIsFilterModalOpen(true);
                             }}>
                             <Filter />
                         </button>
-                        <dialog id="filter" className="modal">
-                            <div className="modal-box max-w-150 min-h-90 transition-all overflow-visible">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="font-bold text-lg flex gap-4 py-4 px-2">
-                                        <ListFilter /> Filter
-                                    </h3>{' '}
-                                    <form method="dialog">
-                                        <button className="btn p-3.5 text-lg font-black bg-red-600/70 text-white hover:bg-red-600">
-                                            X
-                                        </button>
-                                    </form>
-                                </div>
-                                <form onSubmit={(e) => handleFormSubmit(e)} id="filterForm">
-                                    <div className="flex flex-col gap-4">
-                                        <div className="flex flex-col gap-2">
-                                            <label className="label text-base text-base-content">
-                                                Account
-                                            </label>
-                                            <SelectAccountDropdown
-                                                name="account"
-                                                className="w-full"
-                                                options={options}
-                                                defaultValue={false}
-                                                selectedId={tempFilters.account}
-                                                onSelect={(option: any) =>
-                                                    setTempFilters({
-                                                        ...tempFilters,
-                                                        account: option.id,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="label text-base text-base-content">
-                                                Tags
-                                            </label>
-                                            <MultiSelectDropdown
-                                                formFieldName="tags"
-                                                options={
-                                                    authUser?.tags?.map((tag: string) => ({
-                                                        label: tag,
-                                                        value: tag,
-                                                    })) || []
-                                                }
-                                                selected={
-                                                    tempFilters.tags
-                                                        ? tempFilters.tags.split(',')
-                                                        : []
-                                                }
-                                                onSelect={(tags: string[]) =>
-                                                    setTempFilters({
-                                                        ...tempFilters,
-                                                        tags: tags.join(','),
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="modal-action justify-end">
-                                            <button
-                                                type="button"
-                                                className="btn btn-outline btn-error rounded"
-                                                onClick={() => {
-                                                    setTempFilters({ account: '', tags: '' });
-                                                }}>
-                                                Reset
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                className="btn btn-outline btn-success rounded">
-                                                Apply
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </dialog>
                     </div>
                 </div>
+
+                <CustomModal
+                    isOpen={isFilterModalOpen}
+                    onClose={() => setIsFilterModalOpen(false)}
+                    title="Filter"
+                    Icon={ListFilter}>
+                    <form onSubmit={(e) => handleFormSubmit(e)} id="filterForm">
+                        <div className="flex flex-col gap-4 p-6">
+                            <div className="flex flex-col gap-2">
+                                <label className="label text-base text-base-content">Account</label>
+                                <SelectAccountDropdown
+                                    name="account"
+                                    className="w-full"
+                                    options={options}
+                                    defaultValue={false}
+                                    selectedId={tempFilters.account}
+                                    onSelect={(option: any) =>
+                                        setTempFilters({
+                                            ...tempFilters,
+                                            account: option.id,
+                                        })
+                                    }
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="label text-base text-base-content">Tags</label>
+                                <MultiSelectDropdown
+                                    formFieldName="tags"
+                                    options={
+                                        authUser?.tags?.map((tag: string) => ({
+                                            label: tag,
+                                            value: tag,
+                                        })) || []
+                                    }
+                                    selected={tempFilters.tags ? tempFilters.tags.split(',') : []}
+                                    onSelect={(tags: string[]) =>
+                                        setTempFilters({
+                                            ...tempFilters,
+                                            tags: tags.join(','),
+                                        })
+                                    }
+                                />
+                            </div>
+                            <div className="modal-action justify-end">
+                                <button
+                                    type="button"
+                                    className="btn btn-outline btn-error rounded"
+                                    onClick={() => {
+                                        setTempFilters({ account: '', tags: '' });
+                                    }}>
+                                    Reset
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn btn-outline btn-success rounded">
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </CustomModal>
+
                 <div className="font-mono">
-                    <TransactionsList maxCount={-1} />
+                    <TransactionsList
+                        maxCount={-1}
+                        transactions={transactions}
+                        isLoading={isTransactionsLoading}
+                        onAddClick={() => setIsNewTransactionModalOpen(true)}
+                    />
                 </div>
 
                 {/* Totals Footer */}

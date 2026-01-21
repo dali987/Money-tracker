@@ -8,16 +8,21 @@ import { useTransactionStore } from '@/store/useTransactionStore';
 
 import SelectDropdown from './Custom/SelectDropdown';
 import { useAccounts } from '@/hooks/useAccounts';
+import { useQueryClient } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
 
 const AccountForm = ({
     action = 'create',
+    onSuccess,
 }: {
     action: 'create' | { type: 'edit'; id: string };
+    onSuccess?: () => void;
 }) => {
     const { authUser } = useAuthStore();
-    const { createAccount, updateAccount } = useTransactionStore();
+    const { createAccount, updateAccount, deleteAccount } = useTransactionStore();
     const [name, setName] = useState('');
-    const [group, setGroup] = useState(authUser?.groups[0] || '');
+    const [group, setGroup] = useState(authUser?.groups?.[0] || '');
+    const queryClient = useQueryClient();
 
     const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
 
@@ -35,7 +40,7 @@ const AccountForm = ({
 
     const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
 
@@ -52,14 +57,26 @@ const AccountForm = ({
         }
 
         if (action === 'create') {
-            createAccount(result.data);
+            await createAccount(result.data);
         } else if (typeof action === 'object' && action.type === 'edit') {
-            updateAccount({ id: action.id, data: result.data });
+            await updateAccount({ id: action.id, data: result.data });
+        }
+        await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+        if (onSuccess) onSuccess();
+    };
+
+    const handleDelete = async () => {
+        if (typeof action === 'object' && action.type === 'edit') {
+            if (confirm('Are you sure you want to delete this account?')) {
+                await deleteAccount(action.id);
+                await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+                if (onSuccess) onSuccess();
+            }
         }
     };
 
     return (
-        <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+        <form className="flex flex-col gap-6 p-6" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-2">
                 <label htmlFor="name">Name</label>
                 <div className="flex flex-col">
@@ -93,13 +110,24 @@ const AccountForm = ({
                 <NumberInput className="w-full" name="balance" />
             </div>
             {error && <p className="text-error text-sm">{error}</p>}
-            <button
-                type="submit"
-                className={
-                    'btn btn-outline' + (action === 'create' ? ' btn-success' : ' btn-info')
-                }>
-                {action === 'create' ? 'Create' : 'Update'}
-            </button>
+            <div className="flex gap-2 w-full">
+                <button
+                    type="submit"
+                    className={
+                        'btn btn-outline flex-1' +
+                        (action === 'create' ? ' btn-success' : ' btn-info')
+                    }>
+                    {action === 'create' ? 'Create' : 'Update'}
+                </button>
+                {typeof action === 'object' && action.type === 'edit' && (
+                    <button
+                        type="button"
+                        onClick={handleDelete}
+                        className="btn btn-outline btn-error">
+                        <Trash2 size={18} />
+                    </button>
+                )}
+            </div>
         </form>
     );
 };

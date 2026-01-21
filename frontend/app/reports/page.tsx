@@ -66,7 +66,7 @@ const PERIOD_CONFIGS: Record<string, any> = {
         groupBy: 'month',
         generateLabels: () =>
             Array.from({ length: 12 }, (_, i) =>
-                new Date(0, i).toLocaleString('en-US', { month: 'long' })
+                new Date(0, i).toLocaleString('en-US', { month: 'long' }),
             ),
     },
 };
@@ -276,14 +276,14 @@ const Page = () => {
     };
 
     return (
-        <main className="bg-base-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-3 lg:p-16">
+        <main className="bg-base-200 min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-6 lg:p-12 transition-all duration-300">
             <Initializer rates />
             <motion.section
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
                 exit="hidden"
-                className="w-full lg:bg-base-100/50 lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 lg:px-6 flex flex-col gap-4">
+                className="w-full lg:p-4 lg:px-6 flex flex-col gap-4">
                 <motion.div
                     variants={itemVariants}
                     className="flex flex-wrap justify-center lg:justify-between p-4 w-full gap-4">
@@ -291,6 +291,7 @@ const Page = () => {
                         id="chartType"
                         defaultValue={chartType}
                         onSelect={(val) => setChartType(val)}
+                        className="w-max"
                         options={[
                             { label: 'Expense & Income', value: 'expenseIncome' },
                             { label: 'Expense & Income by Tags', value: 'expenseIncomeTags' },
@@ -316,7 +317,7 @@ const Page = () => {
                                             onClick={() => {
                                                 (document.activeElement as HTMLElement)?.blur();
                                                 handlePeriodTypeChange(
-                                                    period.toLowerCase() as 'yearly' | 'monthly'
+                                                    period.toLowerCase() as 'yearly' | 'monthly',
                                                 );
                                             }}
                                             className="flex items-center">

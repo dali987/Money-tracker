@@ -80,7 +80,7 @@ const SelectDropdown = ({
 
     return (
         <div
-            className={`relative w-full lg:w-max ${className} ${
+            className={`relative w-full ${className} ${
                 disabled ? 'cursor-not-allowed' : ''
             }`}
             ref={dropdownRef}>
@@ -89,7 +89,7 @@ const SelectDropdown = ({
                 tabIndex={0}
                 role="button"
                 onClick={toggleDropdown}
-                className={`btn w-full lg:w-max justify-between rounded-box normal-case font-normal focus:outline-offset-0 focus:outline-1 focus:shadow-lg transition ${
+                className={`btn w-full justify-between rounded-box normal-case font-normal focus:outline-offset-0 focus:outline-1 focus:shadow-lg transition ${
                     disabled
                         ? 'bg-base-300 cursor-not-allowed border-none'
                         : 'bg-base-100 border-base-content/20'

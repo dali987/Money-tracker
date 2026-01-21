@@ -2,26 +2,32 @@
 
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, LogOut, Settings } from 'lucide-react';
+import { Menu, LogOut, Settings, Keyboard } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '@/Components/ThemeToggle';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useShortcutsHelp } from './KeyboardShortcutsProvider';
+import { useQueryClient } from '@tanstack/react-query';
+import { NotificationCenter } from './NotificationCenter';
 
 const Header = () => {
     const pathname = usePathname();
     const router = useRouter();
     const authUser = useAuthStore((state) => state.authUser);
     const logout = useAuthStore((state) => state.logout);
+    const queryClient = useQueryClient();
 
     const handleLogout = async () => {
         await logout();
+        queryClient.removeQueries();
         toast.success('Logged out successfully');
         router.push('/login');
     };
 
     return (
-        <header className="sticky z-50 top-0 left-0 w-full bg-base-100 backdrop-blur-xl flex justify-between items-center px-4 lg:px-8 py-3 h-16 shadow-lg transition-all duration-300">
+        <header className="sticky z-99999 top-0 left-0 w-full bg-base-100 flex justify-between items-center px-4 lg:px-8 py-3 h-16 shadow-xl transition-all duration-300">
             <div className="flex items-center gap-4">
                 {/* Hamburger menu for mobile */}
                 <label
@@ -31,7 +37,7 @@ const Header = () => {
                 </label>
 
                 <div
-                    className="flex items-center gap-2 select-none"
+                    className="flex items-center gap-3 select-none"
                     onClick={() => router.push('/dashboard')}>
                     <div className="relative w-8 h-8 lg:w-9 lg:h-9">
                         <Image
@@ -41,7 +47,7 @@ const Header = () => {
                             className="object-contain pointer-events-none light:invert light:brightness-70"
                         />
                     </div>
-                    <h1 className="text-xl font-bold hidden sm:block text-base-content">
+                    <h1 className="text-xl font-black hidden sm:block text-base-content">
                         Money Tracker
                     </h1>
                 </div>
@@ -53,7 +59,15 @@ const Header = () => {
                     {pathname.split('/')[1] || 'Dashboard'}
                 </h1>
 
+                <button
+                    onClick={useShortcutsHelp().showHelp}
+                    className="btn btn-ghost btn-circle"
+                    title="Keyboard Shortcuts (?)">
+                    <Keyboard size={20} />
+                </button>
+
                 <ThemeToggle />
+                <NotificationCenter />
 
                 {authUser ? (
                     <div className="dropdown dropdown-end">

@@ -1,6 +1,6 @@
 'use client';
 
-import {usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
     ArrowRightLeft,
     Newspaper,
@@ -9,6 +9,7 @@ import {
     ShoppingBasket,
     SlidersHorizontal,
     LucideIcon,
+    Repeat,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,6 +21,10 @@ const elements = [
     {
         name: 'Transactions',
         icon: ArrowRightLeft,
+    },
+    {
+        name: 'Recurring',
+        icon: Repeat,
     },
     {
         name: 'Accounts',
@@ -56,8 +61,7 @@ const NavElement = ({
                 className={`is-drawer-close:tooltip is-drawer-close:tooltip-right gap-4 ${
                     active ? 'bg-neutral text-neutral-content' : ''
                 }`}
-                data-tip={name}
-                >
+                data-tip={name}>
                 <IconComponent className="inline-block size-8 my-1.5" />
                 <span className="is-drawer-close:hidden">{name}</span>
             </Link>
@@ -71,14 +75,14 @@ const NavBar = ({ children }: { children: React.ReactNode }) => {
     return (
         <nav className="drawer lg:drawer-open">
             <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
-            <div className="drawer-content">{children}</div>
+            <div className="drawer-content bg-base-200">{children}</div>
 
             <div className="drawer-side z-999 lg:z-auto is-drawer-close:overflow-visible h-[calc(100vh-var(--header-height))] mt-(--header-height) lg:mt-0">
                 <label
                     htmlFor="my-drawer-4"
                     aria-label="close sidebar"
                     className="drawer-overlay"></label>
-                <div className="w-64 lg:is-drawer-close:w-18 lg:is-drawer-open:w-64 shadow-neutral shadow-xl bg-base-100 flex flex-col items-start lg:fixed h-full lg:h-[calc(100vh-var(--header-height))]">
+                <div className="w-64 lg:is-drawer-close:w-18 lg:is-drawer-open:w-64 shadow-neutral shadow-xl flex flex-col items-start lg:fixed h-full lg:h-[calc(100vh-var(--header-height))]">
                     {/* Sidebar content here */}
                     <ul className="menu w-full grow gap-2">
                         {/* list item */}

@@ -3,10 +3,12 @@
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { CreditCard, Pencil } from 'lucide-react';
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import AccountForm from './AccountForm';
 import { motion, AnimatePresence, Variants } from 'motion/react';
 import AnimatedNumber from './AnimatedNumber';
+import ErrorState from './ErrorState';
+import CustomModal from './Custom/CustomModal';
 
 const container: Variants = {
     hidden: { opacity: 0, y: 15 },
@@ -45,16 +47,19 @@ const SkeletonNetWorth = () => (
 
 import CustomCollapse from './Custom/CustomCollapse';
 import { useAccounts } from '@/hooks/useAccounts';
+import { useQueryClient } from '@tanstack/react-query';
 
 const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?: boolean }) => {
     const { rates, deleteAccount, getAccountsSummary } = useTransactionStore();
     const { authUser } = useAuthStore();
     const [editAccount, setEditAccount] = useState<any>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [accountsSummary, setAccountsSummary] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const queryClient = useQueryClient();
+    const isAccountsError = useTransactionStore((state) => state.isAccountsError);
 
     const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
-
     const accounts = accountsRaw || [];
 
     useEffect(() => {
@@ -71,11 +76,39 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
 
     const sumsByType = useMemo(() => {
         const sums = accountsSummary?.sumsByGroup || {};
-        return groups.reduce((acc: Record<string, number>, group: string) => {
-            acc[group] = sums[group] || 0;
-            return acc;
-        }, {} as Record<string, number>);
+        return groups.reduce(
+            (acc: Record<string, number>, group: string) => {
+                acc[group] = sums[group] || 0;
+                return acc;
+            },
+            {} as Record<string, number>,
+        );
     }, [accountsSummary, groups]);
+
+    const handleEditClick = (accountId: string) => {
+        setEditAccount(accountId);
+        setIsEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setIsEditModalOpen(false);
+        setEditAccount(null);
+    };
+
+    if (isAccountsError) {
+        return (
+            <div className="w-full bg-base-100 rounded-box p-4">
+                <ErrorState
+                    message="Failed to load your net worth data."
+                    onRetry={() => {
+                        queryClient.invalidateQueries({ queryKey: ['accounts'] });
+                        getAccountsSummary();
+                    }}
+                />
+            </div>
+        );
+    }
+
     if (!authUser || !rates || !accounts || isLoading) {
         return <SkeletonNetWorth />;
     }
@@ -154,14 +187,9 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                                                                 </h3>
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => {
-                                                                        setEditAccount(account._id);
-                                                                        (
-                                                                            document.getElementById(
-                                                                                'edit-account-modal'
-                                                                            ) as HTMLDialogElement
-                                                                        )?.showModal();
-                                                                    }}
+                                                                    onClick={() =>
+                                                                        handleEditClick(account._id)
+                                                                    }
                                                                     className={
                                                                         'btn btn-sm btn-square btn-ghost opacity-0 group-hover:opacity-100 transition-opacity shrink-0' +
                                                                         (!editMode ? ' hidden' : '')
@@ -172,36 +200,42 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                                                             <div className="flex flex-wrap flex-col items-end gap-1 shrink-0 ml-4">
                                                                 {[
                                                                     authUser.baseCurrency,
-                                                                    ...authUser.currencies,
-                                                                ].map((currency: string) => (
-                                                                    <div
-                                                                        key={currency}
-                                                                        className="flex items-center gap-1 whitespace-nowrap">
-                                                                        <AnimatedNumber
-                                                                            value={
-                                                                                (account.balance /
-                                                                                    rates[
-                                                                                        authUser
-                                                                                            .baseCurrency
-                                                                                    ]) *
-                                                                                rates[currency]
-                                                                            }
-                                                                            className={
-                                                                                account.balance < 0
-                                                                                    ? 'text-red-500'
-                                                                                    : 'text-green-500'
-                                                                            }
-                                                                        />
-                                                                        <span
-                                                                            className={`ml-1 text-xs ${
-                                                                                account.balance < 0
-                                                                                    ? 'text-red-400'
-                                                                                    : 'text-green-400'
-                                                                            }`}>
-                                                                            {currency}
-                                                                        </span>
-                                                                    </div>
-                                                                ))}
+                                                                    ...(authUser.currencies || []),
+                                                                ]
+                                                                    .filter(Boolean)
+                                                                    .map((currency: any) => (
+                                                                        <div
+                                                                            key={currency}
+                                                                            className="flex items-center gap-1 whitespace-nowrap">
+                                                                            <AnimatedNumber
+                                                                                value={
+                                                                                    (account.balance /
+                                                                                        rates?.[
+                                                                                            authUser.baseCurrency ||
+                                                                                                'USD'
+                                                                                        ]) *
+                                                                                    rates?.[
+                                                                                        currency
+                                                                                    ]
+                                                                                }
+                                                                                className={
+                                                                                    account.balance <
+                                                                                    0
+                                                                                        ? 'text-red-500'
+                                                                                        : 'text-green-500'
+                                                                                }
+                                                                            />
+                                                                            <span
+                                                                                className={`ml-1 text-xs ${
+                                                                                    account.balance <
+                                                                                    0
+                                                                                        ? 'text-red-400'
+                                                                                        : 'text-green-400'
+                                                                                }`}>
+                                                                                {currency}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
                                                             </div>
                                                         </div>
                                                         {i !== filtered.length - 1 && (
@@ -217,28 +251,18 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                 </motion.div>
             </CustomCollapse>
 
-            <dialog id="edit-account-modal" className="modal">
-                <div className="modal-box max-w-120 transition-all rounded-3xl">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-bold text-xl flex gap-3 items-center">
-                            <CreditCard className="text-primary" /> Edit Account
-                        </h3>
-                        <form method="dialog">
-                            <button className="btn btn-sm btn-circle btn-ghost">✕</button>
-                        </form>
-                    </div>
-                    {editAccount && <AccountForm action={{ type: 'edit', id: editAccount }} />}
-                    <div className="modal-action flex-col gap-2">
-                        <form method="dialog" className="w-full">
-                            <button
-                                className="btn btn-error btn-outline w-full"
-                                onClick={() => editAccount && deleteAccount(editAccount)}>
-                                Delete Account
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </dialog>
+            <CustomModal
+                isOpen={isEditModalOpen}
+                onClose={handleCloseEditModal}
+                title="Edit Account"
+                Icon={CreditCard}>
+                {editAccount && (
+                    <AccountForm
+                        action={{ type: 'edit', id: editAccount }}
+                        onSuccess={handleCloseEditModal}
+                    />
+                )}
+            </CustomModal>
         </motion.div>
     );
 };

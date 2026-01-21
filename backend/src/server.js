@@ -10,10 +10,13 @@ import accountRouter from './routes/account.router.js';
 import transactionRouter from './routes/transaction.router.js';
 import userRouter from './routes/user.router.js';
 import exchangeRouter from './routes/exchange.router.js';
+import budgetRouter from './routes/budget.router.js';
+import recurringRouter from './routes/recurring.router.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cron from 'node-cron';
 import { fetchAndSaveExchangeRates } from './controllers/exchange.controller.js';
+import { processDueRecurringTransactions } from './controllers/recurring.controller.js';
 
 const dev = ENV.NODE_ENV !== 'production';
 const nextApp = next({ dev, dir: '../frontend' });
@@ -78,6 +81,8 @@ nextApp.prepare().then(async () => {
     apiRouter.use('/transaction', transactionRouter);
     apiRouter.use('/user', userRouter);
     apiRouter.use('/exchange', exchangeRouter);
+    apiRouter.use('/budget', budgetRouter);
+    apiRouter.use('/recurring', recurringRouter);
 
     app.use('/api/v1', apiRouter);
 
@@ -100,6 +105,17 @@ nextApp.prepare().then(async () => {
                 console.log('Exchange rates updated successfully via scheduler.');
             } catch (error) {
                 console.error('Failed to update exchange rates in scheduler:', error);
+            }
+        });
+
+        // Schedule daily recurring transactions check (Every day at midnight)
+        cron.schedule('0 0 * * *', async () => {
+            console.log('Running daily recurring transactions check...');
+            try {
+                const count = await processDueRecurringTransactions();
+                console.log(`Daily check complete. Processed ${count} recurring transactions.`);
+            } catch (error) {
+                console.error('Failed to run daily recurring transactions check:', error);
             }
         });
     });

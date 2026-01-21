@@ -4,23 +4,7 @@ import { authClient } from '@/lib/auth-client';
 
 // Define types for our User and State
 // We extend the Better Auth user with our custom fields
-export interface User {
-    id: string;
-    email: string;
-    emailVerified: boolean;
-    name: string;
-    image?: string;
-    createdAt: Date;
-    updatedAt: Date;
-    // Custom fields
-    username?: string;
-    currencies?: string[];
-    baseCurrency?: string;
-    groups?: string[];
-    tags?: string[];
-    profilePic?: string;
-    [key: string]: any; // Allow for flexible expansion
-}
+import { User } from '@/types';
 
 interface AuthState {
     authUser: User | null;
@@ -29,12 +13,12 @@ interface AuthState {
     isLoggingIn: boolean;
 
     checkAuth: () => Promise<User | null>;
-    signup: (formData: any) => Promise<boolean | string>;
-    login: (formData: any) => Promise<boolean | string>;
+    signup: (formData: Record<string, string>) => Promise<boolean | string>;
+    login: (formData: Record<string, string>) => Promise<boolean | string>;
     logout: () => Promise<void>;
-    updateSetting: (key: string, setting: any) => Promise<any>;
-    addSetting: (key: string, setting: any) => Promise<any>;
-    removeSetting: (key: string, setting: any) => Promise<any>;
+    updateSetting: (key: string, setting: any) => Promise<User | null>;
+    addSetting: (key: string, setting: any) => Promise<User | null>;
+    removeSetting: (key: string, setting: any) => Promise<User | null>;
 }
 
 /**
@@ -98,7 +82,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
      * @param formData - Object containing username, email, and password
      * @returns true on success, error message string on failure
      */
-    signup: async (formData) => {
+    signup: async (formData: Record<string, string>) => {
         set({ isSigningUp: true });
         try {
             // Use Better Auth to create the account
@@ -132,7 +116,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
      * @param formData - Object containing email and password
      * @returns true on success, error message string on failure
      */
-    login: async (formData) => {
+    login: async (formData: Record<string, string>) => {
         set({ isLoggingIn: true });
         try {
             // Use Better Auth to sign in

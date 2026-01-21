@@ -24,7 +24,7 @@ export default function DateSelect({ name }: { name: string }) {
                 name={name}
                 ref={myDatepicker}
             />
-            <CalendarDays className="absolute right-2 top-1/2 -translate-y-1/2 z-1000 pointer-events-none" />
+            <CalendarDays className="absolute right-2 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
         </div>
     );
 }

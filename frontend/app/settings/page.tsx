@@ -114,10 +114,14 @@ const page = () => {
     useEffect(() => {
         if (authUser) {
             setSelected(
-                authUser.currencies.filter((currency: string) => currency !== authUser.baseCurrency)
+                authUser.currencies.filter(
+                    (currency: string) => currency !== authUser.baseCurrency,
+                ),
             );
             setNewCurrencies(
-                authUser.currencies.filter((currency: string) => currency !== authUser.baseCurrency)
+                authUser.currencies.filter(
+                    (currency: string) => currency !== authUser.baseCurrency,
+                ),
             );
             setCurrGroups(authUser.groups || []);
             setCurrTags(authUser.tags || []);
@@ -208,17 +212,18 @@ const page = () => {
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
-        })
+        }),
     );
 
     return (
-        <main className="bg-base-200 flex justify-center items-start lg:items-center min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-4 lg:p-16">
+        <main className="bg-base-200 min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-6 lg:p-12 transition-all duration-300">
+            {' '}
             <Initializer rates currencies />
             <motion.section
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, ease: 'easeOut' }}
-                className="w-full lg:bg-base-100/50 lg:rounded-lg lg:shadow-2xl lg:max-w-5xl lg:p-4 flex flex-col gap-4">
+                className="w-full lg:p-4 flex flex-col gap-4">
                 {/* Profile Section */}
                 <CustomCollapse title="Profile">
                     <div className="flex flex-col gap-4">
@@ -309,7 +314,8 @@ const page = () => {
                                     <MultiSelectDropdown
                                         formFieldName="secondaryCurrency"
                                         options={options.filter(
-                                            (option: any) => option.value !== authUser?.baseCurrency
+                                            (option: any) =>
+                                                option.value !== authUser?.baseCurrency,
                                         )}
                                         prompt="Select additional currencies"
                                         selected={selected}
@@ -332,7 +338,7 @@ const page = () => {
                                                         className="font-bold text-base-content">
                                                         {currency}
                                                     </th>
-                                                )
+                                                ),
                                             )}
                                     </tr>
                                 </thead>
@@ -364,7 +370,7 @@ const page = () => {
                                                             </td>
                                                         ))}
                                                     </motion.tr>
-                                                )
+                                                ),
                                             )}
                                     </AnimatePresence>
                                 </motion.tbody>
@@ -430,7 +436,10 @@ const page = () => {
                                                 animate="visible"
                                                 exit="exit"
                                                 variants={itemVariants}
-                                                transition={{ duration: 0.35, ease: 'easeOut' }}>
+                                                transition={{
+                                                    duration: 0.35,
+                                                    ease: 'easeOut',
+                                                }}>
                                                 <SortableBadge
                                                     name={group}
                                                     onRemove={handleRemoveGroup}
@@ -504,7 +513,10 @@ const page = () => {
                                                 animate="visible"
                                                 exit="exit"
                                                 variants={itemVariants}
-                                                transition={{ duration: 0.35, ease: 'easeOut' }}>
+                                                transition={{
+                                                    duration: 0.35,
+                                                    ease: 'easeOut',
+                                                }}>
                                                 <SortableBadge
                                                     name={tag}
                                                     onRemove={handleRemoveTag}

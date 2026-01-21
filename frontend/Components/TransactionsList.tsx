@@ -2,14 +2,17 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { ArrowRight, File, Pencil } from 'lucide-react';
+import { ArrowRight, Wallet, Pencil, SquarePen } from 'lucide-react';
 import TransactionForm from './TransactionForm';
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
 import TranscationsSkeleton from './skeletons/TranscationsSkeleton';
 import EmptyState from './EmptyState';
+import ErrorState from './ErrorState';
+import CustomModal from './Custom/CustomModal';
 
 const typeProperties = {
     transfer: {
@@ -31,27 +34,49 @@ const typeProperties = {
 
 const fields = ['expense', 'transfer', 'income'];
 
-const TransactionsList = ({ maxCount }: { maxCount: number }) => {
+const TransactionsList = ({
+    maxCount,
+    transactions: externalTransactions,
+    isLoading: externalIsLoading,
+    onAddClick,
+}: {
+    maxCount: number;
+    transactions?: any[];
+    isLoading?: boolean;
+    onAddClick?: () => void;
+}) => {
     const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
+    // Only fetch if external transactions are not provided
+    const { data: transactionsRaw = [], isLoading: isInternalLoading } = useTransactions(
+        externalTransactions ? undefined : {},
+    );
+    const { data: transactionsForExcel = [] } = useTransactions({});
 
     const accounts = accountsRaw || [];
-    const transactions = useTransactionStore((state) => state.transactions);
+    // Prioritize external transactions
+    const transactions = externalTransactions || transactionsRaw;
+    const isTransactionsLoading =
+        externalIsLoading !== undefined ? externalIsLoading : isInternalLoading;
+
     const getTransactionsWithFilter = useTransactionStore(
-        (state) => state.getTransactionsWithFilter
+        (state) => state.getTransactionsWithFilter,
     );
-    const isTransactionsLoading = useTransactionStore((state) => state.isTransactionsLoading);
+    const queryClient = useQueryClient();
 
     const deleteTransaction = useTransactionStore((state) => state.deleteTransaction);
 
-    const authUser = useAuthStore((state: any) => state.authUser);
-    const isCheckingAuth = useAuthStore((state: any) => state.isCheckingAuth);
+    const authUser = useAuthStore((state) => state.authUser);
+    const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
 
     const [currentPage, setCurrentPage] = useState(1);
     const [inputMode, setInputMode] = useState<'left' | 'right' | null>(null);
     const itemsPerPage = 10;
 
+    const [editingTransaction, setEditingTransaction] = useState<any>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
     useEffect(() => {
-        getTransactionsWithFilter();
+        // getTransactionsWithFilter(); // This might not be needed if useTransactions handles fetching
     }, [getTransactionsWithFilter]);
 
     useEffect(() => {
@@ -60,7 +85,7 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
 
     const accountNameMap = useMemo(() => {
         if (!accounts || accounts.length === 0) return {};
-        return accounts.reduce((map: Record<string, string>, account: any) => {
+        return accounts.reduce((map: Record<string, string>, account) => {
             map[account._id] = account.name;
             return map;
         }, {});
@@ -80,14 +105,44 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
         setCurrentPage(page);
     };
 
-    const [editingTransaction, setEditingTransaction] = useState<any>(null);
+    const isTransactionsError = useTransactionStore((state) => state.isTransactionsError);
+    const isAccountsError = useTransactionStore((state) => state.isAccountsError);
+
+    const handleEditClick = (transaction: any) => {
+        setEditingTransaction(transaction);
+        setIsEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setIsEditModalOpen(false);
+        setEditingTransaction(null);
+    };
 
     return (
         <div className="flex flex-col gap-4">
             <AnimatePresence mode="popLayout" initial={false}>
-                {isCheckingAuth ||
-                (isTransactionsLoading && transactions.length < 1) ||
-                (isAccountsLoading && accounts.length < 1) ? (
+                {isTransactionsError || isAccountsError ? (
+                    <motion.div
+                        key="error"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}>
+                        <ErrorState
+                            message={
+                                isAccountsError
+                                    ? 'Failed to load accounts.'
+                                    : 'Failed to load transactions.'
+                            }
+                            onRetry={() => {
+                                if (isAccountsError)
+                                    queryClient.invalidateQueries({ queryKey: ['accounts'] });
+                                getTransactionsWithFilter({});
+                            }}
+                        />
+                    </motion.div>
+                ) : isCheckingAuth ||
+                  (isTransactionsLoading && transactions.length < 1) ||
+                  (isAccountsLoading && accounts.length < 1) ? (
                     <motion.div
                         key="skeleton"
                         initial={{ opacity: 0 }}
@@ -111,7 +166,7 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                             <AnimatePresence mode="popLayout">
                                 {authUser &&
                                     accounts.length > 0 &&
-                                    displayedTransactions.map((transaction: any) => (
+                                    displayedTransactions.map((transaction) => (
                                         <motion.li
                                             className="list-row !"
                                             key={transaction._id}
@@ -127,11 +182,11 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                                                             <div className="truncate">
                                                                 {
                                                                     accountNameMap[
-                                                                        transaction[
+                                                                        (transaction as any)[
                                                                             typeProperties[
                                                                                 transaction.type as keyof typeof typeProperties
                                                                             ].account
-                                                                        ]
+                                                                        ] || ''
                                                                     ]
                                                                 }
                                                             </div>
@@ -140,7 +195,8 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                                                                 <span className="truncate shrink">
                                                                     {
                                                                         accountNameMap[
-                                                                            transaction.fromAccount
+                                                                            transaction.fromAccount ||
+                                                                                ''
                                                                         ]
                                                                     }
                                                                 </span>
@@ -151,7 +207,8 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                                                                 <span className="truncate shrink">
                                                                     {
                                                                         accountNameMap[
-                                                                            transaction.toAccount
+                                                                            transaction.toAccount ||
+                                                                                ''
                                                                         ]
                                                                     }
                                                                 </span>
@@ -161,7 +218,7 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                                                     <div className="text-xs uppercase font-semibold opacity-60">
                                                         {format(
                                                             new Date(transaction.date),
-                                                            'dd MMM, yyyy'
+                                                            'dd MMM, yyyy',
                                                         )}
                                                     </div>
                                                     <p className="text-base-300 text-sm wrap-break-word lg:max-w-sm">
@@ -195,14 +252,7 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                                             <button
                                                 type="button"
                                                 className="btn btn-square btn-ghost self-center max-lg:btn-sm "
-                                                onClick={() => {
-                                                    setEditingTransaction(transaction);
-                                                    (
-                                                        document.getElementById(
-                                                            'edit-transaction-modal'
-                                                        ) as HTMLDialogElement
-                                                    )?.showModal();
-                                                }}>
+                                                onClick={() => handleEditClick(transaction)}>
                                                 <Pencil size={22} />
                                             </button>
                                         </motion.li>
@@ -210,80 +260,78 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                             </AnimatePresence>
                         ) : (
                             <EmptyState
-                                action={{
-                                    label: 'Add Transaction',
-                                    onClick: () => {
-                                        const toggle = document.getElementById(
-                                            'new-modal-toggle'
-                                        ) as HTMLInputElement;
-                                        if (toggle) toggle.checked = true;
-                                    },
-                                }}
+                                action={
+                                    onAddClick
+                                        ? {
+                                              label: 'Add Transaction',
+                                              onClick: onAddClick,
+                                          }
+                                        : undefined
+                                }
                             />
                         )}
                     </motion.ul>
                 )}
             </AnimatePresence>
-            <dialog id="edit-transaction-modal" className="modal">
-                <div className="modal-box max-w-150 min-h-80 transition-all bg-base-200">
-                    <div className="flex justify-between items-center">
-                        <h3 className="font-bold text-lg flex gap-2 py-4">
-                            <File /> Edit Transaction
-                        </h3>{' '}
-                        <form method="dialog">
-                            <button className="btn p-3.5 text-lg font-black btn-error text-white">
-                                X
-                            </button>
-                        </form>
-                    </div>
-                    {editingTransaction && (
-                        <div className="tabs tabs-lift">
-                            {fields.map((type: string, i: number) => (
-                                <React.Fragment key={type}>
-                                    <input
-                                        type="radio"
-                                        name="edit-tabs"
-                                        style={{
-                                            //@ts-ignore
-                                            '--color-base-content':
-                                                type === 'expense'
-                                                    ? '#fb2c36'
-                                                    : type === 'income'
-                                                    ? 'oklch(72.3% 0.219 149.579)'
-                                                    : '',
+
+            <CustomModal
+                isOpen={isEditModalOpen}
+                onClose={handleCloseEditModal}
+                title="Edit Transaction"
+                Icon={SquarePen}>
+                {editingTransaction && (
+                    <div className="tabs tabs-lift p-6 pb-0">
+                        {fields.map((type: string, i: number) => (
+                            <React.Fragment key={type}>
+                                <input
+                                    type="radio"
+                                    name="edit-tabs"
+                                    style={{
+                                        //@ts-ignore
+                                        '--color-base-content':
+                                            type === 'expense'
+                                                ? '#fb2c36'
+                                                : type === 'income'
+                                                  ? 'oklch(72.3% 0.219 149.579)'
+                                                  : '',
+                                    }}
+                                    className="tab grow font-bold transition-all duration-300"
+                                    aria-label={type}
+                                    defaultChecked={editingTransaction.type === type}
+                                />
+                                <div className="tab-content bg-base-100 border-base-300 p-6">
+                                    <TransactionForm
+                                        type={type as 'expense' | 'income' | 'transfer'}
+                                        action={{
+                                            type: 'edit',
+                                            id: editingTransaction._id,
                                         }}
-                                        className="tab grow font-bold transition-all duration-300"
-                                        aria-label={type}
-                                        defaultChecked={editingTransaction.type === type}
+                                        onSuccess={handleCloseEditModal}
                                     />
-                                    <div className="tab-content bg-base-100 border-base-300 p-6">
-                                        <TransactionForm
-                                            type={type as 'expense' | 'income' | 'transfer'}
-                                            action={{
-                                                type: 'edit',
-                                                id: editingTransaction._id,
-                                            }}
-                                        />
-                                    </div>
-                                </React.Fragment>
-                            ))}
-                        </div>
-                    )}
-                    <div className="modal-action">
-                        <form method="dialog">
-                            <button
-                                className="btn btn-error text-white"
-                                onClick={() => {
-                                    if (editingTransaction) {
-                                        deleteTransaction(editingTransaction._id);
-                                    }
-                                }}>
-                                Delete
-                            </button>
-                        </form>
+                                </div>
+                            </React.Fragment>
+                        ))}
                     </div>
-                </div>
-            </dialog>
+                )}
+                <form method="dialog" className="flex justify-end items-center">
+                    <button
+                        className="btn btn-error text-white m-6"
+                        onClick={async () => {
+                            if (editingTransaction) {
+                                await deleteTransaction(editingTransaction._id);
+                                await queryClient.invalidateQueries({
+                                    queryKey: ['transactions'],
+                                });
+                                await queryClient.invalidateQueries({
+                                    queryKey: ['accounts'],
+                                });
+                                handleCloseEditModal();
+                            }
+                        }}>
+                        Delete
+                    </button>
+                </form>
+            </CustomModal>
 
             {(maxCount > 10 || maxCount == -1) && transactions.length > 10 && (
                 <div className="flex justify-center mt-4">
@@ -342,7 +390,7 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         const val = parseInt(
-                                                            (e.target as HTMLInputElement).value
+                                                            (e.target as HTMLInputElement).value,
                                                         );
                                                         if (
                                                             !isNaN(val) &&
@@ -364,7 +412,7 @@ const TransactionsList = ({ maxCount }: { maxCount: number }) => {
                                             className="join-item btn"
                                             onClick={() =>
                                                 setInputMode(
-                                                    page === 'left-ellipsis' ? 'left' : 'right'
+                                                    page === 'left-ellipsis' ? 'left' : 'right',
                                                 )
                                             }>
                                             ...

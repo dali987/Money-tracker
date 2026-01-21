@@ -1,8 +1,9 @@
 import { CalendarDays, Check, ChevronDown } from 'lucide-react';
-import { useActionState, useCallback, useState, useRef, useEffect } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import DateSelect from './DateSelect';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
+import CustomModal from './CustomModal';
 
 const options = [
     'Today',
@@ -23,6 +24,7 @@ type Props = {
 const SelectDropdown = ({ onRangeChange, className }: Props) => {
     const [selected, setSelected] = useState('');
     const [isOpen, setIsOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [isTop, setIsTop] = useState(false);
     const [dateRange, setDateRange] = useState<{
@@ -87,7 +89,7 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
                 end: { date: end, label: formatDate(end) },
             };
         },
-        [formatDate]
+        [formatDate],
     );
 
     const handleSelect = useCallback(
@@ -104,9 +106,11 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
                         label: option,
                     });
                 }
-            } else (document.getElementById('modal-toggle') as HTMLInputElement).checked = true;
+            } else {
+                setIsModalOpen(true);
+            }
         },
-        [getDateRange, onRangeChange]
+        [getDateRange, onRangeChange],
     );
 
     const handleFormSubmit = useCallback(
@@ -127,6 +131,7 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
             }
             if (new Date(start) > new Date(end)) {
                 toast.error('end date is before start date');
+                return;
             }
 
             const startDate = new Date(start);
@@ -146,8 +151,9 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
                     label: 'Custom',
                 });
             }
+            setIsModalOpen(false);
         },
-        [formatDate, onRangeChange]
+        [formatDate, onRangeChange],
     );
 
     // Handle clicks outside to close dropdown
@@ -223,10 +229,13 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
                     )}
                 </AnimatePresence>
             </div>
-            <input type="checkbox" id="modal-toggle" className="modal-toggle" />
-            <div className="modal" role="dialog">
-                <form className="modal-box" onSubmit={(e) => handleFormSubmit(e)}>
-                    <h3 className="text-lg font-bold p-2 pb-6">Custom Date</h3>
+
+            <CustomModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Custom Date"
+                Icon={CalendarDays}>
+                <form className="w-full p-6" onSubmit={(e) => handleFormSubmit(e)}>
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-col gap-2">
                             <label className="label text-base text-base-content">Start Date</label>
@@ -238,22 +247,12 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
                         </div>
                     </div>
                     <div className="modal-action">
-                        <button
-                            className="btn bg-green-500 text-white hover:bg-green-700 rounded"
-                            onClick={() =>
-                                ((document.getElementById(
-                                    'modal-toggle'
-                                ) as HTMLInputElement)!.checked = false)
-                            }
-                            type="submit">
+                        <button className="btn btn-success rounded" type="submit">
                             Select Date
                         </button>
                     </div>
                 </form>
-                <label className="modal-backdrop" htmlFor="modal-toggle">
-                    Close
-                </label>
-            </div>
+            </CustomModal>
         </>
     );
 };
