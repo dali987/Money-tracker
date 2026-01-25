@@ -3,7 +3,6 @@ import { axiosInstance } from '@/lib/axios';
 import { Account } from '@/types';
 
 export const useAccounts = () => {
-    // Always return useQuery to strictly follow React Rules of Hooks
     return useQuery<Account[]>({
         queryKey: ['accounts'],
         queryFn: async () => {

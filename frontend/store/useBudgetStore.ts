@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { axiosInstance } from '@/lib/axios';
+import { axiosInstance } from '@/lib/axios'; // TODO: Remove if unused
 import { toast } from 'sonner';
+import { budgetApi } from '@/lib/api/budget';
 
 import { Budget } from '@/types';
 
@@ -22,8 +23,8 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
     getBudgets: async () => {
         set({ isLoading: true, isError: false });
         try {
-            const res = await axiosInstance.get('/budget/');
-            set({ budgets: res.data.data });
+            const data = await budgetApi.getAll();
+            set({ budgets: data.data });
         } catch (error) {
             console.error('Error fetching budgets:', error);
             set({ isError: true });
@@ -35,8 +36,8 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
 
     createBudget: async (data) => {
         try {
-            const res = await axiosInstance.post('/budget/create', data);
-            set((state) => ({ budgets: [...state.budgets, res.data.data] }));
+            const response = await budgetApi.create(data);
+            set((state) => ({ budgets: [...state.budgets, response.data] }));
             toast.success('Budget created successfully');
         } catch (error: any) {
             console.error('Error creating budget:', error);
@@ -47,9 +48,9 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
 
     updateBudget: async (id, data) => {
         try {
-            const res = await axiosInstance.put(`/budget/update/${id}`, data);
+            const response = await budgetApi.update(id, data);
             set((state) => ({
-                budgets: state.budgets.map((b) => (b._id === id ? res.data.data : b)),
+                budgets: state.budgets.map((b) => (b._id === id ? response.data : b)),
             }));
             toast.success('Budget updated successfully');
         } catch (error) {
@@ -60,7 +61,7 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
 
     deleteBudget: async (id) => {
         try {
-            await axiosInstance.delete(`/budget/delete/${id}`);
+            await budgetApi.delete(id);
             set((state) => ({
                 budgets: state.budgets.filter((b) => b._id !== id),
             }));

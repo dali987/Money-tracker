@@ -2,9 +2,8 @@ import { create } from 'zustand';
 import { axiosInstance } from '@/lib/axios';
 import { authClient } from '@/lib/auth-client';
 
-// Define types for our User and State
-// We extend the Better Auth user with our custom fields
 import { User } from '@/types';
+import { userApi } from '@/lib/api/user';
 
 interface AuthState {
     authUser: User | null;
@@ -21,46 +20,30 @@ interface AuthState {
     removeSetting: (key: string, setting: any) => Promise<User | null>;
 }
 
-/**
- * Auth store for managing authentication state and user settings.
- *
- * Authentication is handled by Better Auth client, but this store
- * provides a centralized place for user data and settings management.
- */
 export const useAuthStore = create<AuthState>((set, get) => ({
     authUser: null,
     isCheckingAuth: true,
     isSigningUp: false,
     isLoggingIn: false,
 
-    /**
-     * Check if user is authenticated by fetching session from Better Auth.
-     * Also fetches full user data from the API for application-specific fields.
-     */
     checkAuth: async () => {
         set({ isCheckingAuth: true });
 
-        // If we already have user data, return it
         if (get().authUser) {
             set({ isCheckingAuth: false });
             return get().authUser;
         }
 
         try {
-            // Get session from Better Auth
             const { data: session } = await authClient.getSession();
 
             if (!session?.user) {
-                // No session found, user is not logged in
-                // Don't throw error here, just return null as it's a valid state
                 set({ authUser: null });
                 return null;
             }
 
-            // Fetch full user data from our API (includes custom fields)
-            // Ideally better-auth session would have everything, but we might have large arrays/settings
-            const res = await axiosInstance.get('/user/');
-            const user = res.data.data;
+            const data = await userApi.getProfile();
+            const user = data.data;
 
             if (!user) {
                 throw new Error('Failed to fetch user data');
@@ -77,16 +60,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    /**
-     * Sign up a new user using Better Auth.
-     * @param formData - Object containing username, email, and password
-     * @returns true on success, error message string on failure
-     */
     signup: async (formData: Record<string, string>) => {
         set({ isSigningUp: true });
         try {
-            // Use Better Auth to create the account
-            const { data, error } = await authClient.signUp.email({
+            const { data: authData, error } = await authClient.signUp.email({
                 email: formData.email,
                 password: formData.password,
                 name: formData.username, // Better Auth uses 'name' field
@@ -98,8 +75,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             }
 
             // Fetch full user data after signup
-            const res = await axiosInstance.get('/user/');
-            const user = res.data.data;
+            const profileRes = await userApi.getProfile();
+            const user = profileRes.data;
 
             set({ authUser: user });
             return true;
@@ -111,16 +88,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    /**
-     * Log in an existing user using Better Auth.
-     * @param formData - Object containing email and password
-     * @returns true on success, error message string on failure
-     */
     login: async (formData: Record<string, string>) => {
         set({ isLoggingIn: true });
         try {
-            // Use Better Auth to sign in
-            const { data, error } = await authClient.signIn.email({
+            const { data: authData, error } = await authClient.signIn.email({
                 email: formData.email,
                 password: formData.password,
             });
@@ -130,8 +101,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             }
 
             // Fetch full user data after login
-            const res = await axiosInstance.get('/user/');
-            const user = res.data.data;
+            const profileRes = await userApi.getProfile();
+            const user = profileRes.data;
 
             set({ authUser: user });
             return true;
@@ -143,9 +114,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    /**
-     * Log out the current user.
-     */
     logout: async () => {
         try {
             await authClient.signOut();
@@ -155,18 +123,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ authUser: null });
     },
 
-    /**
-     * Update a user setting.
-     * @param key - Setting key to update
-     * @param setting - New value for the setting
-     */
     updateSetting: async (key, setting) => {
         try {
-            const res = await axiosInstance.post('/user/update', { key, setting });
+            const data = await userApi.updateSetting(key, setting);
 
-            if (!res) throw new Error('Error updating setting');
+            if (!data) throw new Error('Error updating setting');
 
-            const updatedSetting = res.data.data;
+            const updatedSetting = data.data;
             const user = get().authUser;
 
             if (!user) throw new Error('No user logged in');
@@ -180,18 +143,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    /**
-     * Add a value to an array setting (e.g., add a tag).
-     * @param key - Setting key (array field)
-     * @param setting - Value to add to the array
-     */
     addSetting: async (key, setting) => {
         try {
-            const res = await axiosInstance.post('/user/add', { key, setting });
+            const data = await userApi.addSetting(key, setting);
 
-            if (!res) throw new Error('Error adding setting');
+            if (!data) throw new Error('Error adding setting');
 
-            const updatedSetting = res.data.data;
+            const updatedSetting = data.data;
             const user = get().authUser;
 
             if (!user) throw new Error('No user logged in');
@@ -205,18 +163,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    /**
-     * Remove a value from an array setting (e.g., remove a tag).
-     * @param key - Setting key (array field)
-     * @param setting - Value to remove from the array
-     */
     removeSetting: async (key, setting) => {
         try {
-            const res = await axiosInstance.post('/user/remove', { key, setting });
+            const data = await userApi.removeSetting(key, setting);
 
-            if (!res) throw new Error('Error removing setting');
+            if (!data) throw new Error('Error removing setting');
 
-            const updatedSetting = res.data.data;
+            const updatedSetting = data.data;
             const user = get().authUser;
 
             if (!user) throw new Error('No user logged in');
