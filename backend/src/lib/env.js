@@ -11,7 +11,6 @@ export const ENV = {
     JWT_REFRESH_TOKEN_EXPIRE_REMEMBER_ME: process.env.JWT_REFRESH_TOKEN_EXPIRE_REMEMBER_ME,
     CLIENT_URL: process.env.CLIENT_URL,
     EXCHANGE_RATE_API_KEY: process.env.EXCHANGE_RATE_API_KEY,
-    // Better Auth configuration
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
 };

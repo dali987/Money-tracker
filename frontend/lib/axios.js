@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'sonner';
 
 /**
  * Axios instance configured for the money tracker API.
@@ -36,6 +37,12 @@ axiosInstance.interceptors.response.use(
             console.error('Session expired or invalid');
         }
 
+        // Handle 429 Rate Limit errors
+        if (error.response?.status === 429) {
+            const message = error.response.data?.message || 'Too many requests. Please slow down.';
+            toast.error(message);
+        }
+
         return Promise.reject(error);
-    }
+    },
 );
