@@ -1,42 +1,48 @@
 'use client';
 
 import { useAuthStore } from '@/store/useAuthStore';
-import NumberInput from './Custom/NumberInput';
-import { useEffect, useState } from 'react';
-import { accountSchema } from '../lib/validations';
-import { useTransactionStore } from '@/store/useTransactionStore';
+import NumberInput from '@/Components/Custom/NumberInput';
+import { useState } from 'react';
+import { accountSchema } from '@/lib/validations';
 
-import SelectDropdown from './Custom/SelectDropdown';
+import SelectDropdown from '@/Components/Custom/SelectDropdown';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
+import { useAccountStore } from '@/store/useAccountStore';
+import { Account } from '@/types';
 
-const AccountForm = ({
-    action = 'create',
-    onSuccess,
-}: {
+interface AccountFormProps {
     action: 'create' | { type: 'edit'; id: string };
     onSuccess?: () => void;
-}) => {
+}
+
+const AccountForm = ({ action = 'create', onSuccess }: AccountFormProps) => {
     const { authUser } = useAuthStore();
-    const { createAccount, updateAccount, deleteAccount } = useTransactionStore();
+    const { createAccount, updateAccount, deleteAccount } = useAccountStore();
     const [name, setName] = useState('');
     const [group, setGroup] = useState(authUser?.groups?.[0] || '');
     const queryClient = useQueryClient();
 
-    const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
+    const { data: accounts } = useAccounts();
 
-    const accounts = accountsRaw || [];
+    const [prevActionId, setPrevActionId] = useState<string | null>(null);
+    const currentId = typeof action === 'object' ? action.id : 'create';
 
-    useEffect(() => {
-        if (typeof action === 'object' && action.type === 'edit') {
-            const account = accounts.find((account: any) => account._id === action.id);
+    // Sync form state when action or accounts data changes (without using useEffect)
+    if (currentId !== prevActionId && (currentId === 'create' || accounts)) {
+        setPrevActionId(currentId);
+        if (currentId === 'create') {
+            setName('');
+            setGroup(authUser?.groups?.[0] || '');
+        } else {
+            const account = accounts?.find((a: Account) => a._id === currentId);
             if (account) {
                 setName(account.name);
                 setGroup(account.group);
             }
         }
-    }, [action, accounts]);
+    }
 
     const [error, setError] = useState<string | null>(null);
 

@@ -1,9 +1,8 @@
 import mongoose from 'mongoose';
 import RecurringTransaction from '../models/recurringTransaction.model.js';
 import Transaction from '../models/transaction.model.js';
-import Account from '../models/account.model.js';
+import { accountActions } from '../utils/accountActions.js';
 
-// Helper to calculate next run date
 const calculateNextRunDate = (currentDate, frequency) => {
     const date = new Date(currentDate);
     if (frequency === 'daily') date.setDate(date.getDate() + 1);
@@ -13,42 +12,9 @@ const calculateNextRunDate = (currentDate, frequency) => {
     return date;
 };
 
-// Reusing actions from transaction controller logic for consistency if needed,
-// but we will primarily use the existing `Transaction.create` flow or manually update.
-// Actually, creating a Transaction document via API calls `createTransaction` which handles balance updates.
-// Here we are internal. We should replicate the balance update logic to ensure consistency.
-
-const accountActions = {
-    income: async (transaction, session) =>
-        await Account.findByIdAndUpdate(
-            transaction.toAccount,
-            { $inc: { balance: transaction.amount } },
-            { session },
-        ),
-    expense: async (transaction, session) =>
-        await Account.findByIdAndUpdate(
-            transaction.fromAccount,
-            { $inc: { balance: -transaction.amount } },
-            { session },
-        ),
-    transfer: async (transaction, session) => {
-        await Account.findByIdAndUpdate(
-            transaction.toAccount,
-            { $inc: { balance: transaction.amount } },
-            { session },
-        );
-        await Account.findByIdAndUpdate(
-            transaction.fromAccount,
-            { $inc: { balance: -transaction.amount } },
-            { session },
-        );
-    },
-};
-
 export const createRecurringTransaction = async (req, res, next) => {
     try {
         const { startDate } = req.body;
-        // Default nextRunDate to startDate if not provided
         const nextRunDate = startDate ? new Date(startDate) : new Date();
 
         const recurring = await RecurringTransaction.create({
@@ -123,7 +89,6 @@ export const deleteRecurringTransaction = async (req, res, next) => {
 export const processDueRecurringTransactions = async (userId = null) => {
     const session = await mongoose.startSession();
     session.startTransaction();
-    let processedCount = 0;
 
     try {
         const today = new Date();
@@ -139,37 +104,38 @@ export const processDueRecurringTransactions = async (userId = null) => {
         const dueTransactions = await RecurringTransaction.find(query).session(session);
 
         for (const recurring of dueTransactions) {
-            // 1. Create the real Transaction
-            const newTransaction = new Transaction({
-                // user: recurring.user, // Transaction model doesn't store user directly usually, mainly via accounts
-                type: recurring.type,
-                fromAccount: recurring.fromAccount, // These link to accounts which are linked to user
-                toAccount: recurring.toAccount,
-                amount: recurring.amount,
-                note: recurring.description, // Mapping description -> note
-                date: recurring.nextRunDate,
-                tags: recurring.tags,
-            });
-
-            await newTransaction.save({ session });
-            processedCount++;
-
-            // 2. Update Account Balances
-            await accountActions[recurring.type](recurring, session);
-
-            // 3. Update Recurring Rule (nextRunDate)
             let nextDate = new Date(recurring.nextRunDate);
+
+            // Loop to catch up on missed transactions
             while (nextDate <= today) {
+                // 1. Create the real Transaction
+                const newTransaction = new Transaction({
+                    // user: recurring.user,
+                    type: recurring.type,
+                    fromAccount: recurring.fromAccount,
+                    toAccount: recurring.toAccount,
+                    amount: recurring.amount,
+                    note: recurring.description,
+                    date: nextDate, // Use the specific run date
+                    tags: recurring.tags,
+                });
+
+                await newTransaction.save({ session });
+
+                // 2. Update Account Balances
+                await accountActions[recurring.type](recurring, session);
+
+                // 3. Calculate next run date
                 nextDate = calculateNextRunDate(nextDate, recurring.frequency);
             }
 
+            // 4. Update Recurring Rule
             recurring.nextRunDate = nextDate;
-            recurring.lastRunDate = new Date();
+            recurring.lastRunDate = new Date(); // Or the last actual run date in the loop, but today is fine as "processed at"
             await recurring.save({ session });
         }
 
         await session.commitTransaction();
-        return processedCount;
     } catch (error) {
         await session.abortTransaction();
         throw error;

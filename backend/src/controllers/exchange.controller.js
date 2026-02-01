@@ -5,7 +5,7 @@ import { ENV } from '../lib/env.js';
 
 export const fetchAndSaveExchangeRates = async () => {
     const result = await fetch(
-        `https://v6.exchangerate-api.com/v6/${ENV.EXCHANGE_RATE_API_KEY}/latest/USD`
+        `https://v6.exchangerate-api.com/v6/${ENV.EXCHANGE_RATE_API_KEY}/latest/USD`,
     );
     if (!result.ok) {
         throw new Error("Couldn't update exchange rates");
@@ -22,8 +22,9 @@ export const fetchAndSaveExchangeRates = async () => {
             timeNextUpdateUtc: exchangeRates.time_next_update_utc,
             base: exchangeRates.base_code,
             rates: exchangeRates.conversion_rates,
+            lastFetchedAt: new Date(),
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
     );
 
     if (!updatedExchangeRates) {
@@ -31,6 +32,39 @@ export const fetchAndSaveExchangeRates = async () => {
     }
 
     return updatedExchangeRates;
+};
+
+export const checkExchangeRates = async () => {
+    try {
+        const rates = await ExchangeRates.findOne();
+        if (!rates) {
+            console.log('No exchange rates found, fetching for the first time...');
+            return await fetchAndSaveExchangeRates();
+        }
+
+        const oneDayInMs = 24 * 60 * 60 * 1000;
+        const lastFetched = rates.lastFetchedAt ? new Date(rates.lastFetchedAt).getTime() : 0;
+        const now = Date.now();
+
+        // If lastFetchedAt is missing (old data), fall back to timeLastUpdateUnix
+        if (!rates.lastFetchedAt) {
+            const oneDayInSeconds = 24 * 60 * 60;
+            const nowUnix = Math.floor(Date.now() / 1000);
+            if (nowUnix - rates.timeLastUpdateUnix > oneDayInSeconds) {
+                console.log('Exchange rates (based on provider) are older than a day, updating...');
+                return await fetchAndSaveExchangeRates();
+            }
+        } else if (now - lastFetched > oneDayInMs) {
+            console.log('Exchange rates are older than a day, updating...');
+            return await fetchAndSaveExchangeRates();
+        }
+
+        console.log('Exchange rates are up to date (less than a day old).');
+        return rates;
+    } catch (error) {
+        console.error('Error checking/updating exchange rates:', error);
+        throw error;
+    }
 };
 
 export const updateExchangeRates = async (req, res, next) => {
@@ -45,14 +79,7 @@ export const updateExchangeRates = async (req, res, next) => {
 
 export const getRates = async () => {
     try {
-        const exchangeRates = await ExchangeRates.find();
-        if (!exchangeRates) {
-            const error = new Error('Exchange rates not found');
-            error.status = 404;
-            throw error;
-        }
-
-        return exchangeRates[0];
+        return await checkExchangeRates();
     } catch (error) {
         console.error('An error occurred while getting exchange rates: ', error);
         throw error;
@@ -125,7 +152,9 @@ export const getAllCurrencies = async (req, res, next) => {
         const currencyMap = {};
         currencies.forEach((currency) => {
             const country = countryList.findOneByCurrencyCode(currency);
-            currencyMap[currency] = country;
+            if (country) {
+                currencyMap[currency] = country.data;
+            }
         });
 
         res.status(200).json({ success: true, data: currencyMap });

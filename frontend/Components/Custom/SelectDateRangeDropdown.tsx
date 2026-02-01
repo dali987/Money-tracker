@@ -15,11 +15,11 @@ const options = [
     'Custom',
 ];
 
-type Props = {
+interface Props {
     // optional prop: where to handle filtering (preferred for separation of concerns)
     onRangeChange?: (range: { start: string | null; end: string | null; label: string }) => void;
     className?: string;
-};
+}
 
 const SelectDropdown = ({ onRangeChange, className }: Props) => {
     const [selected, setSelected] = useState('');

@@ -4,31 +4,31 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { recurringApi } from '@/lib/api/recurring';
 import { RecurringTransaction } from '@/types';
-import RecurringForm from '@/Components/RecurringForm';
-import { Plus, Clock, Trash2, Edit2, AlertCircle, Wallet, ArrowRight } from 'lucide-react';
+import RecurringForm from '@/Components/transactions/RecurringForm';
+import { Plus, Clock, Wallet, ArrowRight, MoreVertical } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import SelectDropdown from '@/Components/Custom/SelectDropdown';
+import EmptyState from '@/Components/states/EmptyState';
+import ErrorState from '@/Components/states/ErrorState';
+import ThreeBlockSkeleton from '@/Components/states/ThreeBlockSkeleton';
 
-const container = {
+const containerVariants = {
     hidden: { opacity: 0 },
-    show: {
+    visible: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.05,
+            staggerChildren: 0.1,
         },
     },
 };
 
-const item = {
-    hidden: { opacity: 0, y: 15 },
-    show: {
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
         opacity: 1,
         y: 0,
-        transition: {
-            type: 'spring',
-            stiffness: 300,
-            damping: 24,
-        },
+        transition: { duration: 0.4, ease: 'easeOut' as const },
     },
 };
 
@@ -59,8 +59,8 @@ const RecurringPage = () => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
+    const handleDelete = (id: string, e?: React.MouseEvent | { stopPropagation: () => void }) => {
+        e?.stopPropagation();
         if (confirm('Are you sure you want to delete this recurring rule?')) {
             deleteMutation.mutate(id);
         }
@@ -77,28 +77,19 @@ const RecurringPage = () => {
         setIsModalOpen(false);
     };
 
-    if (isLoading)
-        return (
-            <div className="p-10 flex justify-center">
-                <span className="loading loading-spinner loading-lg"></span>
-            </div>
-        );
-
-    if (isError)
-        return (
-            <div className="flex flex-col items-center justify-center p-10 text-center text-error gap-2">
-                <AlertCircle size={32} />
-                <p>Failed to load recurring rules.</p>
-            </div>
-        );
-
     const list = recurringTransactions?.data || [];
 
     return (
         <main className="bg-base-200 min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-6 lg:p-12 transition-all duration-300">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <motion.div
+                    variants={itemVariants}
+                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-base-content flex items-center gap-2">
                             Recurring Transactions
@@ -118,48 +109,53 @@ const RecurringPage = () => {
                             Add Rule
                         </button>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* List */}
                 <div className="w-full">
                     <AnimatePresence mode="wait">
-                        {list.length === 0 ? (
+                        {isError ? (
                             <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="flex flex-col items-center justify-center py-20 text-center bg-base-100 rounded-3xl border border-dashed border-base-content/20">
-                                <div className="bg-base-200 p-4 rounded-full mb-4">
-                                    <Clock className="w-8 h-8 text-base-content/40" />
-                                </div>
-                                <h3 className="text-lg font-bold text-base-content">
-                                    No recurring rules yet
-                                </h3>
-                                <p className="text-base-content/60 max-w-sm mt-2 mb-6">
-                                    Set up recurring bills or salary to have them automatically
-                                    added to your transactions.
-                                </p>
-                                <button
-                                    className="btn btn-outline btn-sm"
-                                    onClick={() => {
+                                variants={itemVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className="w-full">
+                                <ErrorState message="Failed to load your recurring transactions." />
+                            </motion.div>
+                        ) : isLoading ? (
+                            <ThreeBlockSkeleton />
+                        ) : list.length === 0 ? (
+                            <EmptyState
+                                title="No recurring transactions found"
+                                description="We couldn't find any recurring transactions created. Try adding a new transaction to get started."
+                                icon={<Plus />}
+                                action={{
+                                    label: 'Add Rule',
+                                    onClick: () => {
                                         setEditingItem(null);
                                         setIsModalOpen(true);
-                                    }}>
-                                    Create your first rule
-                                </button>
-                            </motion.div>
+                                    },
+                                }}
+                            />
                         ) : (
                             <motion.div
-                                variants={container}
+                                variants={containerVariants}
                                 initial="hidden"
-                                animate="show"
+                                animate="visible"
                                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                {list.map((item: RecurringTransaction) => (
+                                {list.map((item: RecurringTransaction, index: number) => (
                                     <motion.div
                                         key={item._id}
-                                        variants={item}
+                                        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        transition={{
+                                            duration: 0.4,
+                                            delay: 0.2 + index * 0.1,
+                                            ease: 'easeOut',
+                                        }}
                                         layout
-                                        onClick={() => handleEdit(item)}
-                                        className="group relative bg-base-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all border border-base-200 cursor-pointer overflow-hidden">
+                                        className="group relative bg-base-100 p-6 rounded-2xl shadow-sm hover:border-primary/20 hover:shadow-md border border-base-200 cursor-pointer overflow-hidden">
                                         {/* Status Indicator Bar */}
                                         <div
                                             className={`absolute top-0 left-0 w-1.5 h-full 
@@ -184,13 +180,30 @@ const RecurringPage = () => {
                                                  }`}>
                                                 {item.type}
                                             </span>
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0">
-                                                <button
-                                                    onClick={(e) => handleDelete(item._id, e)}
-                                                    className="btn btn-ghost btn-xs btn-square text-error hover:bg-error/10">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
+                                            <SelectDropdown
+                                                trigger={
+                                                    <div className="btn btn-ghost btn-circle btn-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <MoreVertical
+                                                            size={18}
+                                                            className="text-base-content/70"
+                                                        />
+                                                    </div>
+                                                }
+                                                showSelected={false}
+                                                menuClassName="w-32"
+                                                options={[
+                                                    { label: 'Edit', value: 'edit' },
+                                                    {
+                                                        label: 'Delete',
+                                                        value: 'delete',
+                                                        className: 'text-error hover:bg-error/10',
+                                                    },
+                                                ]}
+                                                onSelect={(val) => {
+                                                    if (val === 'edit') handleEdit(item);
+                                                    if (val === 'delete') handleDelete(item._id);
+                                                }}
+                                            />
                                         </div>
 
                                         <div className="ml-2 mb-4">
@@ -275,7 +288,7 @@ const RecurringPage = () => {
                     onClose={handleFormClose}
                     onSuccess={handleFormSuccess}
                 />
-            </div>
+            </motion.div>
         </main>
     );
 };

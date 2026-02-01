@@ -79,15 +79,23 @@ export interface TransactionSummary {
 export type Rates = Record<string, number>;
 
 export interface CurrencyOption {
-    label: string;
-    value: string;
+    code: string;
+    currency: string;
+    currency_code: string;
+    currency_symbol: string;
+    dial_code: string;
+    flag: string;
+    local_name: string;
+    name: string;
+    preferred: boolean;
 }
+
 export interface RecurringTransaction {
     _id: string;
     user: string;
     type: TransactionType;
-    fromAccount?: any;
-    toAccount?: any;
+    fromAccount?: string | Account;
+    toAccount?: string | Account;
     amount: number;
     frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
     startDate: string;
@@ -97,3 +105,26 @@ export interface RecurringTransaction {
     tags: string[];
     lastRunDate?: string;
 }
+
+export interface TransactionFilter {
+    type?: string;
+    startDate?: Date;
+    endDate?: Date;
+    accountId?: string;
+    tags?: string;
+    category?: string;
+    groupBy?: string;
+    account?: string;
+    excludeTags?: string;
+}
+
+export type ChartDataResponse = {
+    _id: number;
+    income: number;
+    expense: number;
+};
+
+export type NetWorthChartResponse = {
+    netWorthAtEndOfPeriod: number;
+    changes: Record<string, number>;
+};

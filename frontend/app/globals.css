@@ -2,6 +2,8 @@
 
 @custom-variant light (&:is([data-theme='mostlyextreme'] *));
 @custom-variant dark (&:is([data-theme='darkmode'] *));
+@custom-variant is-drawer-open (.drawer:has(.drawer-toggle:checked) &);
+@custom-variant is-drawer-close (.drawer:not(:has(.drawer-toggle:checked)) &);
 
 @plugin "daisyui" {
     /* List the two themes you want to toggle between */
@@ -18,7 +20,7 @@
     --color-base-200: oklch(0.949 0.002 247.8);
     --color-base-300: #d1d5dc;
     --color-base-content: oklch(0.03 0.003 264.5);
-    --color-primary: oklch(67% 0.182 276.935);
+    --color-primary: oklch(0.7 0.233 277.117);
     --color-primary-content: oklch(25% 0.09 281.288);
     --color-secondary: oklch(79% 0.209 151.711);
     --color-secondary-content: oklch(26% 0.065 152.934);

@@ -5,11 +5,34 @@ import { useBudgetStore } from '@/store/useBudgetStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Edit2, AlertCircle, CheckCircle, Wallet } from 'lucide-react';
+import { Plus, AlertCircle, CheckCircle, Wallet, MoreVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import SelectDropdown from '@/Components/Custom/SelectDropdown';
 import NumberInput from '@/Components/Custom/NumberInput';
 import CustomModal from '@/Components/Custom/CustomModal';
+import ErrorState from '@/Components/states/ErrorState';
+import EmptyState from '@/Components/states/EmptyState';
+import ThreeBlockSkeleton from '@/Components/states/ThreeBlockSkeleton';
+import { Budget, Transaction } from '@/types';
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1,
+        },
+    },
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.4, ease: 'easeOut' as const },
+    },
+};
 
 // Helper for currency if utility missing
 const formatMoney = (amount: number) => {
@@ -19,12 +42,10 @@ const formatMoney = (amount: number) => {
     }).format(amount);
 };
 
-import ErrorState from '@/Components/ErrorState';
-
 const BudgetPage = () => {
     const { budgets, getBudgets, createBudget, updateBudget, deleteBudget, isLoading, isError } =
         useBudgetStore();
-    const { transactions, getTransactionsWithFilter } = useTransactionStore(); // Fetch all/monthly transactions
+    const { transactions } = useTransactionStore(); // Fetch all/monthly transactions
     const { authUser } = useAuthStore();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,24 +60,13 @@ const BudgetPage = () => {
 
     useEffect(() => {
         getBudgets();
-        // Fetch current month's transactions to be accurate?
-        // Or just rely on what's in store if it loads default.
-        // Better to ensure we have data.
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
-
-        getTransactionsWithFilter({
-            startDate: startOfMonth,
-            endDate: endOfMonth,
-        });
-    }, [getBudgets, getTransactionsWithFilter]);
+    }, [getBudgets]);
 
     const budgetStats = useMemo(() => {
         return budgets.map((budget) => {
             const spent = transactions
-                .filter((t: any) => t.type === 'expense' && t.tags?.includes(budget.tag))
-                .reduce((sum: number, t: any) => sum + t.amount, 0);
+                .filter((transaction: Transaction) => transaction.type === 'expense' && transaction.tags?.includes(budget.tag))
+                .reduce((sum: number, transaction: Transaction) => sum + transaction.amount, 0);
 
             const percentage = Math.min((spent / budget.amount) * 100, 100);
             const isOverBudget = spent > budget.amount;
@@ -96,7 +106,7 @@ const BudgetPage = () => {
         setFormData({ tag: '', amount: '', alertThreshold: '80' });
     };
 
-    const handleEdit = (budget: any) => {
+    const handleEdit = (budget: Budget) => {
         setFormData({
             tag: budget.tag,
             amount: String(budget.amount),
@@ -124,42 +134,6 @@ const BudgetPage = () => {
             (tag: string) => !budgets.some((b) => b.tag === tag && b._id !== editId),
         ) || [];
 
-    // Animation Variants
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1,
-                delayChildren: 0.1,
-            },
-        },
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.4, delayChildren: 1, ease: 'easeOut' as const },
-        },
-    };
-
-    const cardVariants = {
-        hidden: { opacity: 0, y: 30, scale: 0.95 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            transition: { duration: 0.5, ease: 'easeOut' as const },
-        },
-        exit: {
-            opacity: 0,
-            scale: 0.9,
-            transition: { duration: 0.3 },
-        },
-    };
-
     return (
         <main className="bg-base-200 min-h-screen w-full lg:w-[calc(100%-var(--nav-width))] lg:ml-(--nav-width) p-6 lg:p-12 transition-all duration-300">
             <motion.div
@@ -172,9 +146,7 @@ const BudgetPage = () => {
                     variants={itemVariants}
                     className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-base-content">
-                            Monthly Budgets
-                        </h1>
+                        <h1 className="text-3xl font-bold text-base-content">Monthly Budgets</h1>
                         <p className="text-base-content/70 mt-1">
                             Track your spending by tag and stay on target.
                         </p>
@@ -191,50 +163,26 @@ const BudgetPage = () => {
 
                 {/* Content */}
                 {isError ? (
-                    <motion.div variants={itemVariants} className="w-full">
+                    <motion.div
+                        variants={itemVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="w-full">
                         <ErrorState
                             message="Failed to load your budgets."
                             onRetry={() => getBudgets()}
                         />
                     </motion.div>
                 ) : isLoading ? (
-                    <motion.div
-                        variants={itemVariants}
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[1, 2, 3].map((i) => (
-                            <motion.div
-                                key={i}
-                                className="skeleton h-56 rounded-2xl w-full"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: i * 0.1 }}
-                            />
-                        ))}
-                    </motion.div>
+                    <ThreeBlockSkeleton />
                 ) : budgets.length === 0 ? (
-                    <motion.div
-                        variants={itemVariants}
-                        className="flex flex-col items-center justify-center py-20 bg-base-100 rounded-3xl shadow-sm border border-base-200">
-                        <motion.div
-                            className="bg-base-200 p-4 rounded-full mb-4"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}>
-                            <Plus size={32} className="text-primary" />
-                        </motion.div>
-                        <h3 className="text-xl font-semibold">No budgets yet</h3>
-                        <p className="text-base-content/60 mt-2 text-center max-w-md">
-                            Create a budget for a tag to start tracking your expenses and save more
-                            money.
-                        </p>
-                        <motion.button
-                            onClick={openCreateModal}
-                            className="btn btn-outline btn-primary mt-6"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}>
-                            Create your first budget
-                        </motion.button>
-                    </motion.div>
+                    // <BudgetEmpty variant={itemVariants} openModal={openCreateModal} />
+                    <EmptyState
+                        title="No budgets found"
+                        description="We couldn't find any budgets created. Try adding a new budget to get started."
+                        icon={<Plus />}
+                        action={{ label: 'Add Budget', onClick: openCreateModal }}
+                    />
                 ) : (
                     <motion.div
                         variants={containerVariants}
@@ -251,14 +199,10 @@ const BudgetPage = () => {
                                     exit={{ opacity: 0, scale: 0.9 }}
                                     transition={{
                                         duration: 0.4,
-                                        delay: index * 0.1,
+                                        delay: 0.2 + index * 0.1,
                                         ease: 'easeOut',
                                     }}
-                                    whileHover={{
-                                        y: -4,
-                                        boxShadow: '0 10px 40px -15px rgba(0,0,0,0.3)',
-                                    }}
-                                    className="bg-base-100 border border-base-200 rounded-2xl p-6 shadow-sm relative overflow-hidden group cursor-default">
+                                    className="bg-base-100 border border-base-200 rounded-2xl p-6 shadow-sm relative overflow-hidden group cursor-pointer hover:border-primary/20">
                                     {/* Background Progress Gradient (Subtle) */}
                                     <div
                                         className={`absolute bottom-0 left-0 h-1 transition-all duration-500 ${
@@ -287,28 +231,30 @@ const BudgetPage = () => {
                                                 {item.tag}
                                             </div>
                                         </div>
-                                        <div className="dropdown dropdown-end">
-                                            <div
-                                                tabIndex={0}
-                                                role="button"
-                                                className="btn btn-ghost btn-circle btn-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Edit2 size={16} />
-                                            </div>
-                                            <ul
-                                                tabIndex={0}
-                                                className="dropdown-content z-1 menu p-2 shadow bg-base-100 rounded-box w-32 border border-base-200">
-                                                <li>
-                                                    <a onClick={() => handleEdit(item)}>Edit</a>
-                                                </li>
-                                                <li>
-                                                    <a
-                                                        onClick={() => handleDelete(item._id)}
-                                                        className="text-error">
-                                                        Delete
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
+                                        <SelectDropdown
+                                            trigger={
+                                                <div className="btn btn-ghost btn-circle btn-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <MoreVertical
+                                                        size={18}
+                                                        className="text-base-content/70"
+                                                    />
+                                                </div>
+                                            }
+                                            showSelected={false}
+                                            menuClassName="w-32"
+                                            options={[
+                                                { label: 'Edit', value: 'edit' },
+                                                {
+                                                    label: 'Delete',
+                                                    value: 'delete',
+                                                    className: 'text-error hover:bg-error/10',
+                                                },
+                                            ]}
+                                            onSelect={(val) => {
+                                                if (val === 'edit') handleEdit(item);
+                                                if (val === 'delete') handleDelete(item._id);
+                                            }}
+                                        />
                                     </div>
 
                                     <div className="flex flex-col gap-1 mb-6">
@@ -460,3 +406,4 @@ const BudgetPage = () => {
 };
 
 export default BudgetPage;
+

@@ -9,6 +9,15 @@ interface Option {
     value: string;
 }
 
+interface MultiSelectProps {
+    formFieldName: string;
+    options: Option[];
+    prompt?: string;
+    className?: string;
+    onSelect?: (values: string[]) => void;
+    selected?: string[];
+}
+
 const EMPTY_ARRAY: string[] = [];
 
 export default function MultiSelectDropdown({
@@ -18,14 +27,7 @@ export default function MultiSelectDropdown({
     className = '',
     onSelect,
     selected = EMPTY_ARRAY,
-}: {
-    formFieldName: string;
-    options: Option[];
-    prompt?: string;
-    className?: string;
-    onSelect?: (values: string[]) => void;
-    selected?: string[];
-}) {
+}: MultiSelectProps) {
     // Internal state synced with the 'selected' prop
     const [selectedValues, setSelectedValues] = useState<string[]>(EMPTY_ARRAY);
     const [isOpen, setIsOpen] = useState(false);

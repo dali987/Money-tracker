@@ -17,7 +17,7 @@ const CustomModal = ({
     children,
     Icon,
     title,
-    autoClose = true,
+    autoClose = false,
     closeButton = true,
     isOpen,
     onClose,
@@ -62,7 +62,7 @@ const CustomModal = ({
                         exit={{ opacity: 0, scale: 0.9, y: 30 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                         onClick={(e) => e.stopPropagation()}>
-                        <div className="p-6 border-b border-zinc-100 dark:border-base-200 flex justify-between items-center bg-zinc-50/50 dark:bg-base-200/50">
+                        <div className="p-6 border-b border-zinc-100 dark:border-base-200 flex justify-between items-center bg-zinc-100 dark:bg-base-200/50">
                             <div className="flex items-center gap-2">
                                 {Icon && <Icon className="w-5 h-5 text-indigo-500" />}
                                 <h2 className="text-lg font-bold text-zinc-800 dark:text-base-content">

@@ -9,6 +9,7 @@ interface CustomCollapseProps {
     children: React.ReactNode;
     defaultOpen?: boolean;
     className?: string;
+    closable?: boolean;
     layout?: any;
 }
 
@@ -19,9 +20,10 @@ const CustomCollapse = ({
     children,
     defaultOpen = true,
     className = 'bg-base-100 rounded-box shadow-sm',
+    closable = true,
     layout,
 }: CustomCollapseProps) => {
-    const [isCollapseOpen, setIsCollapseOpen] = useState(defaultOpen);
+    const [isCollapseOpen, setIsCollapseOpen] = useState(closable ? defaultOpen : true);
 
     return (
         <motion.div
@@ -32,19 +34,21 @@ const CustomCollapse = ({
                 id={id}
                 layout="position"
                 type="button"
-                onClick={() => setIsCollapseOpen(!isCollapseOpen)}
-                className={`w-full flex justify-between bg-base-100 items-center p-4 lg:p-6 font-bold text-xl text-left hover:bg-base-300 transition-colors cursor-pointer ${
-                    isCollapseOpen ? 'rounded-t-box' : 'rounded-box'
-                }`}>
+                onClick={() => closable && setIsCollapseOpen(!isCollapseOpen)}
+                className={`w-full flex justify-between bg-base-100 items-center p-4 lg:p-6 font-bold text-xl text-left transition-colors ${
+                    closable ? 'hover:bg-base-300 cursor-pointer' : 'cursor-default'
+                } ${isCollapseOpen ? 'rounded-t-box' : 'rounded-box'}`}>
                 <span className="ps-8 relative">{title}</span>
                 <div className="flex items-center gap-4">
                     {rightContent}
-                    <motion.span
-                        animate={{ rotate: isCollapseOpen ? 180 : 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="text-gray-400">
-                        <ChevronDown size={24} />
-                    </motion.span>
+                    {closable && (
+                        <motion.span
+                            animate={{ rotate: isCollapseOpen ? 180 : 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="text-gray-400">
+                            <ChevronDown size={24} />
+                        </motion.span>
+                    )}
                 </div>
             </motion.button>
 

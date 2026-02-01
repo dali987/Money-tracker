@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import AccountForm from '@/Components/AccountForm';
+import AccountForm from '@/Components/accounts/AccountForm';
 import CustomModal from '@/Components/Custom/CustomModal';
-import Initializer from '@/Components/Initializer';
-import NetWorth from '@/Components/NetWorth';
+import Initializer from '@/Components/providers/Initializer';
+import NetWorth from '@/Components/dashboard/NetWorth';
 import { Plus, Wallet } from 'lucide-react';
 
-const page = () => {
+const AccountsPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     return (
@@ -38,4 +38,4 @@ const page = () => {
     );
 };
 
-export default page;
+export default AccountsPage;

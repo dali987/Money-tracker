@@ -1,39 +1,7 @@
 import mongoose from 'mongoose';
 import Transaction from '../models/transaction.model.js';
 import Account from '../models/account.model.js';
-
-const actions = {
-    income: async (transaction, factor, session) =>
-        await Account.findByIdAndUpdate(
-            transaction.toAccount,
-            { $inc: { balance: transaction.amount * factor } },
-            { session }
-        ),
-    expense: async (transaction, factor, session) =>
-        await Account.findByIdAndUpdate(
-            transaction.fromAccount,
-            { $inc: { balance: -transaction.amount * factor } },
-            { session }
-        ),
-    transfer: async (transaction, factor, session) => {
-        if (transaction.fromAccount === transaction.ftoAccount) {
-            const error = new Error('Cannot update transfer to the same account');
-            error.status = 400;
-            throw error;
-        }
-
-        await Account.findByIdAndUpdate(
-            transaction.toAccount,
-            { $inc: { balance: transaction.amount * factor } },
-            { session }
-        );
-        await Account.findByIdAndUpdate(
-            transaction.fromAccount,
-            { $inc: { balance: -transaction.amount * factor } },
-            { session }
-        );
-    },
-};
+import { accountActions } from '../utils/accountActions.js';
 
 const getFilter = async (req) => {
     const { startDate, endDate, account, tags, excludeTags, type } = req.query;
@@ -112,20 +80,13 @@ export const getTransactionChartData = async (req, res, next) => {
         }
 
         const data = await Transaction.aggregate(pipeline);
+        console.log('data', data);
         res.status(200).json({ success: true, data });
     } catch (error) {
         console.error('An error occurred while getting chart data: ', error);
         next(error);
     }
 };
-
-/* what this does:1- gets transactions from the start date given untill today, then reverse them (latest transactions -> first transactinos)
-2- we loop through these transactions, for any transaction that is between the today and the end date given, it will subtract if its expense and add if its income from the current net worth (calculated through the accounts)
-3- we get the net worth at the end of the period
-4- then it removes the transactions that are after the end date (giving the transactions that are between the period given, and remember its still backwards so its from end to start time)
-5- it makes an object that has the days or months as keys and the net worth at that time as values
-6- it returns the object
-*/
 
 export const getNetWorthChartData = async (req, res, next) => {
     try {
@@ -204,7 +165,7 @@ export const createTransaction = async (req, res, next) => {
 
         const { type } = req.body;
 
-        await actions[type](transaction, 1, session);
+        await accountActions[type](transaction, session);
 
         await session.commitTransaction();
 
@@ -239,10 +200,10 @@ export const calculateTransactionSum = async (req, res, next) => {
             {
                 $group: {
                     _id: null,
-                    Income: {
+                    totalIncome: {
                         $sum: { $cond: [{ $eq: ['$type', 'income'] }, '$amount', 0] },
                     },
-                    Expense: {
+                    totalExpense: {
                         $sum: { $cond: [{ $eq: ['$type', 'expense'] }, '$amount', 0] },
                     },
                 },
@@ -250,13 +211,13 @@ export const calculateTransactionSum = async (req, res, next) => {
             {
                 $project: {
                     _id: 0,
-                    Income: 1,
-                    Expense: 1,
-                    netWorth: { $subtract: ['$Income', '$Expense'] },
+                    totalIncome: 1,
+                    totalExpense: 1,
+                    netBalance: { $subtract: ['$totalIncome', '$totalExpense'] },
                 },
             },
         ]);
-        const summary = result[0] || { Income: 0, Expense: 0, netWorth: 0 };
+        const summary = result[0] || { totalIncome: 0, totalExpense: 0, netBalance: 0 };
 
         res.status(200).json({ success: true, data: summary });
     } catch (error) {
@@ -286,7 +247,7 @@ export const updateTransaction = async (req, res, next) => {
         const { id: transactionId } = req.params;
         const transaction = await Transaction.findById(transactionId);
 
-        await actions[transaction.type](transaction, -1, session);
+        await accountActions[transaction.type](transaction, session, -1);
 
         const updatedTransaction = await Transaction.findByIdAndUpdate(
             transactionId,
@@ -302,7 +263,7 @@ export const updateTransaction = async (req, res, next) => {
             throw error;
         }
 
-        await actions[transaction.type](updatedTransaction, 1, session);
+        await accountActions[transaction.type](updatedTransaction, session);
 
         await session.commitTransaction();
         res.status(200).json({ success: true, data: updatedTransaction });
@@ -330,7 +291,7 @@ export const deleteTransaction = async (req, res, next) => {
             throw error;
         }
 
-        await actions[deletedTransaction.type](deletedTransaction, -1, session);
+        await accountActions[deletedTransaction.type](deletedTransaction, session, -1);
 
         await session.commitTransaction();
 

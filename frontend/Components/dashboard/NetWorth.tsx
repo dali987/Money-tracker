@@ -3,12 +3,12 @@
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { CreditCard, Pencil } from 'lucide-react';
-import React, { useMemo, useState, useEffect } from 'react';
-import AccountForm from './AccountForm';
+import { useMemo, useState, useEffect } from 'react';
+import AccountForm from '../accounts/AccountForm';
 import { motion, AnimatePresence, Variants } from 'motion/react';
-import AnimatedNumber from './AnimatedNumber';
-import ErrorState from './ErrorState';
-import CustomModal from './Custom/CustomModal';
+import AnimatedNumber from '../ui/AnimatedNumber';
+import ErrorState from '@/Components/states/ErrorState';
+import CustomModal from '@/Components/Custom/CustomModal';
 
 const container: Variants = {
     hidden: { opacity: 0, y: 15 },
@@ -24,40 +24,22 @@ const section: Variants = {
     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
-const SkeletonNetWorth = () => (
-    <div className="w-full font-mono bg-base-100 rounded-box p-4">
-        <div className="flex justify-between items-center mb-6">
-            <div className="skeleton h-8 w-40"></div>
-            <div className="skeleton h-8 w-32"></div>
-        </div>
-        {[1, 2].map((i) => (
-            <div key={i} className="mb-4">
-                <div className="flex justify-between items-center mb-2">
-                    <div className="skeleton h-6 w-24"></div>
-                    <div className="skeleton h-6 w-28"></div>
-                </div>
-                <div className="space-y-2 ml-4">
-                    <div className="skeleton h-10 w-full"></div>
-                    <div className="skeleton h-10 w-full"></div>
-                </div>
-            </div>
-        ))}
-    </div>
-);
-
-import CustomCollapse from './Custom/CustomCollapse';
+import CustomCollapse from '@/Components/Custom/CustomCollapse';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAccountStore } from '@/store/useAccountStore';
+import NetWorthSkeleton from '@/Components/states/NetWorthSkeleton';
 
 const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?: boolean }) => {
-    const { rates, deleteAccount, getAccountsSummary } = useTransactionStore();
+    const { rates } = useTransactionStore();
+    const { getAccountsSummary } = useAccountStore();
     const { authUser } = useAuthStore();
     const [editAccount, setEditAccount] = useState<any>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [accountsSummary, setAccountsSummary] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const queryClient = useQueryClient();
-    const isAccountsError = useTransactionStore((state) => state.isAccountsError);
+    const isAccountsError = useAccountStore((state) => state.isError);
 
     const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
     const accounts = accountsRaw || [];
@@ -110,7 +92,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
     }
 
     if (!authUser || !rates || !accounts || isLoading) {
-        return <SkeletonNetWorth />;
+        return <NetWorthSkeleton />;
     }
 
     return (
@@ -123,6 +105,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
             <CustomCollapse
                 title="NET WORTH"
                 defaultOpen={true}
+                closable={closable}
                 rightContent={
                     <div className="text-xl font-bold">
                         <AnimatedNumber

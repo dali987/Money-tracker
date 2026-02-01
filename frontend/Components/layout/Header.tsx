@@ -4,13 +4,13 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, LogOut, Settings, Keyboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ThemeToggle } from '@/Components/ThemeToggle';
+import { ThemeToggle } from './ThemeToggle';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { useShortcutsHelp } from './KeyboardShortcutsProvider';
+import { useShortcutsHelp } from '../providers/KeyboardShortcutsProvider';
 import { useQueryClient } from '@tanstack/react-query';
-import { NotificationCenter } from './NotificationCenter';
+import { NotificationCenter } from '../notifications/NotificationCenter';
 
 const Header = () => {
     const pathname = usePathname();

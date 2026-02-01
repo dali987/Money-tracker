@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import LayoutWrapper from '../Components/LayoutWrapper';
-import Provider from '@/Components/Provider';
+import LayoutWrapper from '../Components/layout/LayoutWrapper';
+import Provider from '@/Components/providers/Provider';
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
     title: 'Money Tracker - Take Control of Your Finances',
-    description: 'The ultimate money tracking solution to manage accounts, track transactions, analyze spending, and achieve your financial goals.',
+    description:
+        'The ultimate money tracking solution to manage accounts, track transactions, analyze spending, and achieve your financial goals.',
 };
 
 export default async function RootLayout({

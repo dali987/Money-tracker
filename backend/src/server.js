@@ -15,7 +15,10 @@ import recurringRouter from './routes/recurring.router.js';
 import helmet from 'helmet';
 import { apiLimiter } from './middlewares/rateLimit.middleware.js';
 import cron from 'node-cron';
-import { fetchAndSaveExchangeRates } from './controllers/exchange.controller.js';
+import {
+    fetchAndSaveExchangeRates,
+    checkExchangeRates,
+} from './controllers/exchange.controller.js';
 import { processDueRecurringTransactions } from './controllers/recurring.controller.js';
 
 const dev = ENV.NODE_ENV !== 'production';
@@ -72,13 +75,27 @@ nextApp.prepare().then(async () => {
     app.listen(PORT, async () => {
         console.log('Server is up, port:', PORT);
 
-        cron.schedule('0 0 * * 0', async () => {
-            console.log('Running weekly exchange rate update...');
+        // Run startup check for exchange rates
+        try {
+            await checkExchangeRates();
+        } catch (error) {
+            console.error('Failed to run startup exchange rates check:', error);
+        }
+
+        // Run startup check for recurring transactions
+        try {
+            await processDueRecurringTransactions();
+        } catch (error) {
+            console.error('Failed to run startup recurring transactions check:', error);
+        }
+
+        cron.schedule('0 0 * * *', async () => {
+            console.log('Running daily exchange rate update check...');
             try {
-                await fetchAndSaveExchangeRates();
-                console.log('Exchange rates updated successfully via scheduler.');
+                await checkExchangeRates();
+                console.log('Exchange rates update check completed via scheduler.');
             } catch (error) {
-                console.error('Failed to update exchange rates in scheduler:', error);
+                console.error('Failed to check exchange rates in scheduler:', error);
             }
         });
 

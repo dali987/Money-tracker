@@ -2,7 +2,7 @@
 
 import { HorizontalChart } from '@/Components/charts/HorizontalChart';
 import { LineChart } from '@/Components/charts/LineChart';
-import Initializer from '@/Components/Initializer';
+import Initializer from '@/Components/providers/Initializer';
 import SelectAccountDropdown from '@/Components/Custom/SelectAccountDropdown';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -12,6 +12,16 @@ import { useState, useEffect } from 'react';
 import SelectDropdown from '@/Components/Custom/SelectDropdown';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useAccounts } from '@/hooks/useAccounts';
+import ReportSkeleton from '@/Components/states/ReportSkeleton';
+import { ChartDataResponse, TransactionFilter, Account, NetWorthChartResponse } from '@/types';
+
+interface PeriodConfig {
+    label: (date: Date) => string;
+    add: (date: Date, val: number) => Date;
+    range: (date: Date) => { startDate: Date; endDate: Date };
+    groupBy: 'day' | 'month';
+    generateLabels: (date: Date) => string[];
+}
 
 const periods = ['Yearly', 'Monthly'];
 
@@ -30,7 +40,26 @@ const chartConfig = {
     },
 };
 
-const PERIOD_CONFIGS: Record<string, any> = {
+const containerVariants: Variants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.45,
+            ease: 'easeOut',
+            staggerChildren: 0.3,
+            delayChildren: 0.3,
+        },
+    },
+};
+
+const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
+
+const PERIOD_CONFIGS: Record<string, PeriodConfig> = {
     monthly: {
         label: (date: Date) =>
             date.toLocaleDateString('en-US', {
@@ -78,25 +107,34 @@ interface ChartEntry {
     worth?: number;
 }
 
-const transformChartData = (rawData: any[], config: any, chartType: string, currentDate: Date) => {
+const transformChartData = (
+    rawData: ChartDataResponse[],
+    config: PeriodConfig,
+    chartType: string,
+    currentDate: Date,
+) => {
     const isTagGrouping = chartType === 'expenseIncomeTags';
     const isSingleType = chartType === 'netIncome' || chartType === 'netExpense';
     const targetType = chartType === 'netIncome' ? 'income' : 'expense';
 
     if (isTagGrouping) {
-        return rawData.map((item: any) => ({
-            period: item._id,
+        return rawData.map((item: ChartDataResponse) => ({
+            period: item._id.toString(),
             income: item.income,
             expense: item.expense,
         }));
     }
 
     const labels = config.generateLabels(currentDate);
-    const dataMap = new Map(rawData.map((item: any) => [item._id.toString(), item]));
+    const dataMap = new Map(rawData.map((item: ChartDataResponse) => [item._id.toString(), item]));
 
     return labels.map((label: string, index: number) => {
-        const key = (index + 1).toString();
-        const item: any = dataMap.get(key) || { income: 0, expense: 0 };
+        const key = index + 1;
+        const item: ChartDataResponse = dataMap.get(key.toString()) || {
+            _id: key,
+            income: 0,
+            expense: 0,
+        };
         const entry: ChartEntry = { period: label };
 
         if (isSingleType) {
@@ -109,7 +147,11 @@ const transformChartData = (rawData: any[], config: any, chartType: string, curr
     });
 };
 
-const processNetWorthTrend = (response: any, config: any, currentDate: Date): ChartEntry[] => {
+const processNetWorthTrend = (
+    response: NetWorthChartResponse,
+    config: PeriodConfig,
+    currentDate: Date,
+): ChartEntry[] => {
     const { netWorthAtEndOfPeriod, changes } = response;
     const labels = config.generateLabels(currentDate);
     let runningWorth = netWorthAtEndOfPeriod;
@@ -127,7 +169,7 @@ const processNetWorthTrend = (response: any, config: any, currentDate: Date): Ch
         .reverse();
 };
 
-const Page = () => {
+const ReportsPage = () => {
     const { getTransactionsChart, getNetWorthChart } = useTransactionStore();
     const { authUser } = useAuthStore();
 
@@ -139,15 +181,15 @@ const Page = () => {
     const [chartData, setChartData] = useState<ChartEntry[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
+    const { data: accountsRaw = [] } = useAccounts();
 
     const accounts = accountsRaw || [];
 
-    const handleOptions = (accounts: Array<any>) => {
+    const handleOptions = (accounts: Account[]) => {
         if (!accounts) return [];
         const newAccounts = accounts.map((account) => ({
             name: account.name,
-            type: account.type,
+            type: account.group,
             id: account._id,
         }));
         return [{ name: 'All Accounts', type: '', id: '' }, ...newAccounts];
@@ -181,12 +223,11 @@ const Page = () => {
                     setChartData(processNetWorthTrend(response, config, currentDate));
                 }
             } else {
-                const params: any = {
+                const params: TransactionFilter = {
                     startDate,
                     endDate,
                     groupBy: chartType === 'expenseIncomeTags' ? 'tag' : config.groupBy,
-                    user: !selectedAccount ? true : false,
-                    excludeTags: excludeTags.length > 0 ? excludeTags.join(',') : undefined,
+                    excludeTags: excludeTags.length > 0 ? excludeTags.join(',') : '',
                 };
 
                 if (chartType === 'netIncome') params.type = 'income';
@@ -196,7 +237,7 @@ const Page = () => {
 
                 if (selectedAccount) params.account = selectedAccount;
 
-                const rawData = await getTransactionsChart(params);
+                const rawData: ChartDataResponse[] = await getTransactionsChart(params);
                 setChartData(transformChartData(rawData, config, chartType, currentDate));
             }
             setLoading(false);
@@ -218,25 +259,21 @@ const Page = () => {
         const isWorth = chartType === 'netWorth';
         const targetType = chartType === 'netIncome' ? 'income' : 'expense';
 
-        let currentConfig: any = chartConfig;
+        let currentConfig = {};
 
         if (isWorth) {
             currentConfig = { worth: chartConfig.worth };
         } else if (isSingleType) {
-            currentConfig = { [targetType]: (chartConfig as any)[targetType] };
+            currentConfig = { [targetType]: chartConfig[targetType] };
+        } else {
+            currentConfig = {
+                income: chartConfig.income,
+                expense: chartConfig.expense,
+            };
         }
 
         if (loading) {
-            return (
-                <motion.div
-                    key="loading"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex justify-center items-center h-64">
-                    <span className="loading loading-spinner loading-lg"></span>
-                </motion.div>
-            );
+            return <ReportSkeleton />;
         }
 
         return (
@@ -254,25 +291,6 @@ const Page = () => {
                 )}
             </motion.div>
         );
-    };
-
-    const containerVariants: Variants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: {
-                duration: 0.45,
-                ease: 'easeOut',
-                staggerChildren: 0.3,
-                delayChildren: 0.4,
-            },
-        },
-    };
-
-    const itemVariants: Variants = {
-        hidden: { opacity: 0, y: 10 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
     };
 
     return (
@@ -348,7 +366,7 @@ const Page = () => {
                         className="w-full"
                         options={handleOptions(accounts)}
                         placeholder="Select Account"
-                        onSelect={(option: any) => setSelectedAccount(option.id)}
+                        onSelect={(option: { id: string }) => setSelectedAccount(option.id)}
                     />
                     <MultiSelectDropdown
                         formFieldName="excludeTags"
@@ -368,4 +386,4 @@ const Page = () => {
     );
 };
 
-export default Page;
+export default ReportsPage;

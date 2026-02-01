@@ -2,6 +2,19 @@ import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
+export type AccountDropdownOption = { name: string; type: string; id: string };
+
+interface AccountDropDownProps {
+    options: AccountDropdownOption[];
+    className?: string;
+    onSelect?: any;
+    disabled?: boolean;
+    name?: string;
+    defaultValue?: boolean;
+    placeholder?: string;
+    selectedId?: string;
+}
+
 const SelectAccountDropdown = ({
     options,
     className,
@@ -10,17 +23,8 @@ const SelectAccountDropdown = ({
     name,
     defaultValue,
     placeholder,
-    selectedId
-}: {
-    options: { name: string; type: string; id: string }[];
-    className?: string;
-    onSelect?: any;
-    disabled?: boolean;
-    name?: string;
-    defaultValue?: boolean;
-    placeholder?: string;
-    selectedId?: string;
-}) => {
+    selectedId,
+}: AccountDropDownProps) => {
     const [selected, setSelected] = useState({ name: '', type: '', id: '' });
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -68,7 +72,6 @@ const SelectAccountDropdown = ({
             }
         }
     }, [selectedId, options]);
-
 
     const toggleDropdown = () => {
         if (disabled) return;

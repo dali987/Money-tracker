@@ -2,9 +2,17 @@ import { create } from 'zustand';
 import { toast } from 'sonner';
 import { transactionApi } from '@/lib/api/transactions';
 import { exchangeApi } from '@/lib/api/exchange';
-import { useAccountStore } from './useAccountStore';
+import { useAccountStore } from '@/store/useAccountStore';
 
-import { Transaction, Rates, CurrencyOption, TransactionSummary } from '@/types';
+import {
+    Transaction,
+    Rates,
+    CurrencyOption,
+    TransactionSummary,
+    TransactionFilter,
+    ChartDataResponse,
+    NetWorthChartResponse,
+} from '@/types';
 
 interface TransactionStore {
     transactions: Transaction[];
@@ -13,10 +21,10 @@ interface TransactionStore {
     isTransactionsLoading: boolean;
     isTransactionsError: boolean;
 
-    getTransactionsWithFilter: (filters: any) => Promise<Transaction[]>;
-    getTransactionsSummary: (filters: any) => Promise<TransactionSummary | null>;
-    getTransactionsChart: (filters: any) => Promise<any[]>;
-    getNetWorthChart: (filters: any) => Promise<any>;
+    getTransactionsWithFilter: (filters: TransactionFilter) => Promise<Transaction[]>;
+    getTransactionsSummary: (filters: TransactionFilter) => Promise<TransactionSummary | null>;
+    getTransactionsChart: (filters: TransactionFilter) => Promise<ChartDataResponse[]>;
+    getNetWorthChart: (filters: TransactionFilter) => Promise<NetWorthChartResponse | null>;
     createTransaction: (transactionData: any) => Promise<void>;
     updateTransaction: (transactionData: {
         id: string;
@@ -79,6 +87,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     getNetWorthChart: async (filters) => {
         try {
             const data = await transactionApi.getNetWorthChart(filters);
+            console.log('data is: ', data);
             return data.data;
         } catch (error) {
             console.error('An error occurred while getting net worth chart data: ', error);

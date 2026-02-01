@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import Header from './Header';
 import NavBar from './NavBar';
 import { Toaster } from 'sonner';
-import { KeyboardShortcutsProvider } from './KeyboardShortcutsProvider';
+import { KeyboardShortcutsProvider } from '../providers/KeyboardShortcutsProvider';
 import { useNotificationTriggers } from '@/hooks/useNotificationTriggers';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {

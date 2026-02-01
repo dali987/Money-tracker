@@ -1,5 +1,16 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+
+interface NumberInputProps {
+    className?: string;
+    name?: string;
+    disabled?: boolean;
+    value?: number | string;
+    onChange?: (value: number) => void;
+    min?: number;
+    step?: number;
+    placeholder?: string;
+}
 
 const NumberInput = ({
     className,
@@ -10,16 +21,7 @@ const NumberInput = ({
     min,
     step,
     placeholder,
-}: {
-    className?: string;
-    name?: string;
-    disabled?: boolean;
-    value?: number | string;
-    onChange?: (value: number) => void;
-    min?: number;
-    step?: number;
-    placeholder?: string;
-}) => {
+}: NumberInputProps) => {
     const isControlled = controlledValue !== undefined;
     const [internalNumber, setInternalNumber] = useState(0);
 

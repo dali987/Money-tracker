@@ -1,13 +1,14 @@
 'use client';
 
-import Initializer from '@/Components/Initializer';
+import Initializer from '@/Components/providers/Initializer';
 import MultiSelectDropdown from '@/Components/Custom/MultiSelectDropdown';
 import SearchableSelect from '@/Components/Custom/SearchableSelect';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Plus, User, Link as LinkIcon } from 'lucide-react';
+import Image from 'next/image';
 import {
     useSensors,
     useSensor,
@@ -16,63 +17,116 @@ import {
     pointerWithin,
     KeyboardSensor,
     DragOverlay,
+    DragOverEvent,
+    DragStartEvent,
 } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { SortableBadge } from '@/Components/Custom/SortableBadge';
 import CustomCollapse from '@/Components/Custom/CustomCollapse';
 import { motion, AnimatePresence, Variants } from 'motion/react';
 const flagUrl = (countryCode: string) =>
-    `https://flagcdn.com/16x12/${countryCode.toLowerCase()}.png`;
-const flagSet = (countryCode: string) =>
-    `https://flagcdn.com/32x24/${countryCode.toLowerCase()}.png 2x,https://flagcdn.com/48x36/${countryCode.toLowerCase()}.png 3x`;
+    `https://flagcdn.com/48x36/${countryCode.toLowerCase()}.png`;
 
-const page = () => {
+const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.25,
+            delayChildren: 0.7,
+            ease: 'easeOut',
+        },
+    },
+};
+
+const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: (i?: number) => ({
+        opacity: 1,
+        y: 0,
+        transition: {
+            delay: i ? i * 0.15 : 0,
+            duration: 0.25,
+            ease: 'easeOut',
+        },
+    }),
+    exit: { opacity: 0, scale: 0.95, transition: { duration: 0.3, ease: 'easeOut' } },
+};
+
+const SettingsPage = () => {
     const { rates, currencies } = useTransactionStore();
     const { authUser, updateSetting } = useAuthStore();
-    const [options, setOptions] = useState<any>([]);
-    const [selected, setSelected] = useState<any>([]);
-    const [newCurrencies, setNewCurrencies] = useState<any>([]);
+
+    interface Option {
+        label: React.ReactNode;
+        value: string;
+        searchText: string;
+    }
+
+    // Derive options from currencies using useMemo
+    const options = useMemo<Option[]>(() => {
+        if (!currencies || currencies.length === 0) return [];
+        return Object.values(currencies).map((currencyData) => {
+            const countryCode = currencyData.code;
+            return {
+                label: (
+                    <div className="flex items-center gap-3">
+                        <Image
+                            src={flagUrl(countryCode)}
+                            alt={countryCode}
+                            width={20}
+                            height={16}
+                            className="object-cover rounded-sm shadow-sm"
+                        />
+                        <span className="font-semibold text-gray-700">
+                            {currencyData.currency_code}
+                        </span>
+                        <span className="text-gray-400 text-sm">{currencyData.currency}</span>
+                    </div>
+                ),
+                value: currencyData.currency_code,
+                searchText: `${currencyData.currency_code} ${currencyData.currency}`,
+            };
+        });
+    }, [currencies]);
+
+    // Derive selected and newCurrencies from authUser
+    const selected = useMemo(() => {
+        if (!authUser?.currencies) return [];
+        return authUser.currencies.filter((currency: string) => currency !== authUser.baseCurrency);
+    }, [authUser]);
+
+    const newCurrencies = useMemo(() => {
+        if (!authUser?.currencies) return [];
+        return authUser.currencies.filter((currency: string) => currency !== authUser.baseCurrency);
+    }, [authUser]);
+
     const [newTag, setNewTag] = useState('');
     const [newGroup, setNewGroup] = useState('');
     const [username, setUsername] = useState('');
     const [imageUrl, setImageUrl] = useState('');
     const [currGroups, setCurrGroups] = useState<string[]>([]);
     const [currTags, setCurrTags] = useState<string[]>([]);
-    const [activeId, setActiveId] = useState(null);
-    const containerVariants: Variants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.25,
-                delayChildren: 0.7,
-                ease: 'easeOut',
-            },
-        },
-    };
+    const [activeId, setActiveId] = useState<string | null>(null);
+    const [prevUserId, setPrevUserId] = useState<string | null>(null);
 
-    const itemVariants: Variants = {
-        hidden: { opacity: 0, y: 10 },
-        visible: (i?: number) => ({
-            opacity: 1,
-            y: 0,
-            transition: {
-                delay: i ? i * 0.15 : 0,
-                duration: 0.25,
-                ease: 'easeOut',
-            },
-        }),
-        exit: { opacity: 0, scale: 0.95, transition: { duration: 0.3, ease: 'easeOut' } },
-    };
+    // Initialize/Sync editable form fields when authUser changes
+    if (authUser && authUser.id !== prevUserId) {
+        setPrevUserId(authUser.id);
+        setCurrGroups(authUser.groups || []);
+        setCurrTags(authUser.tags || []);
+        setUsername(authUser.username || authUser.name || '');
+        setImageUrl(authUser.image || authUser.profilePic || '');
+    }
 
-    const handleDragOverGroups = (event: any) => {
+    const handleDragOverGroups = (event: DragOverEvent) => {
         const { active, over } = event;
 
         // Check if the item was actually moved to a different position
         if (over && active.id !== over.id) {
             setCurrGroups((items) => {
-                const oldIndex = items.indexOf(active.id);
-                const newIndex = items.indexOf(over.id);
+                const oldIndex = items.indexOf(String(active.id));
+                const newIndex = items.indexOf(String(over.id));
 
                 const newOrder = arrayMove(items, oldIndex, newIndex);
 
@@ -82,14 +136,14 @@ const page = () => {
         }
     };
 
-    const handleDragOverTags = (event: any) => {
+    const handleDragOverTags = (event: DragOverEvent) => {
         const { active, over } = event;
 
         // Check if the item was actually moved to a different position
         if (over && active.id !== over.id) {
             setCurrTags((items) => {
-                const oldIndex = items.indexOf(active.id);
-                const newIndex = items.indexOf(over.id);
+                const oldIndex = items.indexOf(String(active.id));
+                const newIndex = items.indexOf(String(over.id));
 
                 const newOrder = arrayMove(items, oldIndex, newIndex);
 
@@ -102,7 +156,7 @@ const page = () => {
     const getRatio = (from: string, to: string) => {
         const fromRate = rates[from];
         const toRate = rates[to];
-        if (fromRate == toRate) {
+        if (fromRate === toRate) {
             return 1;
         }
         if (fromRate && toRate) {
@@ -111,63 +165,14 @@ const page = () => {
         return 1;
     };
 
-    useEffect(() => {
-        if (authUser) {
-            setSelected(
-                authUser.currencies.filter(
-                    (currency: string) => currency !== authUser.baseCurrency,
-                ),
-            );
-            setNewCurrencies(
-                authUser.currencies.filter(
-                    (currency: string) => currency !== authUser.baseCurrency,
-                ),
-            );
-            setCurrGroups(authUser.groups || []);
-            setCurrTags(authUser.tags || []);
-            setUsername(authUser.username || authUser.name || '');
-            setImageUrl(authUser.image || authUser.profilePic || '');
-        }
-    }, [authUser]);
-
-    useEffect(() => {
-        if (currencies && Object.keys(currencies).length > 0) {
-            const newOptions = Object.keys(currencies).map((currency: any) => {
-                const currencyData = currencies[currency].data || currencies[currency];
-                const countryCode = currencyData.code || currencyData.country_code || 'us';
-                if (currency.toUpperCase() === 'EUR') {
-                }
-                return {
-                    label: (
-                        <div className="flex items-center gap-3">
-                            <img
-                                src={flagUrl(countryCode)}
-                                srcSet={flagSet(countryCode)}
-                                alt={countryCode}
-                                className="w-5 h-4 object-cover rounded-sm shadow-sm"
-                            />
-                            <span className="font-semibold text-gray-700">
-                                {currencyData.currency_code}
-                            </span>
-                            <span className="text-gray-400 text-sm">{currencyData.currency}</span>
-                        </div>
-                    ),
-                    value: currencyData.currency_code,
-                    searchText: `${currencyData.currency_code} ${currencyData.currency}`,
-                };
-            });
-            setOptions(newOptions);
-        }
-    }, [currencies]);
-
     const handleBaseCurrencyChange = async (value: string) => {
+        if (!authUser?.currencies || !authUser.baseCurrency) return;
         if (authUser.currencies.includes(value)) {
-            const newCurrencies = [...authUser.currencies];
-            newCurrencies[newCurrencies.indexOf(value)] = authUser.baseCurrency;
+            const updatedCurrencies = [...authUser.currencies];
+            updatedCurrencies[updatedCurrencies.indexOf(value)] = authUser.baseCurrency;
 
-            await updateSetting('currencies', newCurrencies);
+            await updateSetting('currencies', updatedCurrencies);
             await updateSetting('baseCurrency', value);
-            setNewCurrencies(newCurrencies);
         } else {
             await updateSetting('baseCurrency', value);
         }
@@ -199,11 +204,11 @@ const page = () => {
         setCurrTags(updatedTags);
     };
 
-    const handleSave = async (key: string, value: any) => {
+    const handleSave = async (key: string, value: string | string[]) => {
         try {
             await updateSetting(key, value);
             toast.success('Updated successfully');
-        } catch (error) {
+        } catch {
             toast.error('Failed to update');
         }
     };
@@ -314,8 +319,7 @@ const page = () => {
                                     <MultiSelectDropdown
                                         formFieldName="secondaryCurrency"
                                         options={options.filter(
-                                            (option: any) =>
-                                                option.value !== authUser?.baseCurrency,
+                                            (option) => option.value !== authUser?.baseCurrency,
                                         )}
                                         prompt="Select additional currencies"
                                         selected={selected}
@@ -331,6 +335,7 @@ const page = () => {
                                     <tr>
                                         <th></th>
                                         {authUser &&
+                                            authUser.baseCurrency &&
                                             [authUser.baseCurrency, ...newCurrencies].map(
                                                 (currency: string) => (
                                                     <th
@@ -348,6 +353,7 @@ const page = () => {
                                     variants={containerVariants}>
                                     <AnimatePresence>
                                         {authUser &&
+                                            authUser.baseCurrency &&
                                             [authUser.baseCurrency, ...newCurrencies].map(
                                                 (currency: string, i: number) => (
                                                     <motion.tr
@@ -361,14 +367,13 @@ const page = () => {
                                                         <th className="font-bold text-base-content">
                                                             {currency}
                                                         </th>
-                                                        {[
-                                                            authUser.baseCurrency,
-                                                            ...newCurrencies,
-                                                        ].map((currency2: string) => (
-                                                            <td key={currency2}>
-                                                                {getRatio(currency, currency2)}
-                                                            </td>
-                                                        ))}
+                                                        {[authUser.baseCurrency, ...newCurrencies]
+                                                            .filter((c): c is string => Boolean(c))
+                                                            .map((currency2) => (
+                                                                <td key={currency2}>
+                                                                    {getRatio(currency, currency2)}
+                                                                </td>
+                                                            ))}
                                                     </motion.tr>
                                                 ),
                                             )}
@@ -382,6 +387,7 @@ const page = () => {
                                 animate="visible">
                                 <AnimatePresence mode="popLayout">
                                     {authUser &&
+                                        authUser.baseCurrency &&
                                         newCurrencies.map((currency: string, i: number) => (
                                             <motion.li
                                                 key={currency}
@@ -394,12 +400,12 @@ const page = () => {
                                                 <div className="flex flex-col">
                                                     <span className="font-semibold text-lg">
                                                         1 {currency} ={' '}
-                                                        {getRatio(currency, authUser.baseCurrency)}{' '}
+                                                        {getRatio(currency, authUser.baseCurrency!)}{' '}
                                                         {authUser.baseCurrency}
                                                     </span>
                                                     <p className="text-gray-500 text-sm">
                                                         1 {authUser.baseCurrency} ={' '}
-                                                        {getRatio(authUser.baseCurrency, currency)}{' '}
+                                                        {getRatio(authUser.baseCurrency!, currency)}{' '}
                                                         {currency}
                                                     </p>
                                                 </div>
@@ -417,10 +423,14 @@ const page = () => {
                         <DndContext
                             sensors={sensors}
                             collisionDetection={pointerWithin}
-                            onDragStart={(event: any) => setActiveId(event.active.id)}
+                            onDragStart={(event: DragStartEvent) =>
+                                setActiveId(String(event.active.id))
+                            }
                             onDragOver={handleDragOverGroups}
                             onDragCancel={() => setActiveId(null)}
-                            onDragEnd={() => setActiveId(null)}>
+                            onDragEnd={() => {
+                                setActiveId(null);
+                            }}>
                             <motion.div
                                 variants={containerVariants}
                                 initial="hidden"
@@ -494,10 +504,14 @@ const page = () => {
                         <DndContext
                             sensors={sensors}
                             collisionDetection={pointerWithin}
-                            onDragStart={(event: any) => setActiveId(event.active.id)}
+                            onDragStart={(event: DragStartEvent) =>
+                                setActiveId(String(event.active.id))
+                            }
                             onDragOver={handleDragOverTags}
                             onDragCancel={() => setActiveId(null)}
-                            onDragEnd={() => setActiveId(null)}>
+                            onDragEnd={() => {
+                                setActiveId(null);
+                            }}>
                             <motion.div
                                 variants={containerVariants}
                                 initial="hidden"
@@ -569,4 +583,4 @@ const page = () => {
     );
 };
 
-export default page;
+export default SettingsPage;

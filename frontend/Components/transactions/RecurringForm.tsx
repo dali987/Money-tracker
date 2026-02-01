@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { RecurringTransaction } from '@/types';
 import { Clock } from 'lucide-react';
-import TransactionForm from '@/Components/TransactionForm';
+import TransactionForm from '@/Components/transactions/TransactionForm';
 import CustomModal from '@/Components/Custom/CustomModal';
 import React, { useState, useEffect } from 'react';
 
@@ -38,15 +38,16 @@ const RecurringForm = ({ existingTransaction, isOpen, onClose, onSuccess }: Recu
                         <input
                             type="radio"
                             name="recurring-tabs"
-                            style={{
-                                //@ts-ignore
-                                '--color-base-content':
-                                    type === 'expense'
-                                        ? '#fb2c36'
-                                        : type === 'income'
-                                          ? 'oklch(72.3% 0.219 149.579)'
-                                          : '',
-                            }}
+                            style={
+                                {
+                                    '--color-base-content':
+                                        type === 'expense'
+                                            ? '#fb2c36'
+                                            : type === 'income'
+                                              ? 'oklch(72.3% 0.219 149.579)'
+                                              : '',
+                                } as React.CSSProperties
+                            }
                             className="tab grow font-bold transition-all duration-300"
                             aria-label={type}
                             checked={activeTab === type}

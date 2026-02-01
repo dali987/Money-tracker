@@ -1,20 +1,23 @@
 'use client';
 
-import Initializer from '@/Components/Initializer';
+import Initializer from '@/Components/providers/Initializer';
 import MultiSelectDropdown from '@/Components/Custom/MultiSelectDropdown';
-import SelectAccountDropdown from '@/Components/Custom/SelectAccountDropdown';
+import SelectAccountDropdown, {
+    AccountDropdownOption,
+} from '@/Components/Custom/SelectAccountDropdown';
 import SelectDropdown from '@/Components/Custom/SelectDateRangeDropdown';
-import TransactionForm from '@/Components/TransactionForm';
-import TransactionsList from '@/Components/TransactionsList';
+import TransactionForm from '@/Components/transactions/TransactionForm';
+import TransactionsList from '@/Components/transactions/TransactionsList';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { Plus, FilePlusCorner, Filter, ListFilter } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import AnimatedNumber from '@/Components/AnimatedNumber';
+import AnimatedNumber from '@/Components/ui/AnimatedNumber';
 import React, { useEffect, useState } from 'react';
 import { useCallback, useMemo } from 'react';
 import { useAccounts } from '@/hooks/useAccounts';
 import CustomModal from '@/Components/Custom/CustomModal';
+import { Account, TransactionFilter } from '@/types';
 
 const fields = ['expense', 'transfer', 'income'];
 
@@ -35,18 +38,18 @@ const itemVariants = {
     visible: { opacity: 1, scale: 1 },
 };
 
-const page = () => {
+const TransactionsPage = () => {
     const getTransactionsWithFilter = useTransactionStore(
         (state) => state.getTransactionsWithFilter,
     );
     const getTransactionsSummary = useTransactionStore((state) => state.getTransactionsSummary);
     const transactions = useTransactionStore((state) => state.transactions);
     const isTransactionsLoading = useTransactionStore((state) => state.isTransactionsLoading);
-    const authUser = useAuthStore((state: any) => state.authUser);
+    const authUser = useAuthStore((state) => state.authUser);
     const [summary, setSummary] = useState({
-        Expense: 0,
-        Income: 0,
-        netWorth: 0,
+        totalExpense: 0,
+        totalIncome: 0,
+        netBalance: 0,
     });
     const [selectedRange, setSelectedRange] = useState<{
         start: string | null;
@@ -72,20 +75,10 @@ const page = () => {
     const [isNewTransactionModalOpen, setIsNewTransactionModalOpen] = useState(false);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
-    const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
-
-    const accounts = accountsRaw || [];
+    const { data: accounts } = useAccounts();
 
     const handleRangeChange = useCallback(
-        async ({
-            start,
-            end,
-            label,
-        }: {
-            start: string | null;
-            end: string | null;
-            label: string;
-        }) => {
+        ({ start, end, label }: { start: string | null; end: string | null; label: string }) => {
             setSelectedRange({ start, end, label });
         },
         [],
@@ -93,37 +86,36 @@ const page = () => {
 
     const createFormSubmit = useCallback(async () => {
         setIsNewTransactionModalOpen(false);
-        const filters: any = { ...currentFilters };
+        const filters: TransactionFilter = { ...currentFilters };
         if (selectedRange.label !== 'All time' && selectedRange.start && selectedRange.end) {
-            filters.startDate = selectedRange.start;
-            filters.endDate = selectedRange.end;
+            filters.startDate = new Date(selectedRange.start);
+            filters.endDate = new Date(selectedRange.end);
         }
         await getTransactionsWithFilter(filters);
     }, [getTransactionsWithFilter, selectedRange, currentFilters]);
 
-    const handleOptions = (accounts: Array<any>) => {
-        if (!accounts) return [];
+    const handleOptions = (accounts: Account[]) => {
         return accounts.map((account) => ({
             name: account.name,
-            type: account.type,
+            type: account.group,
             id: account._id,
         }));
     };
 
     useEffect(() => {
         const fetchTransactions = async () => {
-            const filters: any = { ...currentFilters };
+            const filters: TransactionFilter = { ...currentFilters };
             if (selectedRange.label !== 'All time' && selectedRange.start && selectedRange.end) {
-                filters.startDate = selectedRange.start;
-                filters.endDate = selectedRange.end;
+                filters.startDate = new Date(selectedRange.start);
+                filters.endDate = new Date(selectedRange.end);
             }
             await getTransactionsWithFilter(filters);
             const sum = await getTransactionsSummary(filters);
             if (sum) {
                 setSummary({
-                    Expense: (sum as any).Expense ?? (sum as any).totalExpense ?? 0,
-                    Income: (sum as any).Income ?? (sum as any).totalIncome ?? 0,
-                    netWorth: (sum as any).netWorth ?? (sum as any).netBalance ?? 0,
+                    totalExpense: sum.totalExpense ?? 0,
+                    totalIncome: sum.totalIncome ?? 0,
+                    netBalance: sum.netBalance ?? 0,
                 });
             }
         };
@@ -134,7 +126,7 @@ const page = () => {
         setTempFilters(currentFilters);
     }, [currentFilters]);
 
-    const options = useMemo(() => handleOptions(accounts), [accounts, handleOptions]);
+    const options = useMemo(() => handleOptions(accounts!), [accounts]);
 
     const handleFormSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -175,15 +167,16 @@ const page = () => {
                                     <input
                                         type="radio"
                                         name="edit-tabs"
-                                        style={{
-                                            //@ts-ignore
-                                            '--color-base-content':
-                                                type === 'expense'
-                                                    ? '#fb2c36'
-                                                    : type === 'income'
-                                                      ? 'oklch(72.3% 0.219 149.579)'
-                                                      : '',
-                                        }}
+                                        style={
+                                            {
+                                                '--color-base-content':
+                                                    type === 'expense'
+                                                        ? '#fb2c36'
+                                                        : type === 'income'
+                                                          ? 'oklch(72.3% 0.219 149.579)'
+                                                          : '',
+                                            } as React.CSSProperties
+                                        }
                                         className="tab grow font-bold transition-all duration-300"
                                         aria-label={type}
                                         defaultChecked={i == 0}
@@ -228,7 +221,7 @@ const page = () => {
                                     options={options}
                                     defaultValue={false}
                                     selectedId={tempFilters.account}
-                                    onSelect={(option: any) =>
+                                    onSelect={(option: AccountDropdownOption) =>
                                         setTempFilters({
                                             ...tempFilters,
                                             account: option.id,
@@ -298,9 +291,9 @@ const page = () => {
                                     className="stat place-items-center py-6">
                                     <div className="stat-title font-medium">Total Income</div>
                                     <div className="stat-value text-success text-3xl font-bold">
-                                        +<AnimatedNumber value={summary.Income} />{' '}
+                                        +<AnimatedNumber value={summary.totalIncome} />{' '}
                                         <span className="text-sm font-normal opacity-70">
-                                            {authUser?.currency}
+                                            {authUser?.baseCurrency}
                                         </span>
                                     </div>
                                 </motion.div>
@@ -310,9 +303,9 @@ const page = () => {
                                     className="stat place-items-center border-l border-base-200 py-6">
                                     <div className="stat-title font-medium">Total Expense</div>
                                     <div className="stat-value text-error text-3xl font-bold">
-                                        -<AnimatedNumber value={summary.Expense} />{' '}
+                                        -<AnimatedNumber value={summary.totalExpense} />{' '}
                                         <span className="text-sm font-normal opacity-70">
-                                            {authUser?.currency}
+                                            {authUser?.baseCurrency}
                                         </span>
                                     </div>
                                 </motion.div>
@@ -323,12 +316,12 @@ const page = () => {
                                     <div className="stat-title font-medium">Net Balance</div>
                                     <div
                                         className={`stat-value text-3xl font-bold ${
-                                            summary.netWorth >= 0 ? 'text-success' : 'text-error'
+                                            summary.netBalance >= 0 ? 'text-success' : 'text-error'
                                         }`}>
-                                        {summary.netWorth >= 0 ? '+' : ''}
-                                        <AnimatedNumber value={summary.netWorth} />{' '}
+                                        {summary.netBalance >= 0 ? '+' : ''}
+                                        <AnimatedNumber value={summary.netBalance} />{' '}
                                         <span className="text-sm font-normal opacity-70">
-                                            {authUser?.currency}
+                                            {authUser?.baseCurrency}
                                         </span>
                                     </div>
                                 </motion.div>
@@ -341,4 +334,4 @@ const page = () => {
     );
 };
 
-export default page;
+export default TransactionsPage;

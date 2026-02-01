@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose from 'mongoose';
 
 const exchangeRatesSchema = new mongoose.Schema({
     timeLastUpdateUnix: {
@@ -24,10 +24,14 @@ const exchangeRatesSchema = new mongoose.Schema({
     rates: {
         type: Map,
         of: Number,
-        required: true
-    }
-})
+        required: true,
+    },
+    lastFetchedAt: {
+        type: Date,
+        default: Date.now,
+    },
+});
 
-const ExchangeRates = mongoose.model("ExchangeRates", exchangeRatesSchema)
+const ExchangeRates = mongoose.model('ExchangeRates', exchangeRatesSchema);
 
-export default ExchangeRates
+export default ExchangeRates;

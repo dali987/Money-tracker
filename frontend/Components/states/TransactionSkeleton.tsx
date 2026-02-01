@@ -1,6 +1,4 @@
-import React from 'react';
-
-const TranscationsSkeleton = () => {
+const TransactionSkeleton = () => {
     return (
         <div className="flex items-center justify-between ">
             <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -18,4 +16,4 @@ const TranscationsSkeleton = () => {
     );
 };
 
-export default TranscationsSkeleton;
+export default TransactionSkeleton;
