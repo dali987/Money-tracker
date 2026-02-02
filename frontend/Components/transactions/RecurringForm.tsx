@@ -3,7 +3,7 @@ import { RecurringTransaction } from '@/types';
 import { Clock } from 'lucide-react';
 import TransactionForm from '@/Components/transactions/TransactionForm';
 import CustomModal from '@/Components/Custom/CustomModal';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 interface RecurringFormProps {
     existingTransaction?: RecurringTransaction | null;
@@ -18,12 +18,17 @@ const RecurringForm = ({ existingTransaction, isOpen, onClose, onSuccess }: Recu
         existingTransaction?.type || 'expense',
     );
 
-    // Reset activeTab when modal opens with a different transaction
-    useEffect(() => {
+    const [prevIsOpen, setPrevIsOpen] = useState(false);
+    const [prevId, setPrevId] = useState<string | undefined>(undefined);
+
+    // Reset activeTab when modal opens with a different transaction (Sync during render)
+    if (isOpen !== prevIsOpen || existingTransaction?._id !== prevId) {
+        setPrevIsOpen(isOpen);
+        setPrevId(existingTransaction?._id);
         if (isOpen) {
             setActiveTab(existingTransaction?.type || 'expense');
         }
-    }, [isOpen, existingTransaction]);
+    }
 
     return (
         <CustomModal

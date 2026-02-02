@@ -64,9 +64,12 @@ export interface Notification {
     actionUrl?: string;
 }
 
-export interface MultiCurrencySummary {
+export interface AccountSummary {
     totalNetWorth: number;
     sumsByGroup: Record<string, number>;
+}
+
+export interface MultiCurrencySummary extends AccountSummary {
     sumsByAccount: Record<string, number>;
 }
 
@@ -100,6 +103,7 @@ export interface RecurringTransaction {
     frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
     startDate: string;
     nextRunDate: string;
+    note?: string;
     active: boolean;
     description: string;
     tags: string[];
@@ -123,6 +127,8 @@ export type ChartDataResponse = {
     income: number;
     expense: number;
 };
+
+export type ChartData = Omit<ChartDataResponse, "_id"> & { period: number }
 
 export type NetWorthChartResponse = {
     netWorthAtEndOfPeriod: number;

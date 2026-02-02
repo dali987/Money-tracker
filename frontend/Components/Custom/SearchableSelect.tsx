@@ -27,18 +27,24 @@ const SearchableSelect = ({
     const [isFocused, setIsFocused] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Initialize with default value if provided
-    useEffect(() => {
+    const [prevDefaultValue, setPrevDefaultValue] = useState<string | undefined>(undefined);
+    const [prevOptions, setPrevOptions] = useState<Option[]>([]);
+
+    // Initialize with default value if provided (Sync during render)
+    if (defaultValue !== prevDefaultValue || options !== prevOptions) {
+        setPrevDefaultValue(defaultValue);
+        setPrevOptions(options);
+
         if (defaultValue && options.length > 0) {
             const found = options.find((o) => o.value === defaultValue);
             if (found) setSelected(found);
         }
-    }, [defaultValue, options]);
+    }
 
     const filtered = useMemo(() => {
         if (!search) return options;
         return options.filter((option) =>
-            option.searchText.toLowerCase().includes(search.toLowerCase())
+            option.searchText.toLowerCase().includes(search.toLowerCase()),
         );
     }, [search, options]);
 

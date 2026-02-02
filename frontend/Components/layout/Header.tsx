@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, LogOut, Settings, Keyboard } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';

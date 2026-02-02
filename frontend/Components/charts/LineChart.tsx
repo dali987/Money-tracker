@@ -8,8 +8,15 @@ import {
     ChartLegend,
     ChartLegendContent,
 } from '@/Components/ui/chart';
+import { ChartData } from '@/types';
 
-export function LineChart({ data, chartConfig }: { data: Array<any>; chartConfig: ChartConfig }) {
+export function LineChart({
+    data,
+    chartConfig,
+}: {
+    data: Record<number, ChartData>[];
+    chartConfig: ChartConfig;
+}) {
     console.log('data : ', data);
 
     if (!data || data.length === 0) {
@@ -52,20 +59,3 @@ export function LineChart({ data, chartConfig }: { data: Array<any>; chartConfig
         </ChartContainer>
     );
 }
-
-// {dataKeys
-//                         .filter((key) => key !== dataKeys[0])
-//                         .map((key) => (
-//                             <linearGradient id={key} x1="0" y1="0" x2="0" y2="1">
-//                                 <stop
-//                                     offset="5%"
-//                                     stopColor={`var(--color-${key})`}
-//                                     stopOpacity={0.8}
-//                                 />
-//                                 <stop
-//                                     offset="95%"
-//                                     stopColor={`var(--color-${key})`}
-//                                     stopOpacity={0.1}
-//                                 />
-//                             </linearGradient>
-//                         ))}

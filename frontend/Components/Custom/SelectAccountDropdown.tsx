@@ -7,7 +7,7 @@ export type AccountDropdownOption = { name: string; type: string; id: string };
 interface AccountDropDownProps {
     options: AccountDropdownOption[];
     className?: string;
-    onSelect?: any;
+    onSelect?: (option: AccountDropdownOption) => void;
     disabled?: boolean;
     name?: string;
     defaultValue?: boolean;
@@ -30,7 +30,7 @@ const SelectAccountDropdown = ({
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [isTop, setIsTop] = useState(false);
 
-    const handleSelect = (option: { name: string; type: string; id: string }) => {
+    const handleSelect = (option: AccountDropdownOption) => {
         setSelected(option);
         setIsOpen(false);
         if (onSelect) {
@@ -38,8 +38,22 @@ const SelectAccountDropdown = ({
         }
     };
 
-    useEffect(() => {
-        if (
+    const [prevSelectedId, setPrevSelectedId] = useState<string | undefined>(undefined);
+    const [prevOptions, setPrevOptions] = useState<AccountDropdownOption[]>([]);
+
+    // Sync selection state when props change (Sync during render)
+    if (selectedId !== prevSelectedId || options !== prevOptions) {
+        setPrevSelectedId(selectedId);
+        setPrevOptions(options);
+
+        if (selectedId !== undefined) {
+            const found = options.find((o) => o.id === selectedId);
+            if (found) {
+                setSelected(found);
+            } else {
+                setSelected({ name: '', type: '', id: '' });
+            }
+        } else if (
             options.length > 0 &&
             defaultValue &&
             (!selected.id || !options.find((o) => o.id === selected.id))
@@ -49,7 +63,7 @@ const SelectAccountDropdown = ({
                 onSelect(options[0]);
             }
         }
-    }, [options, selected.id, defaultValue]);
+    }
 
     // Handle clicks outside to close dropdown
     useEffect(() => {
@@ -61,17 +75,6 @@ const SelectAccountDropdown = ({
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-    useEffect(() => {
-        if (selectedId !== undefined) {
-            const found = options.find((o) => o.id === selectedId);
-            if (found) {
-                setSelected(found);
-            } else {
-                setSelected({ name: '', type: '', id: '' });
-            }
-        }
-    }, [selectedId, options]);
 
     const toggleDropdown = () => {
         if (disabled) return;

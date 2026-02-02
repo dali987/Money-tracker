@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
 import { accountApi } from '@/lib/api/accounts';
-import { Account, MultiCurrencySummary } from '@/types';
+import { Account, AccountSummary } from '@/types';
 
 interface AccountStore {
     accounts: Account[];
@@ -13,7 +13,7 @@ interface AccountStore {
     createAccount: (accountData: any) => Promise<void>;
     updateAccount: (accountData: { id: string; data: Partial<Account> }) => Promise<void>;
     deleteAccount: (accountId: string) => Promise<void>;
-    getAccountsSummary: () => Promise<MultiCurrencySummary | null>;
+    getAccountsSummary: () => Promise<AccountSummary | null>;
 }
 
 export const useAccountStore = create<AccountStore>((set, get) => ({

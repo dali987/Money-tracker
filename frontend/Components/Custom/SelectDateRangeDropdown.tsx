@@ -48,7 +48,7 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
             const today = new Date();
             let start = new Date();
             start.setHours(0, 0, 0, 0);
-            let end = new Date();
+            const end = new Date();
             end.setHours(23, 59, 59, 999);
 
             switch (option) {

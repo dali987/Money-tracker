@@ -39,7 +39,7 @@ const NumberInput = ({
     return (
         <div className={`relative min-w-45 h-10 ${className}`}>
             <button
-                className="absolute right-10 top-1/2 -translate-y-1/2 rounded-md p-1.5 active:bg-base-300 transition-all hover:bg-base-200 focus:bg-base-100 disabled:pointer-events-none disabled:shadow-none z-100 select-none"
+                className="absolute right-10 top-1/2 -translate-y-1/2 rounded-md p-1.5 active:bg-base-300 transition-all hover:bg-base-200 focus:bg-base-100 disabled:pointer-events-none disabled:shadow-none z-10 select-none"
                 type="button"
                 disabled={disabled}
                 onClick={() => handleChange(number - (step || 1))}>
@@ -64,7 +64,7 @@ const NumberInput = ({
                 className="w-full h-full input rounded-md transition focus:outline-offset-0 focus:outline-1 shadow-sm focus:shadow-lg appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <button
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 active:bg-base-300 transition-all hover:bg-base-200 focus:bg-base-100 disabled:pointer-events-none disabled:shadow-none z-100 select-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 active:bg-base-300 transition-all hover:bg-base-200 focus:bg-base-100 disabled:pointer-events-none disabled:shadow-none z-10 select-none"
                 type="button"
                 disabled={disabled}
                 onClick={() => handleChange(number + (step || 1))}>

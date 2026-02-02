@@ -10,7 +10,7 @@ interface CustomCollapseProps {
     defaultOpen?: boolean;
     className?: string;
     closable?: boolean;
-    layout?: any;
+    layout?: boolean;
 }
 
 const CustomCollapse = ({

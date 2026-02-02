@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import CustomModal from '@/Components/Custom/CustomModal';
 import { SquarePen } from 'lucide-react';
 import TransactionForm from '@/Components/transactions/TransactionForm';
+import { Transaction } from '@/types';
 
 interface EditTransactionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    transaction: any;
+    transaction: Transaction;
     onDelete: (id: string) => void;
 }
 
@@ -26,14 +27,13 @@ const EditTransactionModal = ({
                                 type="radio"
                                 name="edit-tabs"
                                 style={{
-                                    //@ts-ignore
                                     '--color-base-content':
                                         type === 'expense'
                                             ? '#fb2c36'
                                             : type === 'income'
                                               ? 'oklch(72.3% 0.219 149.579)'
                                               : '',
-                                }}
+                                } as CSSProperties}
                                 className="tab grow font-bold transition-all duration-300"
                                 aria-label={type}
                                 defaultChecked={transaction.type === type}

@@ -6,7 +6,7 @@ import RecurringFrequencySelect from '@/Components/Custom/RecurringFrequencySele
 import MoneyExchangeInput from '@/Components/Custom/MoneyExchangeInput';
 import { recurringApi } from '@/lib/api/recurring';
 import { transactionSchema } from '@/lib/validations';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -18,6 +18,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useQueryClient } from '@tanstack/react-query';
 import { Account, Transaction, RecurringTransaction } from '@/types';
 import { useAccountStore } from '@/store/useAccountStore';
+import { AccountDropdownOption } from '../Custom/SelectAccountDropdown';
 
 const formContainer: Variants = {
     hidden: { opacity: 0 },
@@ -37,6 +38,13 @@ interface TransactionFormProps {
     initialData?: Transaction | RecurringTransaction | null;
 }
 
+interface KeepFormData {
+    note: string;
+    tags: string[];
+    toAccount: AccountDropdownOption | null;
+    fromAccount: AccountDropdownOption | null;
+}
+
 const TransactionForm = ({
     type,
     action = 'create',
@@ -52,7 +60,7 @@ const TransactionForm = ({
     const { data: transactions = [] } = useTransactions({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const account = useMemo(() => {
+    const transaction = useMemo(() => {
         if (initialData) return initialData;
         if (typeof action !== 'string' && action.type === 'edit') {
             return transactions.find((t) => t._id === action.id);
@@ -60,28 +68,12 @@ const TransactionForm = ({
         return null;
     }, [initialData, action, transactions]);
 
-    const [keepFormData, setKeepFormData] = useState({
-        note:
-            (account && ('description' in account ? account.description : '')) ||
-            (account && ('note' in account ? (account as any).note : '')) ||
-            '',
-        tags: account?.tags || [],
+    const [keepFormData, setKeepFormData] = useState<KeepFormData>({
+        note: transaction?.note || '',
+        tags: transaction?.tags || [],
         toAccount: null,
         fromAccount: null,
     });
-
-    useEffect(() => {
-        if (account) {
-            setKeepFormData((prev) => ({
-                ...prev,
-                note:
-                    ('description' in account ? account.description : '') ||
-                    ('note' in account ? (account as any).note : '') ||
-                    '',
-                tags: account.tags || [],
-            }));
-        }
-    }, [account]);
 
     const handleOptions = useMemo(() => {
         return (accounts || []).map((acc) => ({
@@ -94,17 +86,17 @@ const TransactionForm = ({
     const getSelectedId = (accField: string | Account | undefined | null) => {
         if (!accField) {
             // Check other potential identity fields if accField is missing
-            if (account) {
-                if ('accountId' in account && account.accountId) return account.accountId;
-                if ('fromAccount' in account && account.fromAccount) {
-                    return typeof account.fromAccount === 'object'
-                        ? account.fromAccount._id
-                        : account.fromAccount;
+            if (transaction) {
+                if ('accountId' in transaction && transaction.accountId) return transaction.accountId;
+                if ('fromAccount' in transaction && transaction.fromAccount) {
+                    return typeof transaction.fromAccount === 'object'
+                        ? transaction.fromAccount._id
+                        : transaction.fromAccount;
                 }
-                if ('toAccount' in account && account.toAccount) {
-                    return typeof account.toAccount === 'object'
-                        ? account.toAccount._id
-                        : account.toAccount;
+                if ('toAccount' in transaction && transaction.toAccount) {
+                    return typeof transaction.toAccount === 'object'
+                        ? transaction.toAccount._id
+                        : transaction.toAccount;
                 }
             }
             return '';
@@ -118,7 +110,7 @@ const TransactionForm = ({
         const formData = new FormData(e.currentTarget);
 
         try {
-            let dateStr = String(formData.get('date'));
+            const dateStr = String(formData.get('date'));
             let date = '';
 
             if (dateStr && dateStr !== 'Pick a date') {
@@ -144,7 +136,6 @@ const TransactionForm = ({
                 tags: keepFormData.tags,
                 note: keepFormData.note,
                 date: date,
-                frequency: formData.get('frequency') || 'monthly',
             };
 
             if (isRecurring) {
@@ -153,7 +144,7 @@ const TransactionForm = ({
                     amount: rawValues.amount,
                     description: rawValues.note,
                     tags: rawValues.tags,
-                    frequency: rawValues.frequency as any,
+                    frequency: formData.get('frequency') as 'daily' | 'weekly' | 'monthly' | 'yearly',
                     startDate: rawValues.date
                         ? new Date(rawValues.date).toISOString()
                         : new Date().toISOString(),
@@ -195,12 +186,9 @@ const TransactionForm = ({
             if (onSuccess) onSuccess();
         } catch (error) {
             if (error instanceof z.ZodError) {
-                const fieldErrors = z.treeifyError(error) as any;
-                if (fieldErrors?.properties) {
-                    Object.values(fieldErrors.properties).forEach((data: any) => {
-                        data?.errors?.forEach((msg: string) => toast.error(msg));
-                    });
-                }
+                error.issues.forEach((issue) => {
+                    toast.error(issue.message);
+                });
             } else {
                 toast.error('Unexpected error occurred');
                 console.error(error);
@@ -242,7 +230,7 @@ const TransactionForm = ({
                             options={handleOptions}
                             name={type === 'income' ? 'toAccount' : 'fromAccount'}
                             selectedId={getSelectedId(
-                                type === 'income' ? account?.toAccount : account?.fromAccount,
+                                type === 'income' ? transaction?.toAccount : transaction?.fromAccount,
                             )}
                             onSelect={(opt) =>
                                 setKeepFormData((p) => ({
@@ -275,9 +263,9 @@ const TransactionForm = ({
                                     disabled={true}
                                     options={handleOptions}
                                     name="toAccount"
-                                    selectedId={getSelectedId(account?.toAccount)}
+                                    selectedId={getSelectedId(transaction?.toAccount)}
                                     onSelect={(opt) =>
-                                        setKeepFormData((p: any) => ({ ...p, toAccount: opt }))
+                                        setKeepFormData((p) => ({ ...p, toAccount: opt }))
                                     }
                                 />
                             </div>

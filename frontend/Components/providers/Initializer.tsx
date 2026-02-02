@@ -9,13 +9,12 @@ const Initializer = ({ rates, currencies }: { rates?: boolean; currencies?: bool
     const { checkAuth } = useAuthStore();
 
     useEffect(() => {
-        // Fetch all initial data from one place
         checkAuth();
-        rates && getRates();
-        currencies && getCurrencies();
-    }, [checkAuth, getRates, getCurrencies]); // Add dependencies
+        if (rates) getRates();
+        if (currencies) getCurrencies();
+    }, [checkAuth, getRates, getCurrencies, rates, currencies]);
 
-    return null; // This component doesn't render anything
+    return null;
 };
 
 export default Initializer;

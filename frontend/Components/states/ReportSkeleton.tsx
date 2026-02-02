@@ -1,7 +1,5 @@
 'use client';
 
-import { motion } from 'motion/react';
-
 const ReportSkeleton = () => {
     return (
         <div className="w-full h-80 flex flex-col gap-6 p-4">

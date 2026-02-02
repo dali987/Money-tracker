@@ -39,6 +39,11 @@ const recurringTransactionSchema = new mongoose.Schema({
         default: Date.now,
         required: true,
     },
+    note: {
+        type: String,
+        default: "",
+        required: false,
+    },
     nextRunDate: {
         type: Date,
         required: true,

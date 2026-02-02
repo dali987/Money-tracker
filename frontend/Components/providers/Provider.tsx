@@ -7,10 +7,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { ViewTransitions } from 'next-view-transitions';
 
-/**
- * Routes that don't require authentication.
- * Users can access these pages without being logged in.
- */
 const PUBLIC_ROUTES = ['/', '/login', '/signup'];
 
 const Provider = ({ children }: { children: React.ReactNode }) => {

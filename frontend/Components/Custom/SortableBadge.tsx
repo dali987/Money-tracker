@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 interface BadgeProps {
     name: string;
     type: string;
-    onRemove: (...args: any[]) => void;
+    onRemove: (name: string) => void;
 }
 
 export const SortableBadge = ({ name, type, onRemove }: BadgeProps) => {
@@ -15,7 +15,7 @@ export const SortableBadge = ({ name, type, onRemove }: BadgeProps) => {
     });
 
     const style = {
-        position: 'relative' as 'relative',
+        position: 'relative' as const,
         opacity: isDragging ? 0.6 : 1,
         transform: CSS.Translate.toString(transform),
         zIndex: isDragging ? 999 : 1,

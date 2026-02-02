@@ -3,7 +3,7 @@ import { useTransactionStore } from '@/store/useTransactionStore';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import TransactionSkeleton from '@/Components/states/TransactionSkeleton';
 import EmptyState from '@/Components/states/EmptyState';
@@ -12,10 +12,11 @@ import TransactionListItem from './TransactionListItem';
 import TransactionsPagination from './TransactionsPagination';
 import EditTransactionModal from './EditTransactionModal';
 import { useAccountStore } from '@/store/useAccountStore';
+import { Transaction } from '@/types';
 
 interface TransactionsListProps {
     maxCount: number;
-    transactions?: any[];
+    transactions?: Transaction[];
     isLoading?: boolean;
     onAddClick?: () => void;
 }
@@ -26,13 +27,11 @@ const TransactionsList = ({
     isLoading: externalIsLoading,
     onAddClick,
 }: TransactionsListProps) => {
-    const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
-    const { data: transactionsRaw = [], isLoading: isInternalLoading } = useTransactions(
+    const { data: accounts = [], isLoading: isAccountsLoading } = useAccounts();
+    const { data: transactions = [], isLoading: isInternalLoading } = useTransactions(
         externalTransactions ? undefined : {},
     );
 
-    const accounts = accountsRaw || [];
-    const transactions = externalTransactions || transactionsRaw;
     const isTransactionsLoading = externalIsLoading ?? isInternalLoading;
 
     const queryClient = useQueryClient();
@@ -42,15 +41,18 @@ const TransactionsList = ({
     const { isTransactionsError } = useTransactionStore();
     const { isError: isAccountsError } = useAccountStore();
 
-
     const [currentPage, setCurrentPage] = useState(1);
-    const [editingTransaction, setEditingTransaction] = useState<any>(null);
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const itemsPerPage = 10;
 
-    useEffect(() => {
+    const [prevTransactions, setPrevTransactions] = useState(transactions);
+
+    // Sync current page during render when transactions change
+    if (transactions !== prevTransactions) {
+        setPrevTransactions(transactions);
         setCurrentPage(1);
-    }, [transactions]);
+    }
 
     const accountNameMap = useMemo(() => {
         if (!accounts?.length) return {};
@@ -157,7 +159,7 @@ const TransactionsList = ({
                     setIsEditModalOpen(false);
                     setEditingTransaction(null);
                 }}
-                transaction={editingTransaction}
+                transaction={editingTransaction!}
                 onDelete={handleDelete}
             />
 

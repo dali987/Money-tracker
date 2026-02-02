@@ -29,24 +29,25 @@ import { useAccounts } from '@/hooks/useAccounts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAccountStore } from '@/store/useAccountStore';
 import NetWorthSkeleton from '@/Components/states/NetWorthSkeleton';
+import { Account, AccountSummary } from '@/types';
 
 const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?: boolean }) => {
     const { rates } = useTransactionStore();
     const { getAccountsSummary } = useAccountStore();
     const { authUser } = useAuthStore();
-    const [editAccount, setEditAccount] = useState<any>(null);
+    const [editAccount, setEditAccount] = useState<string | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [accountsSummary, setAccountsSummary] = useState<any>(null);
+    const [accountsSummary, setAccountsSummary] = useState<AccountSummary | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const queryClient = useQueryClient();
     const isAccountsError = useAccountStore((state) => state.isError);
 
-    const { data: accountsRaw = [], isLoading: isAccountsLoading } = useAccounts();
-    const accounts = accountsRaw || [];
+    const { data: accounts } = useAccounts();
 
     useEffect(() => {
         const fetchSummary = async () => {
             const summary = await getAccountsSummary();
+            console.log(summary)
             setAccountsSummary(summary);
             setIsLoading(false);
         };
@@ -54,7 +55,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
     }, [accounts, getAccountsSummary]);
 
     const totalNetWorth = accountsSummary?.totalNetWorth ?? 0;
-    const groups = authUser?.groups || [];
+    const groups = authUser?.groups!;
 
     const sumsByType = useMemo(() => {
         const sums = accountsSummary?.sumsByGroup || {};
@@ -154,8 +155,8 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                                         className="flex flex-col gap-1">
                                         {accounts &&
                                             accounts
-                                                .filter((account: any) => account.group === group)
-                                                .map((account: any, i: number, filtered: any[]) => (
+                                                .filter((account: Account) => account.group === group)
+                                                .map((account: Account, i: number, filtered: Account[]) => (
                                                     <motion.div
                                                         layout
                                                         key={account._id}
@@ -183,27 +184,21 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                                                             <div className="flex flex-wrap flex-col items-end gap-1 shrink-0 ml-4">
                                                                 {[
                                                                     authUser.baseCurrency,
-                                                                    ...(authUser.currencies || []),
+                                                                    ...(authUser.currencies!),
                                                                 ]
-                                                                    .filter(Boolean)
-                                                                    .map((currency: any) => (
+                                                                    .filter((c): c is string => Boolean(c))
+                                                                    .map((currency: string) => (
                                                                         <div
                                                                             key={currency}
                                                                             className="flex items-center gap-1 whitespace-nowrap">
                                                                             <AnimatedNumber
                                                                                 value={
                                                                                     (account.balance /
-                                                                                        rates?.[
-                                                                                            authUser.baseCurrency ||
-                                                                                                'USD'
-                                                                                        ]) *
-                                                                                    rates?.[
-                                                                                        currency
-                                                                                    ]
+                                                                                        rates?.[authUser.baseCurrency!]) *
+                                                                                    rates?.[currency]
                                                                                 }
                                                                                 className={
-                                                                                    account.balance <
-                                                                                    0
+                                                                                    account.balance < 0
                                                                                         ? 'text-red-500'
                                                                                         : 'text-green-500'
                                                                                 }

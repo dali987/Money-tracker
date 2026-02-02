@@ -11,7 +11,7 @@ import {
     XCircle,
     ExternalLink,
 } from 'lucide-react';
-import { useNotificationStore, Notification } from '@/store/useNotificationStore';
+import { useNotificationStore } from '@/store/useNotificationStore';
 import { formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';

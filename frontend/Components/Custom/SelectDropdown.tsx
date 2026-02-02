@@ -12,7 +12,6 @@ interface SelectDropdownProps {
     name?: string;
     defaultValue?: string;
     placeholder?: string;
-    id?: string;
     trigger?: React.ReactNode;
     showSelected?: boolean;
     menuClassName?: string;
@@ -26,7 +25,6 @@ const SelectDropdown = ({
     name,
     defaultValue,
     placeholder,
-    id,
     trigger,
     showSelected = true,
     menuClassName = 'w-full lg:min-w-56',
@@ -45,15 +43,32 @@ const SelectDropdown = ({
         // Prevent generic clicks, but allow form events if needed
     }, []);
 
-    // Initial value checks
-    useEffect(() => {
+    const [prevDefaultValue, setPrevDefaultValue] = useState<string | undefined>(undefined);
+    const [prevOptions, setPrevOptions] = useState<
+        (string | { label: string; value: string; className?: string })[]
+    >([]);
+    const [prevShowSelected, setPrevShowSelected] = useState<boolean>(true);
+    const [prevPlaceholder, setPrevPlaceholder] = useState<string | undefined>(undefined);
+
+    // Initial value checks (Sync during render)
+    if (
+        defaultValue !== prevDefaultValue ||
+        options !== prevOptions ||
+        showSelected !== prevShowSelected ||
+        placeholder !== prevPlaceholder
+    ) {
+        setPrevDefaultValue(defaultValue);
+        setPrevOptions(options);
+        setPrevShowSelected(showSelected);
+        setPrevPlaceholder(placeholder);
+
         if (defaultValue !== undefined) {
             setSelected(defaultValue);
         } else if (options.length > 0 && showSelected && !placeholder) {
             const first = options[0];
             setSelected(typeof first === 'string' ? first : first.value);
         }
-    }, [defaultValue, options, showSelected, placeholder]);
+    }
 
     // Outside click & singular open logic
     useEffect(() => {

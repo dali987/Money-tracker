@@ -8,16 +8,15 @@ import {
     ChartLegend,
     ChartLegendContent,
 } from '@/Components/ui/chart';
+import { ChartData } from '@/types';
 
 export function HorizontalChart({
     data,
     chartConfig,
 }: {
-    data: Array<any>;
+    data: Record<number, ChartData>[];
     chartConfig: ChartConfig;
 }) {
-    console.log('data : ', data);
-
     if (!data || data.length === 0) {
         return (
             <div className="flex items-center justify-center min-h-[200px] w-full text-gray-500">
@@ -25,6 +24,7 @@ export function HorizontalChart({
             </div>
         );
     }
+    console.log(data);
 
     const dataKeys = Object.keys(data[0]);
 

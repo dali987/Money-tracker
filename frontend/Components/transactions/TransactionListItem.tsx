@@ -1,30 +1,31 @@
 import { motion } from 'motion/react';
 import { ArrowRight, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
+import { Transaction, User } from '@/types';
 
 const typeProperties = {
     transfer: {
         color: 'text-gray-500',
         symbol: '',
-        account: '',
+        account: 'accountId' as keyof Transaction,
     },
     income: {
         color: 'text-success',
         symbol: '+',
-        account: 'toAccount',
+        account: 'toAccount' as keyof Transaction,
     },
     expense: {
         color: 'text-error',
         symbol: '-',
-        account: 'fromAccount',
+        account: 'fromAccount' as keyof Transaction,
     },
-};
+} as const;
 
 interface TransactionListItemProps {
-    transaction: any;
-    authUser: any;
+    transaction: Transaction;
+    authUser: User;
     accountNameMap: Record<string, string>;
-    onEditClick: (transaction: any) => void;
+    onEditClick: (transaction: Transaction) => void;
 }
 
 const TransactionListItem = ({
@@ -33,7 +34,7 @@ const TransactionListItem = ({
     accountNameMap,
     onEditClick,
 }: TransactionListItemProps) => {
-    const properties = typeProperties[transaction.type as keyof typeof typeProperties];
+    const properties = typeProperties[transaction.type];
 
     return (
         <motion.li
@@ -48,8 +49,7 @@ const TransactionListItem = ({
                     <div className="text-sm lg:text-base lg:max-w-lg w-full">
                         {transaction.type !== 'transfer' ? (
                             <div className="truncate">
-                                {accountNameMap[(transaction as any)[properties.account] || ''] ||
-                                    ''}
+                                {accountNameMap[(transaction[properties.account] as string) || '']}
                             </div>
                         ) : (
                             <div className="flex items-center gap-2">

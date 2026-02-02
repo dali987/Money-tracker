@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Keyboard } from 'lucide-react';
-import { useKeyboardShortcuts, formatShortcut } from '@/hooks/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import CustomModal from '@/Components/Custom/CustomModal';
 
 interface KeyboardShortcutsContextType {
