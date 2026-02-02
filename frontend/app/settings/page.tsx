@@ -7,8 +7,9 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
-import { Plus, User, Link as LinkIcon } from 'lucide-react';
+import { Plus, User as UserIcon, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
+import type { User } from '@/types';
 import {
     useSensors,
     useSensor,
@@ -204,7 +205,7 @@ const SettingsPage = () => {
         setCurrTags(updatedTags);
     };
 
-    const handleSave = async (key: string, value: string | string[]) => {
+    const handleSave = async (key: keyof User, value: string | string[]) => {
         try {
             await updateSetting(key, value);
             toast.success('Updated successfully');
@@ -239,7 +240,7 @@ const SettingsPage = () => {
                                 Username
                             </label>
                             <label className="input input-bordered flex items-center gap-2">
-                                <User className="w-4 h-4 opacity-70" />
+                                <UserIcon className="w-4 h-4 opacity-70" />
                                 <input
                                     type="text"
                                     id="username"
