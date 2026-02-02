@@ -1,6 +1,5 @@
 'use client';
 
-import { colors } from '@/app/Constants';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';

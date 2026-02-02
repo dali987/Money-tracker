@@ -126,7 +126,7 @@ const TransactionsPage = () => {
         setTempFilters(currentFilters);
     }, [currentFilters]);
 
-    const options = useMemo(() => handleOptions(accounts!), [accounts]);
+    const options = useMemo(() => accounts && handleOptions(accounts), [accounts]);
 
     const handleFormSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -218,7 +218,7 @@ const TransactionsPage = () => {
                                 <SelectAccountDropdown
                                     name="account"
                                     className="w-full"
-                                    options={options}
+                                    options={options || []}
                                     defaultValue={false}
                                     selectedId={tempFilters.account}
                                     onSelect={(option: AccountDropdownOption) =>

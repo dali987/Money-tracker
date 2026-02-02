@@ -21,6 +21,8 @@ interface TransactionsListProps {
     onAddClick?: () => void;
 }
 
+const EMPTY_TRANSACTIONS: Transaction[] = [];
+
 const TransactionsList = ({
     maxCount,
     transactions: externalTransactions,
@@ -28,9 +30,12 @@ const TransactionsList = ({
     onAddClick,
 }: TransactionsListProps) => {
     const { data: accounts = [], isLoading: isAccountsLoading } = useAccounts();
-    const { data: transactions = [], isLoading: isInternalLoading } = useTransactions(
+    const { data: internalTransactions, isLoading: isInternalLoading } = useTransactions(
         externalTransactions ? undefined : {},
     );
+
+    // prioritize external transactions if provided
+    const transactions = externalTransactions ?? internalTransactions ?? EMPTY_TRANSACTIONS;
 
     const isTransactionsLoading = externalIsLoading ?? isInternalLoading;
 

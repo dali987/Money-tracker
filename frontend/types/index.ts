@@ -128,7 +128,15 @@ export type ChartDataResponse = {
     expense: number;
 };
 
-export type ChartData = Omit<ChartDataResponse, "_id"> & { period: number }
+export type ChartData = Omit<ChartDataResponse, '_id'> & { period: number };
+
+export type ReportChartData = {
+    period: string;
+    income?: number;
+    expense?: number;
+    worth?: number;
+    [key: string]: string | number | undefined;
+};
 
 export type NetWorthChartResponse = {
     netWorthAtEndOfPeriod: number;

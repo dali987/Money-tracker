@@ -156,7 +156,7 @@ const NoiseOverlay = () => (
     />
 );
 
-const page = () => {
+const LandingPage = () => {
     useGSAP(() => {
         const lenis = new Lenis({
             duration: 1.2,
@@ -200,4 +200,4 @@ const page = () => {
     );
 };
 
-export default page;
+export default LandingPage;

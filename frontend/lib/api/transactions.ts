@@ -21,7 +21,6 @@ export const transactionApi = {
 
     getNetWorthChart: async (filters?: TransactionFilter) => {
         const response = await axiosInstance.get(`${API_URL}/net-worth-chart`, { params: filters });
-        console.log('ekajze: ', response);
 
         return response.data;
     },

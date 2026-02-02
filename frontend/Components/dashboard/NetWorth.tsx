@@ -31,6 +31,8 @@ import { useAccountStore } from '@/store/useAccountStore';
 import NetWorthSkeleton from '@/Components/states/NetWorthSkeleton';
 import { Account, AccountSummary } from '@/types';
 
+const EMPTY_GROUPS: string[] = [];
+
 const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?: boolean }) => {
     const { rates } = useTransactionStore();
     const { getAccountsSummary } = useAccountStore();
@@ -47,7 +49,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
     useEffect(() => {
         const fetchSummary = async () => {
             const summary = await getAccountsSummary();
-            console.log(summary)
+
             setAccountsSummary(summary);
             setIsLoading(false);
         };
@@ -55,7 +57,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
     }, [accounts, getAccountsSummary]);
 
     const totalNetWorth = accountsSummary?.totalNetWorth ?? 0;
-    const groups = authUser?.groups!;
+    const groups = authUser?.groups ?? EMPTY_GROUPS;
 
     const sumsByType = useMemo(() => {
         const sums = accountsSummary?.sumsByGroup || {};
@@ -155,72 +157,92 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                                         className="flex flex-col gap-1">
                                         {accounts &&
                                             accounts
-                                                .filter((account: Account) => account.group === group)
-                                                .map((account: Account, i: number, filtered: Account[]) => (
-                                                    <motion.div
-                                                        layout
-                                                        key={account._id}
-                                                        variants={section}
-                                                        className="group">
-                                                        <div className="flex justify-between items-start lg:gap-4 py-2 hover:bg-black/5 rounded-lg px-2 transition-colors min-w-0">
-                                                            <div className="flex flex-col lg:flex-row lg:items-center gap-2 min-w-0">
-                                                                <h3
-                                                                    className="text-[#4183c4] font-medium font-sans truncate"
-                                                                    title={account.name}>
-                                                                    {account.name}
-                                                                </h3>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleEditClick(account._id)
-                                                                    }
-                                                                    className={
-                                                                        'btn btn-sm btn-square btn-ghost opacity-0 group-hover:opacity-100 transition-opacity shrink-0' +
-                                                                        (!editMode ? ' hidden' : '')
-                                                                    }>
-                                                                    <Pencil size={16} />
-                                                                </button>
+                                                .filter(
+                                                    (account: Account) => account.group === group,
+                                                )
+                                                .map(
+                                                    (
+                                                        account: Account,
+                                                        i: number,
+                                                        filtered: Account[],
+                                                    ) => (
+                                                        <motion.div
+                                                            layout
+                                                            key={account._id}
+                                                            variants={section}
+                                                            className="group">
+                                                            <div className="flex justify-between items-start lg:gap-4 py-2 hover:bg-black/5 rounded-lg px-2 transition-colors min-w-0">
+                                                                <div className="flex flex-col lg:flex-row lg:items-center gap-2 min-w-0">
+                                                                    <h3
+                                                                        className="text-[#4183c4] font-medium font-sans truncate"
+                                                                        title={account.name}>
+                                                                        {account.name}
+                                                                    </h3>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleEditClick(
+                                                                                account._id,
+                                                                            )
+                                                                        }
+                                                                        className={
+                                                                            'btn btn-sm btn-square btn-ghost opacity-0 group-hover:opacity-100 transition-opacity shrink-0' +
+                                                                            (!editMode
+                                                                                ? ' hidden'
+                                                                                : '')
+                                                                        }>
+                                                                        <Pencil size={16} />
+                                                                    </button>
+                                                                </div>
+                                                                <div className="flex flex-wrap flex-col items-end gap-1 shrink-0 ml-4">
+                                                                    {[
+                                                                        authUser.baseCurrency,
+                                                                        ...authUser.currencies!,
+                                                                    ]
+                                                                        .filter((c): c is string =>
+                                                                            Boolean(c),
+                                                                        )
+                                                                        .map((currency: string) => (
+                                                                            <div
+                                                                                key={currency}
+                                                                                className="flex items-center gap-1 whitespace-nowrap">
+                                                                                <AnimatedNumber
+                                                                                    value={
+                                                                                        (account.balance /
+                                                                                            rates?.[
+                                                                                                authUser
+                                                                                                    .baseCurrency!
+                                                                                            ]) *
+                                                                                        rates?.[
+                                                                                            currency
+                                                                                        ]
+                                                                                    }
+                                                                                    className={
+                                                                                        account.balance <
+                                                                                        0
+                                                                                            ? 'text-red-500'
+                                                                                            : 'text-green-500'
+                                                                                    }
+                                                                                />
+                                                                                <span
+                                                                                    className={`ml-1 text-xs ${
+                                                                                        account.balance <
+                                                                                        0
+                                                                                            ? 'text-red-400'
+                                                                                            : 'text-green-400'
+                                                                                    }`}>
+                                                                                    {currency}
+                                                                                </span>
+                                                                            </div>
+                                                                        ))}
+                                                                </div>
                                                             </div>
-                                                            <div className="flex flex-wrap flex-col items-end gap-1 shrink-0 ml-4">
-                                                                {[
-                                                                    authUser.baseCurrency,
-                                                                    ...(authUser.currencies!),
-                                                                ]
-                                                                    .filter((c): c is string => Boolean(c))
-                                                                    .map((currency: string) => (
-                                                                        <div
-                                                                            key={currency}
-                                                                            className="flex items-center gap-1 whitespace-nowrap">
-                                                                            <AnimatedNumber
-                                                                                value={
-                                                                                    (account.balance /
-                                                                                        rates?.[authUser.baseCurrency!]) *
-                                                                                    rates?.[currency]
-                                                                                }
-                                                                                className={
-                                                                                    account.balance < 0
-                                                                                        ? 'text-red-500'
-                                                                                        : 'text-green-500'
-                                                                                }
-                                                                            />
-                                                                            <span
-                                                                                className={`ml-1 text-xs ${
-                                                                                    account.balance <
-                                                                                    0
-                                                                                        ? 'text-red-400'
-                                                                                        : 'text-green-400'
-                                                                                }`}>
-                                                                                {currency}
-                                                                            </span>
-                                                                        </div>
-                                                                    ))}
-                                                            </div>
-                                                        </div>
-                                                        {i !== filtered.length - 1 && (
-                                                            <div className="divider my-0 opacity-10"></div>
-                                                        )}
-                                                    </motion.div>
-                                                ))}
+                                                            {i !== filtered.length - 1 && (
+                                                                <div className="divider my-0 opacity-10"></div>
+                                                            )}
+                                                        </motion.div>
+                                                    ),
+                                                )}
                                     </motion.div>
                                 </CustomCollapse>
                             </motion.div>

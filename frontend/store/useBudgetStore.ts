@@ -1,9 +1,8 @@
 import { create } from 'zustand';
-import { axiosInstance } from '@/lib/axios'; // TODO: Remove if unused
 import { toast } from 'sonner';
 import { budgetApi } from '@/lib/api/budget';
-
 import { Budget } from '@/types';
+import { AxiosError } from 'axios';
 
 interface BudgetStore {
     budgets: Budget[];
@@ -15,7 +14,7 @@ interface BudgetStore {
     deleteBudget: (id: string) => Promise<void>;
 }
 
-export const useBudgetStore = create<BudgetStore>((set, get) => ({
+export const useBudgetStore = create<BudgetStore>((set) => ({
     budgets: [],
     isLoading: false,
     isError: false,
@@ -39,10 +38,14 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
             const response = await budgetApi.create(data);
             set((state) => ({ budgets: [...state.budgets, response.data] }));
             toast.success('Budget created successfully');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error creating budget:', error);
-            const message = error.response?.data?.message || 'Failed to create budget';
-            toast.error(message);
+            if (error instanceof AxiosError) {
+                const message = error.response?.data?.message || 'Failed to create budget';
+                toast.error(message);
+            } else {
+                toast.error('Failed to create budget');
+            }
         }
     },
 

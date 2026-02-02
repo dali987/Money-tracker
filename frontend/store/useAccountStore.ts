@@ -10,7 +10,7 @@ interface AccountStore {
 
     // Actions
     getAccounts: (force?: boolean) => Promise<Account[]>;
-    createAccount: (accountData: any) => Promise<void>;
+    createAccount: (accountData: Partial<Account>) => Promise<void>;
     updateAccount: (accountData: { id: string; data: Partial<Account> }) => Promise<void>;
     deleteAccount: (accountId: string) => Promise<void>;
     getAccountsSummary: () => Promise<AccountSummary | null>;

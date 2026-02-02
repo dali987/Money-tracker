@@ -25,7 +25,7 @@ interface TransactionStore {
     getTransactionsSummary: (filters: TransactionFilter) => Promise<TransactionSummary | null>;
     getTransactionsChart: (filters: TransactionFilter) => Promise<ChartDataResponse[]>;
     getNetWorthChart: (filters: TransactionFilter) => Promise<NetWorthChartResponse | null>;
-    createTransaction: (transactionData: any) => Promise<void>;
+    createTransaction: (transactionData: Partial<Transaction>) => Promise<void>;
     updateTransaction: (transactionData: {
         id: string;
         data: Partial<Transaction>;
@@ -35,7 +35,7 @@ interface TransactionStore {
     getCurrencies: () => Promise<CurrencyOption[]>;
 }
 
-export const useTransactionStore = create<TransactionStore>((set, get) => ({
+export const useTransactionStore = create<TransactionStore>((set) => ({
     transactions: [],
     rates: {},
     currencies: [],
@@ -87,7 +87,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     getNetWorthChart: async (filters) => {
         try {
             const data = await transactionApi.getNetWorthChart(filters);
-            console.log('data is: ', data);
+
             return data.data;
         } catch (error) {
             console.error('An error occurred while getting net worth chart data: ', error);

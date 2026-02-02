@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { axiosInstance } from '@/lib/axios';
-import { Transaction } from '@/types';
+import { Transaction, TransactionFilter } from '@/types';
 
-export const useTransactions = (filters: any = {}) => {
+export const useTransactions = (filters: TransactionFilter = {}) => {
     return useQuery<Transaction[]>({
         queryKey: ['transactions', filters],
         queryFn: async () => {

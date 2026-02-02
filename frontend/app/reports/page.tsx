@@ -3,7 +3,9 @@
 import { HorizontalChart } from '@/Components/charts/HorizontalChart';
 import { LineChart } from '@/Components/charts/LineChart';
 import Initializer from '@/Components/providers/Initializer';
-import SelectAccountDropdown from '@/Components/Custom/SelectAccountDropdown';
+import SelectAccountDropdown, {
+    AccountDropdownOption,
+} from '@/Components/Custom/SelectAccountDropdown';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import MultiSelectDropdown from '@/Components/Custom/MultiSelectDropdown';
@@ -13,7 +15,13 @@ import SelectDropdown from '@/Components/Custom/SelectDropdown';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useAccounts } from '@/hooks/useAccounts';
 import ReportSkeleton from '@/Components/states/ReportSkeleton';
-import { ChartDataResponse, TransactionFilter, Account, NetWorthChartResponse } from '@/types';
+import {
+    ChartDataResponse,
+    TransactionFilter,
+    Account,
+    NetWorthChartResponse,
+    ReportChartData,
+} from '@/types';
 
 interface PeriodConfig {
     label: (date: Date) => string;
@@ -100,19 +108,12 @@ const PERIOD_CONFIGS: Record<string, PeriodConfig> = {
     },
 };
 
-interface ChartEntry {
-    period: string;
-    income?: number;
-    expense?: number;
-    worth?: number;
-}
-
 const transformChartData = (
     rawData: ChartDataResponse[],
     config: PeriodConfig,
     chartType: string,
     currentDate: Date,
-) => {
+): ReportChartData[] => {
     const isTagGrouping = chartType === 'expenseIncomeTags';
     const isSingleType = chartType === 'netIncome' || chartType === 'netExpense';
     const targetType = chartType === 'netIncome' ? 'income' : 'expense';
@@ -135,7 +136,7 @@ const transformChartData = (
             income: 0,
             expense: 0,
         };
-        const entry: ChartEntry = { period: label };
+        const entry: ReportChartData = { period: label };
 
         if (isSingleType) {
             entry[targetType as 'income' | 'expense'] = item[targetType as keyof typeof item] || 0;
@@ -151,7 +152,7 @@ const processNetWorthTrend = (
     response: NetWorthChartResponse,
     config: PeriodConfig,
     currentDate: Date,
-): ChartEntry[] => {
+): ReportChartData[] => {
     const { netWorthAtEndOfPeriod, changes } = response;
     const labels = config.generateLabels(currentDate);
     let runningWorth = netWorthAtEndOfPeriod;
@@ -178,14 +179,14 @@ const ReportsPage = () => {
     const [periodType, setPeriodType] = useState<'yearly' | 'monthly'>('monthly');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [chartType, setChartType] = useState<string>('expenseIncome');
-    const [chartData, setChartData] = useState<ChartEntry[]>([]);
+    const [chartData, setChartData] = useState<ReportChartData[]>([]);
     const [loading, setLoading] = useState(false);
 
     const { data: accountsRaw = [] } = useAccounts();
 
     const accounts = accountsRaw || [];
 
-    const handleOptions = (accounts: Account[]) => {
+    const handleOptions = (accounts: Account[]): AccountDropdownOption[] => {
         if (!accounts) return [];
         const newAccounts = accounts.map((account) => ({
             name: account.name,
@@ -306,7 +307,6 @@ const ReportsPage = () => {
                     variants={itemVariants}
                     className="flex flex-wrap justify-center lg:justify-between p-4 w-full gap-4">
                     <SelectDropdown
-                        id="chartType"
                         defaultValue={chartType}
                         onSelect={(val) => setChartType(val)}
                         className="w-max"
@@ -366,7 +366,7 @@ const ReportsPage = () => {
                         className="w-full"
                         options={handleOptions(accounts)}
                         placeholder="Select Account"
-                        onSelect={(option: { id: string }) => setSelectedAccount(option.id)}
+                        onSelect={(option: AccountDropdownOption) => setSelectedAccount(option.id)}
                     />
                     <MultiSelectDropdown
                         formFieldName="excludeTags"

@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { axiosInstance } from '@/lib/axios';
 import { authClient } from '@/lib/auth-client';
 
 import { User } from '@/types';
@@ -15,9 +14,9 @@ interface AuthState {
     signup: (formData: Record<string, string>) => Promise<boolean | string>;
     login: (formData: Record<string, string>) => Promise<boolean | string>;
     logout: () => Promise<void>;
-    updateSetting: (key: string, setting: any) => Promise<User | null>;
-    addSetting: (key: string, setting: any) => Promise<User | null>;
-    removeSetting: (key: string, setting: any) => Promise<User | null>;
+    updateSetting: (key: keyof User, setting: User[keyof User]) => Promise<User | null>;
+    addSetting: (key: keyof User, setting: User[keyof User]) => Promise<User | null>;
+    removeSetting: (key: keyof User, setting: User[keyof User]) => Promise<User | null>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -63,12 +62,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     signup: async (formData: Record<string, string>) => {
         set({ isSigningUp: true });
         try {
-            const { data: authData, error } = await authClient.signUp.email({
+            const { error } = await authClient.signUp.email({
                 email: formData.email,
                 password: formData.password,
                 name: formData.username, // Better Auth uses 'name' field
                 username: formData.username, // Custom field passed to adapter
-            } as any);
+            } as Parameters<typeof authClient.signUp.email>[0] & { username: string });
 
             if (error) {
                 throw new Error(error.message || 'Sign up failed');
@@ -80,9 +79,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             set({ authUser: user });
             return true;
-        } catch (error: any) {
+        } catch (error) {
             console.error('Signup error:', error);
-            return error.message || 'Error signing up';
+            if (error instanceof Error) {
+                return error.message;
+            }
+            return 'Error signing up';
         } finally {
             set({ isSigningUp: false });
         }
@@ -91,7 +93,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     login: async (formData: Record<string, string>) => {
         set({ isLoggingIn: true });
         try {
-            const { data: authData, error } = await authClient.signIn.email({
+            const { error } = await authClient.signIn.email({
                 email: formData.email,
                 password: formData.password,
             });
@@ -106,9 +108,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             set({ authUser: user });
             return true;
-        } catch (error: any) {
+        } catch (error) {
             console.error('Login error:', error);
-            return error.message || 'Error logging in';
+            if (error instanceof Error) {
+                return error.message;
+            }
+            return 'Error logging in';
         } finally {
             set({ isLoggingIn: false });
         }

@@ -47,7 +47,7 @@ const Steps = () => {
             });
 
             // 3. Animate each content section with a single timeline for smooth entry/exit
-            stepsContentRefs.current.forEach((section, index) => {
+            stepsContentRefs.current.forEach((section) => {
                 if (!section) return;
 
                 const tl = gsap.timeline({

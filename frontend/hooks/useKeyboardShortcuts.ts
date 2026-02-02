@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface ShortcutConfig {
     key: string;
@@ -28,7 +28,6 @@ interface UseKeyboardShortcutsOptions {
 export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) {
     const { shortcuts = [], enableNavigation = true } = options;
     const router = useRouter();
-    const pathname = usePathname();
 
     const handleKeyDown = useCallback(
         (event: KeyboardEvent) => {

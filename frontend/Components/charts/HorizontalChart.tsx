@@ -8,13 +8,13 @@ import {
     ChartLegend,
     ChartLegendContent,
 } from '@/Components/ui/chart';
-import { ChartData } from '@/types';
+import { ReportChartData } from '@/types';
 
 export function HorizontalChart({
     data,
     chartConfig,
 }: {
-    data: Record<number, ChartData>[];
+    data: ReportChartData[];
     chartConfig: ChartConfig;
 }) {
     if (!data || data.length === 0) {
@@ -24,7 +24,6 @@ export function HorizontalChart({
             </div>
         );
     }
-    console.log(data);
 
     const dataKeys = Object.keys(data[0]);
 

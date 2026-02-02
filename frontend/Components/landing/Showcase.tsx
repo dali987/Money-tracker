@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
-import { colors } from '@/app/Constants';
+import Image from 'next/image';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -143,10 +143,12 @@ const Showcase = () => {
                             </div>
                         </div>
                         <div className="relative bg-base-200/50 backdrop-blur-sm overflow-hidden aspect-video group">
-                            <img
+                            <Image
                                 src="/exampleOfSite.png"
                                 alt="Money Tracker Dashboard"
                                 className="w-full h-full object-cover object-top transition-transform duration-700"
+                                width={1920}
+                                height={1080}
                             />
                             {/* Subtle overlay for depth */}
                             <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
@@ -159,61 +161,65 @@ const Showcase = () => {
                         style={{
                             maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1), transparent)',
                             WebkitMaskImage:
-                                'linear-gradient(to bottom, rgba(0,0,0,1), transparent)',
+                                'linear-gradient    (to bottom, rgba(0,0,0,1), transparent)',
                             transform: 'scaleY(-1) translateY(0px)', // Adjust gap as needed
                             zIndex: 0,
                         }}>
                         {/* We duplicate the visual content for reflection - simplified for performance */}
                         <div className="w-full h-full bg-linear-to-b from-indigo-900/50 to-transparent rounded-xl" />
-                        {/* Note: Real reflection requires duplicating the image element which can be heavy. 
-                             Using a gradient block simulates the 'presence' of a reflection often enough for dark modes, 
-                             or we can duplicate the img tag if needed. Let's try duplicating the img for higher quality if permitted.
-                          */}
-                        <img
+
+                        <Image
                             src="/exampleOfSite.png"
                             alt=""
                             className="w-full h-full object-cover object-top opacity-50"
+                            width={1920}
+                            height={1080}
                         />
                     </div>
 
                     {/* Floating Stats Cards */}
                     <div
                         ref={card1Ref}
-                        className="absolute -top-10 -right-10 md:-right-20 bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl z-20 w-64 transform-gpu">
-                        <div className="flex items-center gap-4 mb-2">
-                            <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                        className="absolute -top-10 -right-10 md:-right-20 bg-black/80 backdrop-blur-md border border-white/10 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-xl z-20 w-36 md:w-64 transform-gpu">
+                        <div className="flex items-center gap-2 md:gap-4 mb-1 md:mb-2">
+                            <div className="w-7 h-7 md:w-10 md:h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
                                 ↗
                             </div>
                             <div>
-                                <div className="text-sm text-gray-400">Total Savings</div>
-                                <div className="text-2xl font-bold text-white">$24,500</div>
+                                <div className="text-xs text-gray-400">Total Savings</div>
+                                <div className="text-lg md:text-2xl font-bold text-white">$24,500</div>
                             </div>
                         </div>
-                        <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                        <div className="w-full bg-gray-800 h-1 md:h-2 rounded-full overflow-hidden">
                             <div className="bg-green-500 h-full w-[75%]"></div>
                         </div>
                     </div>
 
                     <div
                         ref={card2Ref}
-                        className="absolute top-1/2 -left-10 md:-left-20 bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl z-20 w-56 transform-gpu">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
+                        className="absolute top-1/2 -left-10 md:-left-20 bg-black/80 backdrop-blur-md border border-white/10 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-xl z-20 w-36 md:w-64 transform-gpu">
+                        <div className="flex items-center gap-2 md:gap-4 mb-1 md:mb-2">
+                            <div className="w-7 h-7 md:w-10 md:h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
                                 📊
                             </div>
                             <div>
-                                <div className="text-sm text-gray-400">Monthly Goal</div>
-                                <div className="text-xl font-bold text-white">85% Hit</div>
+                                <div className="text-xs text-gray-400">Monthly Goal</div>
+                                <div className="text-base md:text-xl font-bold text-white">85% Hit</div>
                             </div>
                         </div>
                     </div>
 
                     <div
                         ref={card3Ref}
-                        className="absolute -bottom-10 -right-5 md:right-10 bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl z-20 w-60 transform-gpu">
-                        <div className="flex justify-between items-end mb-2">
-                            <div className="text-sm text-gray-400">Expenses</div>
-                            <div className="text-red-400 font-mono">- $1,250</div>
+                        className="absolute -bottom-10 -right-5 md:right-10 bg-black/80 backdrop-blur-md border border-white/10 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-xl z-20 w-36 md:w-64 transform-gpu">
+                        <div className="flex items-center gap-2 md:gap-4 mb-1 md:mb-2">
+                            <div className="w-7 h-7 md:w-10 md:h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-500">
+                                📊
+                            </div>
+                            <div>
+                                <div className="text-xs text-gray-400">Expenses</div>
+                                <div className="text-base md:text-xl font-bold text-white">- $1,250</div>
+                            </div>
                         </div>
                         <div className="flex gap-1 h-8 items-end">
                             <div className="w-1/5 bg-gray-700 h-[30%] rounded-sm"></div>

@@ -4,7 +4,6 @@ import { useAuthStore } from '@/store/useAuthStore';
 import NumberInput from '@/Components/Custom/NumberInput';
 import { useState } from 'react';
 import { accountSchema } from '@/lib/validations';
-
 import SelectDropdown from '@/Components/Custom/SelectDropdown';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useQueryClient } from '@tanstack/react-query';
@@ -105,7 +104,6 @@ const AccountForm = ({ action = 'create', onSuccess }: AccountFormProps) => {
                 <label htmlFor="group">Group</label>
                 <SelectDropdown
                     name="group"
-                    id="group"
                     options={authUser?.groups || []}
                     defaultValue={group}
                     onSelect={(val) => setGroup(val)}

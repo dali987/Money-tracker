@@ -5,6 +5,7 @@ import { useAccounts } from './useAccounts';
 import { useBudgetStore } from '@/store/useBudgetStore';
 import { useNotificationStore } from '@/store/useNotificationStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
+import { Account, Budget, Transaction } from '@/types';
 
 export const useNotificationTriggers = () => {
     const { data: accounts } = useAccounts();
@@ -18,7 +19,7 @@ export const useNotificationTriggers = () => {
     useEffect(() => {
         if (!accounts) return;
 
-        accounts.forEach((account: any) => {
+        accounts.forEach((account: Account) => {
             const notificationId = `low-balance-${account._id}-${Math.floor(account.balance)}`;
 
             // Notify if balance is negative and we haven't notified about this specific negative state yet
@@ -45,10 +46,10 @@ export const useNotificationTriggers = () => {
     useEffect(() => {
         if (!budgets || budgets.length === 0 || !transactions || transactions.length === 0) return;
 
-        budgets.forEach((budget: any) => {
+        budgets.forEach((budget: Budget) => {
             const spent = transactions
-                .filter((t: any) => t.type === 'expense' && t.tags?.includes(budget.tag))
-                .reduce((sum: number, t: any) => sum + t.amount, 0);
+                .filter((t: Transaction) => t.type === 'expense' && t.tags?.includes(budget.tag))
+                .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
 
             const percentage = (spent / budget.amount) * 100;
             const threshold = budget.alertThreshold || 80;

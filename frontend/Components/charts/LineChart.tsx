@@ -8,17 +8,15 @@ import {
     ChartLegend,
     ChartLegendContent,
 } from '@/Components/ui/chart';
-import { ChartData } from '@/types';
+import { ReportChartData } from '@/types';
 
 export function LineChart({
     data,
     chartConfig,
 }: {
-    data: Record<number, ChartData>[];
+    data: ReportChartData[];
     chartConfig: ChartConfig;
 }) {
-    console.log('data : ', data);
-
     if (!data || data.length === 0) {
         return (
             <div className="flex items-center justify-center min-h-[200px] w-full text-gray-500">

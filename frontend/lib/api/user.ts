@@ -1,3 +1,4 @@
+import { User } from '@/types';
 import { axiosInstance } from '../axios';
 
 const API_URL = '/user';
@@ -8,17 +9,17 @@ export const userApi = {
         return response.data;
     },
 
-    updateSetting: async (key: string, setting: any) => {
+    updateSetting: async (key: string, setting: User[keyof User]) => {
         const response = await axiosInstance.post(`${API_URL}/update`, { key, setting });
         return response.data;
     },
 
-    addSetting: async (key: string, setting: any) => {
+    addSetting: async (key: string, setting: User[keyof User]) => {
         const response = await axiosInstance.post(`${API_URL}/add`, { key, setting });
         return response.data;
     },
 
-    removeSetting: async (key: string, setting: any) => {
+    removeSetting: async (key: string, setting: User[keyof User]) => {
         const response = await axiosInstance.post(`${API_URL}/remove`, { key, setting });
         return response.data;
     },
