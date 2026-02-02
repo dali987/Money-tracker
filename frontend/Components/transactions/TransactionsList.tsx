@@ -130,7 +130,7 @@ const TransactionsList = ({
                     exit={{ opacity: 0 }}
                     className="list rounded-box overflow-clip">
                     {displayedTransactions.length > 0 ? (
-                        <AnimatePresence mode="popLayout">
+                        <AnimatePresence mode="wait">
                             {authUser &&
                                 accounts.length > 0 &&
                                 displayedTransactions.map((transaction) => (

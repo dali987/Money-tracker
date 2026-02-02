@@ -144,7 +144,7 @@ const Showcase = () => {
                         </div>
                         <div className="relative bg-base-200/50 backdrop-blur-sm overflow-hidden aspect-video group">
                             <Image
-                                src="/exampleOfSite.png"
+                                src="/exampleOfSiteDark.png"
                                 alt="Money Tracker Dashboard"
                                 className="w-full h-full object-cover object-top transition-transform duration-700"
                                 width={1920}
@@ -169,7 +169,7 @@ const Showcase = () => {
                         <div className="w-full h-full bg-linear-to-b from-indigo-900/50 to-transparent rounded-xl" />
 
                         <Image
-                            src="/exampleOfSite.png"
+                            src="/exampleOfSiteDark.png"
                             alt=""
                             className="w-full h-full object-cover object-top opacity-50"
                             width={1920}

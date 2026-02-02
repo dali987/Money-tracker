@@ -11,10 +11,6 @@ import {
     Globe,
     Plus,
     ArrowLeftRight,
-    Sparkles,
-    Clock,
-    Lock,
-    Eye,
 } from 'lucide-react';
 
 export const colors = {
@@ -123,50 +119,5 @@ export const steps = [
             'View insights, track trends, and make informed financial decisions with beautiful charts.',
         icon: TrendingUp,
         color: colors.accent,
-    },
-];
-
-export const benefits = [
-    {
-        icon: Eye,
-        title: 'Financial Clarity',
-        description:
-            'See exactly where your money goes and identify spending patterns and opportunities to save.',
-        color: colors.primary,
-    },
-    {
-        icon: Clock,
-        title: 'Time Savings',
-        description:
-            'Quick transaction entry with automated calculations and summaries. Spend less time managing finances.',
-        color: colors.secondary,
-    },
-    {
-        icon: Target,
-        title: 'Goal Achievement',
-        description:
-            'Track progress toward financial goals and make data-driven decisions to achieve them faster.',
-        color: colors.accent,
-    },
-    {
-        icon: Globe,
-        title: 'Multi-Currency Convenience',
-        description:
-            'Manage finances across currencies with real-time exchange rate updates and automatic conversions.',
-        color: colors.info,
-    },
-    {
-        icon: Lock,
-        title: 'Privacy & Control',
-        description:
-            'Your data stays private and secure. No third-party sharing. You have complete control.',
-        color: colors.success,
-    },
-    {
-        icon: Sparkles,
-        title: 'Smart Insights',
-        description:
-            'Get AI-powered insights and recommendations to optimize your financial health and spending habits.',
-        color: colors.warning,
     },
 ];

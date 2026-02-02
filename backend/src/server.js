@@ -90,20 +90,16 @@ nextApp.prepare().then(async () => {
         }
 
         cron.schedule('0 0 * * *', async () => {
-            console.log('Running daily exchange rate update check...');
             try {
                 await checkExchangeRates();
-                console.log('Exchange rates update check completed via scheduler.');
             } catch (error) {
                 console.error('Failed to check exchange rates in scheduler:', error);
             }
         });
 
         cron.schedule('0 0 * * *', async () => {
-            console.log('Running daily recurring transactions check...');
             try {
-                const count = await processDueRecurringTransactions();
-                console.log(`Daily check complete. Processed ${count} recurring transactions.`);
+                await processDueRecurringTransactions();
             } catch (error) {
                 console.error('Failed to run daily recurring transactions check:', error);
             }

@@ -5,12 +5,6 @@ export const createBudget = async (req, res, next) => {
         const userId = req.user._id;
         const { tag, amount, alertThreshold } = req.body;
 
-        if (!tag || !amount) {
-            const error = new Error('Tag and amount are required');
-            error.statusCode = 400;
-            throw error;
-        }
-
         const existingBudget = await Budget.findOne({ userId, tag });
         if (existingBudget) {
             const error = new Error('Budget for this tag already exists');

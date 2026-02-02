@@ -80,7 +80,6 @@ export const getTransactionChartData = async (req, res, next) => {
         }
 
         const data = await Transaction.aggregate(pipeline);
-        console.log('data', data);
         res.status(200).json({ success: true, data });
     } catch (error) {
         console.error('An error occurred while getting chart data: ', error);
@@ -228,9 +227,9 @@ export const calculateTransactionSum = async (req, res, next) => {
 
 export const getTransaction = async (req, res, next) => {
     try {
-        const { transactionId } = req.body;
+        const { id } = req.params;
 
-        const transaction = await Transaction.findById(transactionId);
+        const transaction = await Transaction.findById(id);
 
         res.status(200).json({ success: true, data: transaction });
     } catch (error) {
@@ -254,7 +253,7 @@ export const updateTransaction = async (req, res, next) => {
             {
                 ...req.body,
             },
-            { new: true }
+            { new: true },
         );
 
         if (!updatedTransaction) {

@@ -38,7 +38,6 @@ export const checkExchangeRates = async () => {
     try {
         const rates = await ExchangeRates.findOne();
         if (!rates) {
-            console.log('No exchange rates found, fetching for the first time...');
             return await fetchAndSaveExchangeRates();
         }
 
@@ -51,15 +50,12 @@ export const checkExchangeRates = async () => {
             const oneDayInSeconds = 24 * 60 * 60;
             const nowUnix = Math.floor(Date.now() / 1000);
             if (nowUnix - rates.timeLastUpdateUnix > oneDayInSeconds) {
-                console.log('Exchange rates (based on provider) are older than a day, updating...');
                 return await fetchAndSaveExchangeRates();
             }
         } else if (now - lastFetched > oneDayInMs) {
-            console.log('Exchange rates are older than a day, updating...');
             return await fetchAndSaveExchangeRates();
         }
 
-        console.log('Exchange rates are up to date (less than a day old).');
         return rates;
     } catch (error) {
         console.error('Error checking/updating exchange rates:', error);
