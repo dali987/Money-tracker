@@ -24,10 +24,15 @@ export const updateAccount = async (req, res, next) => {
     try {
         const { id: accountId } = req.params;
 
-        const account = await Account.findByIdAndUpdate(accountId, req.body, { new: true });
+        // SECURITY: Ensure account belongs to user
+        const account = await Account.findOneAndUpdate(
+            { _id: accountId, user: req.user._id },
+            req.body,
+            { new: true, session },
+        );
 
         if (!account) {
-            const error = new Error('Updating account failed');
+            const error = new Error('Account not found or unauthorized');
             error.status = 404;
             throw error;
         }
@@ -50,10 +55,14 @@ export const deleteAccount = async (req, res, next) => {
     try {
         const { id: accountId } = req.params;
 
-        const account = await Account.findByIdAndDelete(accountId);
+        // SECURITY: Ensure account belongs to user
+        const account = await Account.findOneAndDelete({
+            _id: accountId,
+            user: req.user._id,
+        }).session(session);
 
         if (!account) {
-            const error = new Error('Deleting account failed');
+            const error = new Error('Account not found or unauthorized');
             error.status = 404;
             throw error;
         }

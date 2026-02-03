@@ -18,12 +18,16 @@ interface NotificationStore {
     markAllAsRead: () => void;
     deleteNotification: (id: string) => void;
     clearAll: () => void;
+    notificationCache: Record<string, number | boolean>;
+    setNotificationCache: (key: string, value: number | boolean) => void;
+    clearNotificationCache: (key: string) => void;
 }
 
 export const useNotificationStore = create<NotificationStore>()(
     persist(
         (set) => ({
             notifications: [],
+            notificationCache: {},
 
             addNotification: (notification) => {
                 const newNotification: Notification = {
@@ -59,7 +63,25 @@ export const useNotificationStore = create<NotificationStore>()(
             },
 
             clearAll: () => {
+                // Keep cache so "clear all" doesn't immediately re-trigger active alerts.
                 set({ notifications: [] });
+            },
+
+            setNotificationCache: (key, value) => {
+                set((state) => ({
+                    notificationCache: {
+                        ...state.notificationCache,
+                        [key]: value,
+                    },
+                }));
+            },
+
+            clearNotificationCache: (key) => {
+                set((state) => {
+                    if (!(key in state.notificationCache)) return state;
+                    const { [key]: _removed, ...rest } = state.notificationCache;
+                    return { notificationCache: rest };
+                });
             },
         }),
         {

@@ -85,20 +85,6 @@ const TransactionForm = ({
 
     const getSelectedId = (accField: string | Account | undefined | null) => {
         if (!accField) {
-            // Check other potential identity fields if accField is missing
-            if (transaction) {
-                if ('accountId' in transaction && transaction.accountId) return transaction.accountId;
-                if ('fromAccount' in transaction && transaction.fromAccount) {
-                    return typeof transaction.fromAccount === 'object'
-                        ? transaction.fromAccount._id
-                        : transaction.fromAccount;
-                }
-                if ('toAccount' in transaction && transaction.toAccount) {
-                    return typeof transaction.toAccount === 'object'
-                        ? transaction.toAccount._id
-                        : transaction.toAccount;
-                }
-            }
             return '';
         }
         return typeof accField === 'object' ? accField._id : accField;

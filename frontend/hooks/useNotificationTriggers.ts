@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useAccounts } from './useAccounts';
 import { useBudgetStore } from '@/store/useBudgetStore';
 import { useNotificationStore } from '@/store/useNotificationStore';
@@ -11,37 +11,40 @@ export const useNotificationTriggers = () => {
     const { data: accounts } = useAccounts();
     const { budgets } = useBudgetStore();
     const { transactions } = useTransactionStore();
-    const { addNotification, notifications } = useNotificationStore();
-
-    // Use refs to prevent duplicate notifications in the same session
-    const notifiedIds = useRef<Set<string>>(new Set());
+    const { addNotification, notificationCache, setNotificationCache, clearNotificationCache } =
+        useNotificationStore();
 
     useEffect(() => {
         if (!accounts) return;
 
         accounts.forEach((account: Account) => {
-            const notificationId = `low-balance-${account._id}-${Math.floor(account.balance)}`;
+            const cacheKey = `low-balance-${account._id}`;
+            const roundedBalance = Number(account.balance.toFixed(2));
+            const lastNotifiedBalance = notificationCache[cacheKey];
 
-            // Notify if balance is negative and we haven't notified about this specific negative state yet
-            if (account.balance < 0 && !notifiedIds.current.has(notificationId)) {
-                // Check if we already have a similar unread notification to avoid spam
-                const alreadyNotified = notifications.some(
-                    (n) =>
-                        n.title.includes(account.name) && !n.read && n.message.includes('negative'),
-                );
+            // Notify only when the negative balance changes
+            if (account.balance < 0 && lastNotifiedBalance !== roundedBalance) {
+                addNotification({
+                    title: 'Negative Balance Alert',
+                    message: `Your account "${account.name}" has a negative balance of ${account.balance.toFixed(2)}.`,
+                    type: 'error',
+                    actionUrl: '/accounts',
+                });
+                setNotificationCache(cacheKey, roundedBalance);
+            }
 
-                if (!alreadyNotified) {
-                    addNotification({
-                        title: 'Negative Balance Alert',
-                        message: `Your account "${account.name}" has a negative balance of ${account.balance.toFixed(2)}.`,
-                        type: 'error',
-                        actionUrl: '/accounts',
-                    });
-                    notifiedIds.current.add(notificationId);
-                }
+            // Reset cache when balance is no longer negative
+            if (account.balance >= 0 && lastNotifiedBalance !== undefined) {
+                clearNotificationCache(cacheKey);
             }
         });
-    }, [accounts, addNotification, notifications]);
+    }, [
+        accounts,
+        addNotification,
+        notificationCache,
+        setNotificationCache,
+        clearNotificationCache,
+    ]);
 
     useEffect(() => {
         if (!budgets || budgets.length === 0 || !transactions || transactions.length === 0) return;
@@ -57,24 +60,30 @@ export const useNotificationTriggers = () => {
             const notificationId80 = `budget-80-${budget._id}-${new Date().getMonth()}`;
             const notificationId100 = `budget-100-${budget._id}-${new Date().getMonth()}`;
 
-            if (percentage >= 100 && !notifiedIds.current.has(notificationId100)) {
+            if (percentage >= 100 && !notificationCache[notificationId100]) {
                 addNotification({
                     title: 'Budget Exceeded',
                     message: `You've spent ${spent.toFixed(2)} on "${budget.tag}", surpassing your ${budget.amount} budget.`,
                     type: 'error',
                     actionUrl: '/budget',
                 });
-                notifiedIds.current.add(notificationId100);
-                notifiedIds.current.add(notificationId80); // Mark 80 as done too if we hit 100
-            } else if (percentage >= threshold && !notifiedIds.current.has(notificationId80)) {
+                setNotificationCache(notificationId100, true);
+                setNotificationCache(notificationId80, true); // Mark 80 as done too if we hit 100
+            } else if (percentage >= threshold && !notificationCache[notificationId80]) {
                 addNotification({
                     title: 'Budget Warning',
                     message: `You've reached ${Math.round(percentage)}% of your monthly budget for "${budget.tag}".`,
                     type: 'warning',
                     actionUrl: '/budget',
                 });
-                notifiedIds.current.add(notificationId80);
+                setNotificationCache(notificationId80, true);
             }
         });
-    }, [budgets, transactions, addNotification, notifications]);
+    }, [
+        budgets,
+        transactions,
+        addNotification,
+        notificationCache,
+        setNotificationCache,
+    ]);
 };

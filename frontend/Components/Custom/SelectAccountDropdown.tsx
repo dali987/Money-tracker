@@ -1,5 +1,5 @@
 import { Check, ChevronDown } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export type AccountDropdownOption = { name: string; type: string; id: string };
@@ -25,45 +25,42 @@ const SelectAccountDropdown = ({
     placeholder,
     selectedId,
 }: AccountDropDownProps) => {
-    const [selected, setSelected] = useState({ name: '', type: '', id: '' });
+    const [internalSelectedId, setInternalSelectedId] = useState<string>('');
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [isTop, setIsTop] = useState(false);
 
+    const isControlled = selectedId !== undefined;
+
+    const selectedOption = useMemo(() => {
+        const preferredId = isControlled ? selectedId : internalSelectedId;
+        if (preferredId) {
+            const found = options.find((o) => o.id === preferredId);
+            if (found) return found;
+        }
+
+        if (defaultValue && options.length > 0) {
+            return options[0];
+        }
+
+        return { name: '', type: '', id: '' };
+    }, [defaultValue, internalSelectedId, isControlled, options, selectedId]);
+
     const handleSelect = (option: AccountDropdownOption) => {
-        setSelected(option);
+        if (!isControlled) {
+            setInternalSelectedId(option.id);
+        }
         setIsOpen(false);
         if (onSelect) {
             onSelect(option);
         }
     };
 
-    const [prevSelectedId, setPrevSelectedId] = useState<string | undefined>(undefined);
-    const [prevOptions, setPrevOptions] = useState<AccountDropdownOption[]>([]);
-
-    // Sync selection state when props change (Sync during render)
-    if (selectedId !== prevSelectedId || options !== prevOptions) {
-        setPrevSelectedId(selectedId);
-        setPrevOptions(options);
-
-        if (selectedId !== undefined) {
-            const found = options.find((o) => o.id === selectedId);
-            if (found) {
-                setSelected(found);
-            } else {
-                setSelected({ name: '', type: '', id: '' });
-            }
-        } else if (
-            options.length > 0 &&
-            defaultValue &&
-            (!selected.id || !options.find((o) => o.id === selected.id))
-        ) {
-            setSelected(options[0]);
-            if (onSelect) {
-                onSelect(options[0]);
-            }
+    useEffect(() => {
+        if (!isControlled && defaultValue && options.length > 0 && !internalSelectedId) {
+            onSelect?.(options[0]);
         }
-    }
+    }, [defaultValue, internalSelectedId, isControlled, onSelect, options]);
 
     // Handle clicks outside to close dropdown
     useEffect(() => {
@@ -104,15 +101,15 @@ const SelectAccountDropdown = ({
                 }`}>
                 <span
                     id="selectedText"
-                    title={selected.name || placeholder}
-                    className={selected.name ? 'truncate' : 'text-gray-500 truncate'}>
-                    {selected.name || placeholder}
+                    title={selectedOption.name || placeholder}
+                    className={selectedOption.name ? 'truncate' : 'text-gray-500 truncate'}>
+                    {selectedOption.name || placeholder}
                 </span>
                 <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
                     <ChevronDown className="h-4 w-4 opacity-70" />
                 </motion.div>
             </div>
-            <input type="hidden" name={name} value={selected.id} />
+            <input type="hidden" name={name} value={selectedOption.id} />
 
             <AnimatePresence>
                 {isOpen && !disabled && (
@@ -133,7 +130,7 @@ const SelectAccountDropdown = ({
                                     className="flex justify-between items-center py-2 px-3 rounded-lg transition-colors">
                                     <div className="flex items-center gap-2 overflow-hidden">
                                         <div className="w-5 shrink-0">
-                                            {option.name === selected.name && <Check size={18} />}
+                                            {option.id === selectedOption.id && <Check size={18} />}
                                         </div>
                                         <span className="truncate" title={option.name}>
                                             {option.name}

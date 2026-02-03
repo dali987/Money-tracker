@@ -29,18 +29,13 @@ export interface Account {
 
 export interface Transaction {
     _id: string;
-    userId: string;
-    accountId: string;
-    fromAccount?: string; // Legacy field used in UI for transfers
-    toAccount?: string; // Legacy field used in UI for transfers
-    toAccountId?: string; // Standard field for transfers
     type: TransactionType;
+    fromAccount?: string | Account;
+    toAccount?: string | Account;
     amount: number;
-    description: string;
-    note?: string; // Field used in UI instead of description
+    note?: string;
     date: string | Date;
     tags: string[];
-    category?: string;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -114,12 +109,27 @@ export interface TransactionFilter {
     type?: string;
     startDate?: Date;
     endDate?: Date;
-    accountId?: string;
     tags?: string;
-    category?: string;
     groupBy?: string;
     account?: string;
     excludeTags?: string;
+    page?: number;
+    limit?: number;
+}
+
+export interface PaginationMeta {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    limit: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+}
+
+export interface PaginatedResponse<T> {
+    success: boolean;
+    data: T[];
+    pagination: PaginationMeta;
 }
 
 export type ChartDataResponse = {

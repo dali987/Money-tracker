@@ -12,6 +12,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { Plus, FilePlusCorner, Filter, ListFilter } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useQueryClient } from '@tanstack/react-query';
 import AnimatedNumber from '@/Components/ui/AnimatedNumber';
 import React, { useEffect, useState } from 'react';
 import { useCallback, useMemo } from 'react';
@@ -39,12 +40,7 @@ const itemVariants = {
 };
 
 const TransactionsPage = () => {
-    const getTransactionsWithFilter = useTransactionStore(
-        (state) => state.getTransactionsWithFilter,
-    );
     const getTransactionsSummary = useTransactionStore((state) => state.getTransactionsSummary);
-    const transactions = useTransactionStore((state) => state.transactions);
-    const isTransactionsLoading = useTransactionStore((state) => state.isTransactionsLoading);
     const authUser = useAuthStore((state) => state.authUser);
     const [summary, setSummary] = useState({
         totalExpense: 0,
@@ -76,6 +72,7 @@ const TransactionsPage = () => {
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
     const { data: accounts } = useAccounts();
+    const queryClient = useQueryClient();
 
     const handleRangeChange = useCallback(
         ({ start, end, label }: { start: string | null; end: string | null; label: string }) => {
@@ -84,15 +81,32 @@ const TransactionsPage = () => {
         [],
     );
 
-    const createFormSubmit = useCallback(async () => {
-        setIsNewTransactionModalOpen(false);
+    const activeFilters = useMemo(() => {
         const filters: TransactionFilter = { ...currentFilters };
         if (selectedRange.label !== 'All time' && selectedRange.start && selectedRange.end) {
             filters.startDate = new Date(selectedRange.start);
             filters.endDate = new Date(selectedRange.end);
         }
-        await getTransactionsWithFilter(filters);
-    }, [getTransactionsWithFilter, selectedRange, currentFilters]);
+        return filters;
+    }, [currentFilters, selectedRange]);
+
+    const updateSummary = useCallback(async () => {
+        const sum = await getTransactionsSummary(activeFilters);
+        if (sum) {
+            setSummary({
+                totalExpense: sum.totalExpense ?? 0,
+                totalIncome: sum.totalIncome ?? 0,
+                netBalance: sum.netBalance ?? 0,
+            });
+        }
+    }, [getTransactionsSummary, activeFilters]);
+
+    const createFormSubmit = useCallback(async () => {
+        setIsNewTransactionModalOpen(false);
+        await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+        await updateSummary();
+    }, [queryClient, updateSummary]);
 
     const handleOptions = (accounts: Account[]) => {
         return accounts.map((account) => ({
@@ -103,24 +117,8 @@ const TransactionsPage = () => {
     };
 
     useEffect(() => {
-        const fetchTransactions = async () => {
-            const filters: TransactionFilter = { ...currentFilters };
-            if (selectedRange.label !== 'All time' && selectedRange.start && selectedRange.end) {
-                filters.startDate = new Date(selectedRange.start);
-                filters.endDate = new Date(selectedRange.end);
-            }
-            await getTransactionsWithFilter(filters);
-            const sum = await getTransactionsSummary(filters);
-            if (sum) {
-                setSummary({
-                    totalExpense: sum.totalExpense ?? 0,
-                    totalIncome: sum.totalIncome ?? 0,
-                    netBalance: sum.netBalance ?? 0,
-                });
-            }
-        };
-        fetchTransactions();
-    }, [getTransactionsSummary, getTransactionsWithFilter, currentFilters, selectedRange]);
+        updateSummary();
+    }, [updateSummary]);
 
     useEffect(() => {
         setTempFilters(currentFilters);
@@ -270,8 +268,7 @@ const TransactionsPage = () => {
                 <div className="font-mono">
                     <TransactionsList
                         maxCount={-1}
-                        transactions={transactions}
-                        isLoading={isTransactionsLoading}
+                        filters={activeFilters}
                         onAddClick={() => setIsNewTransactionModalOpen(true)}
                     />
                 </div>

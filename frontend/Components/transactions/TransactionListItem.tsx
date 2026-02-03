@@ -7,7 +7,7 @@ const typeProperties = {
     transfer: {
         color: 'text-gray-500',
         symbol: '',
-        account: 'accountId' as keyof Transaction,
+        account: 'fromAccount' as keyof Transaction,
     },
     income: {
         color: 'text-success',
@@ -35,6 +35,12 @@ const TransactionListItem = ({
     onEditClick,
 }: TransactionListItemProps) => {
     const properties = typeProperties[transaction.type];
+    const getAccountId = (value: Transaction[keyof Transaction]) => {
+        if (!value) return '';
+        if (typeof value === 'string') return value;
+        if (typeof value === 'object' && '_id' in value && value._id) return value._id;
+        return '';
+    };
 
     return (
         <motion.li
@@ -49,16 +55,16 @@ const TransactionListItem = ({
                     <div className="text-sm lg:text-base lg:max-w-lg w-full">
                         {transaction.type !== 'transfer' ? (
                             <div className="truncate">
-                                {accountNameMap[(transaction[properties.account] as string) || '']}
+                                {accountNameMap[getAccountId(transaction[properties.account])] || ''}
                             </div>
                         ) : (
                             <div className="flex items-center gap-2">
                                 <span className="truncate shrink">
-                                    {accountNameMap[transaction.fromAccount || '']}
+                                    {accountNameMap[getAccountId(transaction.fromAccount)] || ''}
                                 </span>
                                 <ArrowRight className="shrink-0 opacity-50" size={16} />
                                 <span className="truncate shrink">
-                                    {accountNameMap[transaction.toAccount || '']}
+                                    {accountNameMap[getAccountId(transaction.toAccount)] || ''}
                                 </span>
                             </div>
                         )}

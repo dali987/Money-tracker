@@ -21,4 +21,19 @@ export const createRecurringTransactionSchema = z
         path: ['fromAccount'],
     });
 
-export const updateRecurringTransactionSchema = createRecurringTransactionSchema.partial();
+export const updateRecurringTransactionSchema = z
+    .object({
+        type: z.enum(['income', 'expense', 'transfer']).optional(),
+        amount: z.number().positive('Amount must be positive').optional(),
+        frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']).optional(),
+        startDate: z.coerce.date().optional(),
+        fromAccount: z.string().optional(),
+        toAccount: z.string().optional(),
+        description: z.string().max(200, 'Description must be at most 200 characters').optional(),
+        tags: z.array(z.string().max(20, 'Tag must be at most 20 characters')).optional(),
+        active: z.boolean().optional(),
+    })
+    .refine((data) => data.fromAccount || data.toAccount, {
+        message: "Recurring transaction must have either 'fromAccount' or 'toAccount'",
+        path: ['fromAccount'],
+    });

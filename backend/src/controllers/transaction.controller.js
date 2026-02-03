@@ -153,22 +153,53 @@ export const getNetWorthChartData = async (req, res, next) => {
     }
 };
 
+const verifyTransactionOwnership = async (transactionId, userId) => {
+    const transaction = await Transaction.findById(transactionId);
+    if (!transaction) return null;
+
+    // Check if either account belongs to the user
+    const accountFilter = { user: userId, _id: { $in: [] } };
+    if (transaction.fromAccount) accountFilter._id.$in.push(transaction.fromAccount);
+    if (transaction.toAccount) accountFilter._id.$in.push(transaction.toAccount);
+
+    if (accountFilter._id.$in.length === 0) return null; // Should not happen for valid transactions
+
+    const userAccount = await Account.findOne(accountFilter);
+    return userAccount ? transaction : null;
+};
+
 export const createTransaction = async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        const transaction = await Transaction.create({
-            ...req.body,
-        });
+        const { fromAccount, toAccount, type } = req.body;
+        const userId = req.user.id;
 
-        const { type } = req.body;
+        // SECURITY: Verify user owns the accounts
+        if (fromAccount) {
+            const acc = await Account.findOne({ _id: fromAccount, user: userId });
+            if (!acc) throw new Error('Unauthorized: You do not own the source account');
+        }
+        if (toAccount) {
+            const acc = await Account.findOne({ _id: toAccount, user: userId });
+            if (!acc) throw new Error('Unauthorized: You do not own the destination account');
+        }
 
-        await accountActions[type](transaction, session);
+        const transaction = await Transaction.create(
+            [
+                {
+                    ...req.body,
+                },
+            ],
+            { session },
+        );
+
+        await accountActions[type](transaction[0], session);
 
         await session.commitTransaction();
 
-        res.status(201).json({ success: true, data: transaction });
+        res.status(201).json({ success: true, data: transaction[0] });
     } catch (error) {
         console.error('An error occurred while creating a transaction: ', error);
         await session.abortTransaction();
@@ -180,9 +211,39 @@ export const createTransaction = async (req, res, next) => {
 
 export const getTransactionWithFilter = async (req, res, next) => {
     try {
+        console.log("running")
         const filter = await getFilter(req);
-        const transactions = await Transaction.find(filter);
+        const { page, limit } = req.query;
 
+        // If pagination params provided, return paginated response
+        if (page || limit) {
+            const pageNum = Math.max(1, parseInt(page, 10) || 1);
+            const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10));
+            const skip = (pageNum - 1) * limitNum;
+
+            const [transactions, totalCount] = await Promise.all([
+                Transaction.find(filter).sort({ date: -1 }).skip(skip).limit(limitNum),
+                Transaction.countDocuments(filter),
+            ]);
+
+            const totalPages = Math.ceil(totalCount / limitNum);
+
+            return res.status(200).json({
+                success: true,
+                data: transactions,
+                pagination: {
+                    currentPage: pageNum,
+                    totalPages,
+                    totalCount,
+                    limit: limitNum,
+                    hasNextPage: pageNum < totalPages,
+                    hasPrevPage: pageNum > 1,
+                },
+            });
+        }
+
+        // Legacy: return all transactions without pagination
+        const transactions = await Transaction.find(filter).sort({ date: -1 });
         res.status(200).json({ success: true, data: transactions });
     } catch (error) {
         console.error('An error occurred while getting user transactions: ', error);
@@ -228,8 +289,15 @@ export const calculateTransactionSum = async (req, res, next) => {
 export const getTransaction = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const userId = req.user.id;
 
-        const transaction = await Transaction.findById(id);
+        const transaction = await verifyTransactionOwnership(id, userId);
+
+        if (!transaction) {
+            const error = new Error('Transaction not found or unauthorized');
+            error.status = 404;
+            throw error;
+        }
 
         res.status(200).json({ success: true, data: transaction });
     } catch (error) {
@@ -244,25 +312,28 @@ export const updateTransaction = async (req, res, next) => {
 
     try {
         const { id: transactionId } = req.params;
-        const transaction = await Transaction.findById(transactionId);
+        const userId = req.user.id;
 
-        await accountActions[transaction.type](transaction, session, -1);
-
-        const updatedTransaction = await Transaction.findByIdAndUpdate(
-            transactionId,
-            {
-                ...req.body,
-            },
-            { new: true },
-        );
-
-        if (!updatedTransaction) {
-            const error = new Error('updating transaction failed');
-            error.status = 401;
+        // SECURITY check
+        const transaction = await verifyTransactionOwnership(transactionId, userId);
+        if (!transaction) {
+            const error = new Error('Transaction not found or unauthorized');
+            error.status = 404;
             throw error;
         }
 
-        await accountActions[transaction.type](updatedTransaction, session);
+        // Revert balance changes from old transaction
+        await accountActions[transaction.type](transaction, session, -1);
+
+        // Update transaction
+        const updatedTransaction = await Transaction.findByIdAndUpdate(
+            transactionId,
+            { ...req.body },
+            { new: true, session },
+        );
+
+        // Apply new balance changes
+        await accountActions[updatedTransaction.type](updatedTransaction, session);
 
         await session.commitTransaction();
         res.status(200).json({ success: true, data: updatedTransaction });
@@ -281,14 +352,18 @@ export const deleteTransaction = async (req, res, next) => {
 
     try {
         const { id: transactionId } = req.params;
+        const userId = req.user.id;
 
-        const deletedTransaction = await Transaction.findByIdAndDelete(transactionId);
-
-        if (!deletedTransaction) {
-            const error = new Error('failed to delete transaction');
-            error.status = 401;
+        // SECURITY check
+        const transaction = await verifyTransactionOwnership(transactionId, userId);
+        if (!transaction) {
+            const error = new Error('Transaction not found or unauthorized');
+            error.status = 404;
             throw error;
         }
+
+        const deletedTransaction =
+            await Transaction.findByIdAndDelete(transactionId).session(session);
 
         await accountActions[deletedTransaction.type](deletedTransaction, session, -1);
 

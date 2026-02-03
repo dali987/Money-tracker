@@ -41,7 +41,7 @@ const recurringTransactionSchema = new mongoose.Schema({
     },
     note: {
         type: String,
-        default: "",
+        default: '',
         required: false,
     },
     nextRunDate: {
@@ -79,6 +79,20 @@ recurringTransactionSchema.pre('validate', function (next) {
     }
     next();
 });
+
+// ============================================================================
+// DATABASE INDEXES
+// ============================================================================
+
+// User lookup: Find all recurring transactions for a user
+recurringTransactionSchema.index({ user: 1 });
+
+// Cron job optimization: Find active recurring transactions due for processing
+// This is the critical index for the daily cron job
+recurringTransactionSchema.index({ active: 1, nextRunDate: 1 });
+
+// Combined user + active for listing a user's active recurring transactions
+recurringTransactionSchema.index({ user: 1, active: 1 });
 
 const RecurringTransaction = mongoose.model('RecurringTransaction', recurringTransactionSchema);
 

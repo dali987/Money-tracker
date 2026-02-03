@@ -15,10 +15,7 @@ import recurringRouter from './routes/recurring.router.js';
 import helmet from 'helmet';
 import { apiLimiter } from './middlewares/rateLimit.middleware.js';
 import cron from 'node-cron';
-import {
-    fetchAndSaveExchangeRates,
-    checkExchangeRates,
-} from './controllers/exchange.controller.js';
+import { checkExchangeRates } from './controllers/exchange.controller.js';
 import { processDueRecurringTransactions } from './controllers/recurring.controller.js';
 
 const dev = ENV.NODE_ENV !== 'production';
@@ -46,7 +43,7 @@ nextApp.prepare().then(async () => {
                 directives: {
                     'default-src': ["'self'"],
                     'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-                    'connect-src': ["'self'", 'http://localhost:3000'],
+                    'connect-src': ["'self'", ENV.CLIENT_URL],
                     'style-src': ["'self'", "'unsafe-inline'"],
                     'img-src': ["'self'", 'data:', 'https:'],
                 },

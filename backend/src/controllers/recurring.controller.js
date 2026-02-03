@@ -12,14 +12,28 @@ const calculateNextRunDate = (currentDate, frequency) => {
     return date;
 };
 
+import Account from '../models/account.model.js';
+
 export const createRecurringTransaction = async (req, res, next) => {
     try {
-        const { startDate } = req.body;
+        const { startDate, fromAccount, toAccount } = req.body;
+        const userId = req.user.id;
+
+        // SECURITY: Verify user owns the accounts
+        if (fromAccount) {
+            const acc = await Account.findOne({ _id: fromAccount, user: userId });
+            if (!acc) throw new Error('Unauthorized: You do not own the source account');
+        }
+        if (toAccount) {
+            const acc = await Account.findOne({ _id: toAccount, user: userId });
+            if (!acc) throw new Error('Unauthorized: You do not own the destination account');
+        }
+
         const nextRunDate = startDate ? new Date(startDate) : new Date();
 
         const recurring = await RecurringTransaction.create({
             ...req.body,
-            user: req.user.id,
+            user: userId,
             nextRunDate,
         });
 
@@ -45,8 +59,21 @@ export const getRecurringTransactions = async (req, res, next) => {
 export const updateRecurringTransaction = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const userId = req.user.id;
+        const { fromAccount, toAccount } = req.body;
+
+        // SECURITY: Verify user owns the NEW accounts (if changing)
+        if (fromAccount) {
+            const acc = await Account.findOne({ _id: fromAccount, user: userId });
+            if (!acc) throw new Error('Unauthorized: You do not own the source account');
+        }
+        if (toAccount) {
+            const acc = await Account.findOne({ _id: toAccount, user: userId });
+            if (!acc) throw new Error('Unauthorized: You do not own the destination account');
+        }
+
         const recurring = await RecurringTransaction.findOneAndUpdate(
-            { _id: id, user: req.user.id },
+            { _id: id, user: userId },
             req.body,
             { new: true },
         );

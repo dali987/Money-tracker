@@ -1,10 +1,17 @@
 import { axiosInstance } from '../axios';
-import { Transaction, TransactionFilter } from '@/types';
+import { Transaction, TransactionFilter, PaginatedResponse } from '@/types';
 
 const API_URL = '/transaction';
 
 export const transactionApi = {
-    getAll: async (filters?: TransactionFilter) => {
+    getAll: async (
+        filters?: TransactionFilter,
+    ): Promise<{ success: boolean; data: Transaction[] }> => {
+        const response = await axiosInstance.get(API_URL, { params: filters });
+        return response.data;
+    },
+
+    getPaginated: async (filters?: TransactionFilter): Promise<PaginatedResponse<Transaction>> => {
         const response = await axiosInstance.get(API_URL, { params: filters });
         return response.data;
     },
