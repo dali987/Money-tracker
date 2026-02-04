@@ -18,7 +18,7 @@ export const createAccount = async (req, res, next) => {
 
         if (existingAccount) {
             const error = new Error('Account already exists');
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
 
@@ -53,7 +53,7 @@ export const updateAccount = async (req, res, next) => {
 
         if (!account) {
             const error = new Error('Account not found or unauthorized');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
 
@@ -82,7 +82,7 @@ export const deleteAccount = async (req, res, next) => {
 
         if (!account) {
             const error = new Error('Account not found or unauthorized');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
 
@@ -114,7 +114,7 @@ export const getAccount = async (req, res, next) => {
 
         if (!account || account.user._id.toString() !== req.user._id.toString()) {
             const error = new Error('Account not found or unauthorized');
-            error.status = 401;
+            error.statusCode = 401;
             throw error;
         }
 

@@ -16,7 +16,7 @@ export const createBudget = async (req, res, next) => {
         }).session(session);
         if (existingBudget) {
             const error = new Error('Budget for this tag already exists');
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
 
@@ -72,7 +72,7 @@ export const updateBudget = async (req, res, next) => {
         const budget = await Budget.findOne({ _id: id, userId }).session(session);
         if (!budget) {
             const error = new Error('Budget not found');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
 
@@ -106,7 +106,7 @@ export const deleteBudget = async (req, res, next) => {
         const budget = await Budget.findOneAndDelete({ _id: id, userId }).session(session);
         if (!budget) {
             const error = new Error('Budget not found');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
 

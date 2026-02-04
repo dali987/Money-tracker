@@ -7,7 +7,7 @@ export const getUser = async (req, res, next) => {
     try {
         if (!req.user) {
             const error = new Error('User not found');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
         res.status(200).json({ success: true, data: req.user });
@@ -33,13 +33,13 @@ export const getSetting = async (req, res, next) => {
 
         if (!req.user) {
             const error = new Error("Unauthorized");
-            error.status = 401;
+            error.statusCode = 401;
             throw error;
         }
 
         if (!ALLOWED_SETTINGS.includes(key)) {
             const error = new Error("Invalid setting key");
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
 
@@ -54,17 +54,21 @@ export const updateSetting = async (req, res, next) => {
     session.startTransaction();
 
     try {
-        if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+        if (!req.user) {
+            const error = new Error("Unauthorized");
+            error.statusCode = 401;
+            throw error;
+        };
         const { key, setting } = req.body;
 
         if (!key || setting == undefined) {
             const error = new Error("Key and setting required");
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
         if (!ALLOWED_SETTINGS.includes(key)) {
             const error = new Error("Invalid key");
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
 
@@ -141,19 +145,19 @@ export const addSetting = async (req, res, next) => {
 
         if (!key || setting == undefined) {
             const error = new Error("Key and setting required");
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
 
         if (!ALLOWED_SETTINGS.includes(key)) {
             const error = new Error("Invalid key");
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
 
         if (!Array.isArray(req.user[key])) {
             const error = new Error("Not an array");
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
 
@@ -185,17 +189,17 @@ export const removeSetting = async (req, res, next) => {
 
         if (!key || setting == undefined) {
             const error = new Error("Key and setting required");
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
         if (!ALLOWED_SETTINGS.includes(key)) {
             const error = new Error("Invalid key");
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
         if (!Array.isArray(req.user[key])) {
             const error = new Error("Not an array");
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
 

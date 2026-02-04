@@ -16,7 +16,7 @@ export const accountActions = {
     transfer: async (transaction, session, factor = 1) => {
         if (transaction.fromAccount === transaction.toAccount) {
             const error = new Error('Cannot update transfer to the same account');
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
 

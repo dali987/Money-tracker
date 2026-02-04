@@ -17,12 +17,12 @@ const budgetSchema = new mongoose.Schema({
     },
     period: {
         type: String,
-        enum: ['monthly'], // We can expand this later
+        enum: ['monthly'],
         default: 'monthly',
     },
     alertThreshold: {
         type: Number,
-        default: 80, // Percentage
+        default: 80,
     },
     createdAt: {
         type: Date,
@@ -30,7 +30,6 @@ const budgetSchema = new mongoose.Schema({
     },
 });
 
-// Ensure unique budget per tag per user
 budgetSchema.index({ userId: 1, tag: 1 }, { unique: true });
 
 const Budget = mongoose.model('Budget', budgetSchema);

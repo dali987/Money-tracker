@@ -26,8 +26,6 @@ const recurringTransactionSchema = new mongoose.Schema({
     period: {
         type: Number,
         default: 1,
-        // e.g., every 1 month, every 2 weeks. Combined with frequency.
-        // For simplicity in V1, let's stick to simple "frequency" string enum or similar.
     },
     frequency: {
         type: String,
@@ -73,25 +71,16 @@ recurringTransactionSchema.pre('validate', function (next) {
         );
     }
 
-    // Set nextRunDate if not set (though controller should handle this)
     if (!this.nextRunDate) {
         this.nextRunDate = this.startDate;
     }
     next();
 });
 
-// ============================================================================
-// DATABASE INDEXES
-// ============================================================================
-
-// User lookup: Find all recurring transactions for a user
 recurringTransactionSchema.index({ user: 1 });
 
-// Cron job optimization: Find active recurring transactions due for processing
-// This is the critical index for the daily cron job
 recurringTransactionSchema.index({ active: 1, nextRunDate: 1 });
 
-// Combined user + active for listing a user's active recurring transactions
 recurringTransactionSchema.index({ user: 1, active: 1 });
 
 const RecurringTransaction = mongoose.model('RecurringTransaction', recurringTransactionSchema);

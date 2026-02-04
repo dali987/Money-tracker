@@ -9,19 +9,17 @@ export const authorizeToken = async (req, res, next) => {
         });
 
         if (!session || !session.user) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized: No valid session',
-            });
+            const error = new Error("Unauthorized: No valid session");
+            error.status = 401;
+            throw error;
         }
 
         const user = await User.findById(session.user.id).select('-password');
 
         if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized: User not found',
-            });
+            const error = new Error("Unauthorized: User not found");
+            error.status = 401;
+            throw error;
         }
 
         req.user = user;
@@ -32,10 +30,9 @@ export const authorizeToken = async (req, res, next) => {
         console.error('Authorization error:', error);
 
         if (error.message?.includes('session')) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized: Session expired or invalid',
-            });
+            const error = new Error("Unauthorized: Session expired or invalid");
+            error.status = 401;
+            throw error;
         }
 
         next(error);

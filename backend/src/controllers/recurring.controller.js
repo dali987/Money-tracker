@@ -18,7 +18,7 @@ const verifyAccountOwnership = async (fromAccount, toAccount, userId) =>{
             const acc = await Account.findOne({ _id: fromAccount, user: userId });
             if (!acc) {
                 const error = new Error('Unauthorized: You do not own the source account');
-                error.status = 403;
+                error.statusCode = 403;
                 throw error;
             }
         }
@@ -26,7 +26,7 @@ const verifyAccountOwnership = async (fromAccount, toAccount, userId) =>{
             const acc = await Account.findOne({ _id: toAccount, user: userId });
             if (!acc) {
                 const error = new Error('Unauthorized: You do not own the destination account');
-                error.status = 403;
+                error.statusCode = 403;
                 throw error;
             }
         }
@@ -95,7 +95,7 @@ export const updateRecurringTransaction = async (req, res, next) => {
 
         if (!recurring) {
             const error = new Error('Recurring transaction not found');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
 
@@ -124,7 +124,7 @@ export const deleteRecurringTransaction = async (req, res, next) => {
 
         if (!recurring) {
             const error = new Error('Recurring transaction not found');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
 

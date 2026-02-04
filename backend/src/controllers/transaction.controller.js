@@ -22,7 +22,7 @@ const getFilter = async (req) => {
         const accountId = new mongoose.Types.ObjectId(account);
         if (!accountIds.some((id) => id.equals(accountId))) {
             const error = new Error('Unauthorized access to account');
-            error.status = 401;
+            error.statusCode = 401;
             throw error;
         }
         transactionFilter.$or = [{ toAccount: accountId }, { fromAccount: accountId }];
@@ -300,7 +300,7 @@ export const getTransaction = async (req, res, next) => {
 
         if (!transaction) {
             const error = new Error('Transaction not found or unauthorized');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
 
@@ -322,7 +322,7 @@ export const updateTransaction = async (req, res, next) => {
         const transaction = await verifyTransactionOwnership(transactionId, userId);
         if (!transaction) {
             const error = new Error('Transaction not found or unauthorized');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
 
@@ -358,7 +358,7 @@ export const deleteTransaction = async (req, res, next) => {
         const transaction = await verifyTransactionOwnership(transactionId, userId);
         if (!transaction) {
             const error = new Error('Transaction not found or unauthorized');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
 

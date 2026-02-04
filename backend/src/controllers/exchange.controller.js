@@ -14,7 +14,7 @@ export const fetchAndSaveExchangeRates = async () => {
         );
         if (!result.ok) {
             const error = new Error("Couldn't update exchange rates");
-            error.status = 500;
+            error.statusCode = 500;
             throw error;
         }
 
@@ -22,7 +22,7 @@ export const fetchAndSaveExchangeRates = async () => {
 
         if (!exchangeRates) {
             const error = new Error('Failed to update exchange rates');
-            error.status = 500;
+            error.statusCode = 500;
             throw error;
         }
 
@@ -42,7 +42,7 @@ export const fetchAndSaveExchangeRates = async () => {
 
         if (!updatedExchangeRates) {
             const error = new Error('Failed to update exchange rates');
-            error.status = 500;
+            error.statusCode = 500;
             throw error;
         }
 
@@ -100,7 +100,7 @@ export const getExchangeRates = async (req, res, next) => {
         const exchangeRates = await getRates();
         if (!exchangeRates) {
             const error = new Error('Exchange rates not found');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
 
@@ -118,7 +118,7 @@ export const convertCurrency = async (req, res, next) => {
 
         if (!from || !to || !amount) {
             const error = new Error('missing inputs');
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
 
@@ -136,7 +136,7 @@ export const convertCurrency = async (req, res, next) => {
 
         if (!fromRate || !toRate) {
             const error = new Error('Invalid currency codes');
-            error.status = 400;
+            error.statusCode = 400;
             throw error;
         }
 
@@ -155,7 +155,7 @@ export const getAllCurrencies = async (req, res, next) => {
 
         if (!exchangeRates) {
             const error = new Error('Exchange rates not found');
-            error.status = 404;
+            error.statusCode = 404;
             throw error;
         }
 

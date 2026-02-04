@@ -35,7 +35,6 @@ nextApp.prepare().then(async () => {
 
     app.use(express.json());
 
-    // Apply Helmet for security headers
     app.use(
         helmet({
             contentSecurityPolicy: {
@@ -59,7 +58,6 @@ nextApp.prepare().then(async () => {
     apiRouter.use('/budget', budgetRouter);
     apiRouter.use('/recurring', recurringRouter);
 
-    // Standard rate limiting for API routes
     app.use('/api/v1', apiLimiter);
     app.use('/api/v1', apiRouter);
 
@@ -72,14 +70,12 @@ nextApp.prepare().then(async () => {
     app.listen(PORT, async () => {
         console.log('Server is up, port:', PORT);
 
-        // Run startup check for exchange rates
         try {
             await getRates();
         } catch (error) {
             console.error('Failed to run startup exchange rates check:', error);
         }
 
-        // Run startup check for recurring transactions
         try {
             await processDueRecurringTransactions();
         } catch (error) {

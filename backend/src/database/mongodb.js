@@ -1,4 +1,4 @@
-import mongoose, { mongo } from "mongoose"
+import mongoose from "mongoose"
 import { ENV } from "../lib/env.js"
 
 const connectToDatabase = async () =>{
