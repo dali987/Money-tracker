@@ -42,11 +42,9 @@ const EmptyState = ({
                     },
                 }}
                 className="relative mb-8">
-                {/* Glow effect */}
                 <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150 animate-pulse" />
 
                 <div className="relative p-8 rounded-3xl bg-linear-to-br from-base-200 to-base-300 border border-base-content/5 shadow-2xl overflow-hidden group">
-                    {/* Animated background stripes */}
                     <div className="absolute inset-0 opacity-5 bg-[linear-gradient(45deg,transparent_25%,rgba(0,0,0,0.1)_50%,transparent_75%)] bg-size-[20px_20px] animate-slide" />
 
                     {icon || (

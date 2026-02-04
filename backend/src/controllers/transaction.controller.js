@@ -3,17 +3,28 @@ import Transaction from '../models/transaction.model.js';
 import Account from '../models/account.model.js';
 import { accountActions } from '../utils/accountActions.js';
 
+const CHART_GROUP_CONFIGS = {
+    month: { $month: '$date' },
+    day: { $dayOfMonth: '$date' },
+    year: { $year: '$date' },
+    tag: '$tags',
+};
+
 const getFilter = async (req) => {
     const { startDate, endDate, account, tags, excludeTags, type } = req.query;
 
-    // Always fetch user's accounts to scope transactions
-    const accounts = await Account.find({ user: req.user.id });
+    const accounts = await Account.find({ user: req.user._id });
     const accountIds = accounts.map((account) => account._id);
 
     let transactionFilter = {};
 
     if (account) {
         const accountId = new mongoose.Types.ObjectId(account);
+        if (!accountIds.some((id) => id.equals(accountId))) {
+            const error = new Error('Unauthorized access to account');
+            error.status = 401;
+            throw error;
+        }
         transactionFilter.$or = [{ toAccount: accountId }, { fromAccount: accountId }];
     } else {
         transactionFilter.$or = [
@@ -49,11 +60,18 @@ const getFilter = async (req) => {
     return transactionFilter;
 };
 
-const CHART_GROUP_CONFIGS = {
-    month: { $month: '$date' },
-    day: { $dayOfMonth: '$date' },
-    year: { $year: '$date' },
-    tag: '$tags',
+const verifyTransactionOwnership = async (transactionId, userId) => {
+    const transaction = await Transaction.findById(transactionId);
+    if (!transaction) return null;
+
+    const accountFilter = { user: userId, _id: { $in: [] } };
+    if (transaction.fromAccount) accountFilter._id.$in.push(transaction.fromAccount);
+    if (transaction.toAccount) accountFilter._id.$in.push(transaction.toAccount);
+
+    if (accountFilter._id.$in.length === 0) return null;
+
+    const userAccount = await Account.findOne(accountFilter);
+    return userAccount ? transaction : null;
 };
 
 export const getTransactionChartData = async (req, res, next) => {
@@ -76,7 +94,7 @@ export const getTransactionChartData = async (req, res, next) => {
         ];
 
         if (groupBy === 'tag') {
-            pipeline.unshift({ $unwind: '$tags' });
+            pipeline.splice(1, 0, { $unwind: '$tags' });
         }
 
         const data = await Transaction.aggregate(pipeline);
@@ -90,55 +108,61 @@ export const getTransactionChartData = async (req, res, next) => {
 export const getNetWorthChartData = async (req, res, next) => {
     try {
         const { startDate, endDate, account, groupBy = 'month' } = req.query;
-        const userId = req.user.id;
+        const userId = req.user._id;
 
         const accountFilter = { user: userId };
         if (account) accountFilter._id = account;
 
         const accounts = await Account.find(accountFilter);
-        const currentNetWorth = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+        const accountsIds = accounts.map((a) => a._id);
 
-        const transactions = await Transaction.find({
-            $or: [
-                { toAccount: { $in: accounts.map((a) => a._id) } },
-                { fromAccount: { $in: accounts.map((a) => a._id) } },
-            ],
-            type: { $in: ['income', 'expense'] },
-            date: { $gte: new Date(startDate) },
-        }).sort({ date: -1 });
-
-        const endOfPeriod = new Date(endDate);
-
-        let netWorthAtEndOfPeriod = currentNetWorth;
-        transactions.forEach((t) => {
-            if (new Date(t.date) > endOfPeriod) {
-                if (t.type === 'income') netWorthAtEndOfPeriod -= t.amount;
-                if (t.type === 'expense') netWorthAtEndOfPeriod += t.amount;
-            }
-        });
-
-        const chartTransactions = transactions.filter((t) => new Date(t.date) <= endOfPeriod);
-
-        const grouped = {};
-        chartTransactions.forEach((t) => {
-            const date = new Date(t.date);
-            let key;
-            if (groupBy === 'month') key = date.getMonth() + 1;
-            else if (groupBy === 'day') key = date.getDate();
-
-            if (!grouped[key]) grouped[key] = 0;
-            if (t.type === 'income') grouped[key] += t.amount;
-            if (t.type === 'expense') grouped[key] -= t.amount;
-        });
-
-        /*
-        {
-            1: 100,
-            2: 200,
-            3: 300,
-            ...
-        }
-        */
+        const stats = await Transaction.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { toAccount: { $in: accountsIds } },
+                        { fromAccount: { $in: accountsIds } },
+                    ],
+                    type: { $in: ['income', 'expense'] },
+                    date: { $gte: new Date(startDate), $lte: new Date(endDate) },
+                },
+            },
+            {
+                $group: {
+                    _id: {
+                        $cond: [
+                            { $eq: [groupBy, 'month'] },
+                            { $month: '$date' },
+                            { $dayOfMonth: '$date' },
+                        ],
+                    },
+                    netChange: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ['$type', 'income'] },
+                                '$amount',
+                                { $multiply: ['$amount', -1] },
+                            ],
+                        },
+                    },
+                },
+            },
+            { $sort: { _id: 1 } },
+            {
+                $project: {
+                    _id: 0,
+                    period: '$_id',
+                    amount: '$netChange',
+                },
+            },
+        ]);
+        const grouped = stats.reduce((acc, change) => {
+            acc[change.period] = change.amount;
+            return acc;
+        }, {});
+        const netWorthAtStart = accounts.reduce((acc, account) => (acc += account.balance), 0);
+        const sumOfChanges = stats.reduce((acc, change) => (acc += change.amount), 0);
+        const netWorthAtEndOfPeriod = netWorthAtStart + sumOfChanges;
 
         res.status(200).json({
             success: true,
@@ -153,30 +177,14 @@ export const getNetWorthChartData = async (req, res, next) => {
     }
 };
 
-const verifyTransactionOwnership = async (transactionId, userId) => {
-    const transaction = await Transaction.findById(transactionId);
-    if (!transaction) return null;
-
-    // Check if either account belongs to the user
-    const accountFilter = { user: userId, _id: { $in: [] } };
-    if (transaction.fromAccount) accountFilter._id.$in.push(transaction.fromAccount);
-    if (transaction.toAccount) accountFilter._id.$in.push(transaction.toAccount);
-
-    if (accountFilter._id.$in.length === 0) return null; // Should not happen for valid transactions
-
-    const userAccount = await Account.findOne(accountFilter);
-    return userAccount ? transaction : null;
-};
-
 export const createTransaction = async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
         const { fromAccount, toAccount, type } = req.body;
-        const userId = req.user.id;
+        const userId = req.user._id;
 
-        // SECURITY: Verify user owns the accounts
         if (fromAccount) {
             const acc = await Account.findOne({ _id: fromAccount, user: userId });
             if (!acc) throw new Error('Unauthorized: You do not own the source account');
@@ -211,11 +219,9 @@ export const createTransaction = async (req, res, next) => {
 
 export const getTransactionWithFilter = async (req, res, next) => {
     try {
-        console.log("running")
         const filter = await getFilter(req);
         const { page, limit } = req.query;
 
-        // If pagination params provided, return paginated response
         if (page || limit) {
             const pageNum = Math.max(1, parseInt(page, 10) || 1);
             const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10));
@@ -242,7 +248,6 @@ export const getTransactionWithFilter = async (req, res, next) => {
             });
         }
 
-        // Legacy: return all transactions without pagination
         const transactions = await Transaction.find(filter).sort({ date: -1 });
         res.status(200).json({ success: true, data: transactions });
     } catch (error) {
@@ -289,7 +294,7 @@ export const calculateTransactionSum = async (req, res, next) => {
 export const getTransaction = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const userId = req.user.id;
+        const userId = req.user._id;
 
         const transaction = await verifyTransactionOwnership(id, userId);
 
@@ -312,9 +317,8 @@ export const updateTransaction = async (req, res, next) => {
 
     try {
         const { id: transactionId } = req.params;
-        const userId = req.user.id;
+        const userId = req.user._id;
 
-        // SECURITY check
         const transaction = await verifyTransactionOwnership(transactionId, userId);
         if (!transaction) {
             const error = new Error('Transaction not found or unauthorized');
@@ -322,17 +326,14 @@ export const updateTransaction = async (req, res, next) => {
             throw error;
         }
 
-        // Revert balance changes from old transaction
         await accountActions[transaction.type](transaction, session, -1);
 
-        // Update transaction
         const updatedTransaction = await Transaction.findByIdAndUpdate(
             transactionId,
             { ...req.body },
             { new: true, session },
         );
 
-        // Apply new balance changes
         await accountActions[updatedTransaction.type](updatedTransaction, session);
 
         await session.commitTransaction();
@@ -352,9 +353,8 @@ export const deleteTransaction = async (req, res, next) => {
 
     try {
         const { id: transactionId } = req.params;
-        const userId = req.user.id;
+        const userId = req.user._id;
 
-        // SECURITY check
         const transaction = await verifyTransactionOwnership(transactionId, userId);
         if (!transaction) {
             const error = new Error('Transaction not found or unauthorized');

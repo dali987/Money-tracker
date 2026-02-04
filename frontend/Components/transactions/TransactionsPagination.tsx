@@ -18,15 +18,12 @@ const TransactionsPagination = ({
     const getVisiblePages = useCallback(() => {
         const pages: (number | 'left-ellipsis' | 'right-ellipsis')[] = [];
 
-        // Always show first page
         pages.push(1);
 
-        // Left ellipsis
         if (currentPage > 3) {
             pages.push('left-ellipsis');
         }
 
-        // Pages around current
         for (
             let i = Math.max(2, currentPage - 1);
             i <= Math.min(totalPages - 1, currentPage + 1);
@@ -35,12 +32,10 @@ const TransactionsPagination = ({
             pages.push(i);
         }
 
-        // Right ellipsis
         if (currentPage < totalPages - 2) {
             pages.push('right-ellipsis');
         }
 
-        // Always show last page (if more than 1 page)
         if (totalPages > 1) {
             pages.push(totalPages);
         }
@@ -102,7 +97,6 @@ const TransactionsPagination = ({
     return (
         <div className="flex justify-center mt-4">
             <div className="join">
-                {/* Previous button */}
                 <button
                     className="join-item btn"
                     disabled={currentPage === 1 || isLoading}
@@ -128,7 +122,6 @@ const TransactionsPagination = ({
                     return renderPageButton(page);
                 })}
 
-                {/* Next button */}
                 <button
                     className="join-item btn"
                     disabled={currentPage === totalPages || isLoading}

@@ -1,10 +1,15 @@
+import mongoose from 'mongoose';
 import Account from '../models/account.model.js';
 import Transaction from '../models/transaction.model.js';
 import { getRates } from './exchange.controller.js';
 
 export const getUser = async (req, res, next) => {
     try {
-        if (!req.user) res.status(401).json({ message: 'Unauthorized' });
+        if (!req.user) {
+            const error = new Error('User not found');
+            error.status = 404;
+            throw error;
+        }
         res.status(200).json({ success: true, data: req.user });
     } catch (error) {
         console.error('An error occurred while getting user: ', error);
@@ -24,100 +29,133 @@ const ALLOWED_SETTINGS = [
 ];
 export const getSetting = async (req, res, next) => {
     try {
-        const { key } = req.params; // Changed to params to match your router :key
+        const { key } = req.params;
 
-        if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+        if (!req.user) {
+            const error = new Error("Unauthorized");
+            error.status = 401;
+            throw error;
+        }
 
-        if (!ALLOWED_SETTINGS.includes(key))
-            return res.status(400).json({ message: 'Invalid setting key' });
+        if (!ALLOWED_SETTINGS.includes(key)) {
+            const error = new Error("Invalid setting key");
+            error.status = 400;
+            throw error;
+        }
 
         res.status(200).json({ success: true, data: req.user[key] });
     } catch (error) {
+        console.error('An error occurred while getting setting: ', error);
         next(error);
     }
 };
 export const updateSetting = async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
         const { key, setting } = req.body;
 
-        if (!key || setting == undefined)
-            return res.status(400).json({ message: 'Key and setting are required' });
-        if (!ALLOWED_SETTINGS.includes(key))
-            return res.status(400).json({ message: 'Invalid key' });
+        if (!key || setting == undefined) {
+            const error = new Error("Key and setting required");
+            error.status = 400;
+            throw error;
+        }
+        if (!ALLOWED_SETTINGS.includes(key)) {
+            const error = new Error("Invalid key");
+            error.status = 400;
+            throw error;
+        }
 
         const oldCurrency = req.user.baseCurrency;
         req.user[key] = setting;
 
         if (key === 'baseCurrency' && oldCurrency !== setting) {
-            try {
-                const ratesData = await getRates();
-                const rates = ratesData.rates;
+            const ratesData = await getRates();
+            const rates = ratesData.rates;
 
-                const fromRate = rates.get(oldCurrency);
-                const toRate = rates.get(setting);
+            const fromRate = rates.get(oldCurrency);
+            const toRate = rates.get(setting);
 
-                if (fromRate && toRate) {
-                    const multiplier = toRate / fromRate;
+            if (fromRate && toRate) {
+                const multiplier = toRate / fromRate;
 
-                    // 1. Update all accounts for this user
-                    await Account.updateMany({ user: req.user._id }, [
+                await Account.updateMany(
+                    { user: req.user._id },
+                    [
                         {
                             $set: {
                                 balance: { $round: [{ $multiply: ['$balance', multiplier] }, 2] },
                             },
                         },
-                    ]);
+                    ],
+                    { session },
+                );
 
-                    // 2. Update all transactions for this user's accounts to keep history consistent
-                    const userAccountIds = await Account.find({ user: req.user._id }).distinct(
-                        '_id'
-                    );
-                    if (userAccountIds.length > 0) {
-                        await Transaction.updateMany(
+                const userAccountIds = await Account.find({ user: req.user._id })
+                    .session(session)
+                    .distinct('_id');
+                if (userAccountIds.length > 0) {
+                    await Transaction.updateMany(
+                        {
+                            $or: [
+                                { fromAccount: { $in: userAccountIds } },
+                                { toAccount: { $in: userAccountIds } },
+                            ],
+                        },
+                        [
                             {
-                                $or: [
-                                    { fromAccount: { $in: userAccountIds } },
-                                    { toAccount: { $in: userAccountIds } },
-                                ],
-                            },
-                            [
-                                {
-                                    $set: {
-                                        amount: {
-                                            $round: [{ $multiply: ['$amount', multiplier] }, 2],
-                                        },
+                                $set: {
+                                    amount: {
+                                        $round: [{ $multiply: ['$amount', multiplier] }, 2],
                                     },
                                 },
-                            ]
-                        );
-                    }
+                            },
+                        ],
+                        { session },
+                    );
                 }
-            } catch (error) {
-                console.error('Failed to update account balances during currency change:', error);
-                // We keep going as we already updated the user's baseCurrency in memory,
-                // but maybe we should throw here?
-                // Given the user's request, they want this to happen.
             }
         }
 
-        await req.user.save();
+        await req.user.save({ session });
+        await session.commitTransaction();
+
         res.status(200).json({ success: true, data: req.user[key] });
     } catch (error) {
+        await session.abortTransaction();
         console.error('An error occurred while updating setting: ', error);
         next(error);
+    } finally {
+        session.endSession();
     }
 };
 
 export const addSetting = async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { key, setting } = req.body;
 
-        if (!key || setting == undefined)
-            return res.status(400).json({ message: 'Key and setting required' });
-        if (!ALLOWED_SETTINGS.includes(key))
-            return res.status(400).json({ message: 'Invalid key' });
-        if (!Array.isArray(req.user[key])) return res.status(400).json({ message: 'Not an array' });
+        if (!key || setting == undefined) {
+            const error = new Error("Key and setting required");
+            error.status = 400;
+            throw error;
+        }
+
+        if (!ALLOWED_SETTINGS.includes(key)) {
+            const error = new Error("Invalid key");
+            error.status = 400;
+            throw error;
+        }
+
+        if (!Array.isArray(req.user[key])) {
+            const error = new Error("Not an array");
+            error.status = 400;
+            throw error;
+        }
 
         const itemsToAdd = Array.isArray(setting) ? setting : [setting];
 
@@ -126,30 +164,55 @@ export const addSetting = async (req, res, next) => {
                 req.user[key].push(item);
             }
         });
-        await req.user.save();
+        await req.user.save({ session });
+        await session.commitTransaction();
+
         res.status(200).json({ success: true, data: req.user[key] });
     } catch (error) {
+        await session.abortTransaction();
         console.error('An error occurred while adding setting: ', error);
         next(error);
+    } finally {
+        session.endSession();
     }
 };
 
 export const removeSetting = async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         const { key, setting } = req.body;
 
-        if (!key || setting == undefined)
-            return res.status(400).json({ message: 'Key and setting required' });
-        if (!ALLOWED_SETTINGS.includes(key))
-            return res.status(400).json({ message: 'Invalid key' });
-        if (!Array.isArray(req.user[key])) return res.status(400).json({ message: 'Not an array' });
+        if (!key || setting == undefined) {
+            const error = new Error("Key and setting required");
+            error.status = 400;
+            throw error;
+        }
+        if (!ALLOWED_SETTINGS.includes(key)) {
+            const error = new Error("Invalid key");
+            error.status = 400;
+            throw error;
+        }
+        if (!Array.isArray(req.user[key])) {
+            const error = new Error("Not an array");
+            error.status = 400;
+            throw error;
+        }
 
         const itemsToRemove = Array.isArray(setting) ? setting : [setting];
 
         itemsToRemove.forEach((item) => req.user[key].pull(item));
-        await req.user.save();
+
+        await req.user.save({ session });
+
+        await session.commitTransaction();
+
         res.status(200).json({ success: true, data: req.user[key] });
     } catch (error) {
+        await session.abortTransaction();
+        console.error('An error occurred while removing setting: ', error);
         next(error);
+    } finally {
+        session.endSession();
     }
 };

@@ -63,7 +63,6 @@ export const useNotificationStore = create<NotificationStore>()(
             },
 
             clearAll: () => {
-                // Keep cache so "clear all" doesn't immediately re-trigger active alerts.
                 set({ notifications: [] });
             },
 

@@ -34,7 +34,7 @@ export const NotificationCenter = () => {
             <div tabIndex={0} role="button" className="btn btn-ghost btn-circle relative group">
                 <Bell size={20} className="group-hover:rotate-12 transition-transform" />
                 {unreadCount > 0 && (
-                    <span className="badge badge-error badge-xs absolute top-2 right-2 animate-pulse">
+                    <span className="badge badge-error badge-xs absolute top-2 right-2">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
@@ -73,20 +73,20 @@ export const NotificationCenter = () => {
                         </div>
                     </div>
 
-                    <div className="max-h-[400px] overflow-y-auto overflow-x-hidden custom-scrollbar">
+                    <div className="max-h-100 overflow-y-auto overflow-x-hidden custom-scrollbar">
                         <AnimatePresence initial={false} mode="popLayout">
                             {notifications.length > 0 ? (
-                                notifications.map((n) => (
+                                notifications.map((notification) => (
                                     <motion.div
-                                        key={n.id}
+                                        key={notification.id}
                                         layout
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, scale: 0.95 }}
-                                        className={`p-4 flex gap-3 hover:bg-base-200 transition-colors relative border-b border-base-200/50 last:border-0 ${!n.read ? 'bg-primary/5' : ''}`}>
+                                        className={`p-4 flex gap-3 hover:bg-base-200 transition-colors relative border-b border-base-200/50 last:border-0 ${!notification.read ? 'bg-primary/5' : ''}`}>
                                         <div
-                                            className={`p-2 rounded-xl h-fit shrink-0 ${typeStyles[n.type].bg} ${typeStyles[n.type].color}`}>
-                                            {React.createElement(typeStyles[n.type].icon, {
+                                            className={`p-2 rounded-xl h-fit shrink-0 ${typeStyles[notification.type].bg} ${typeStyles[notification.type].color}`}>
+                                            {React.createElement(typeStyles[notification.type].icon, {
                                                 size: 18,
                                             })}
                                         </div>
@@ -94,42 +94,42 @@ export const NotificationCenter = () => {
                                         <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                                             <div className="flex justify-between items-start gap-2">
                                                 <h4
-                                                    className={`text-sm font-bold truncate ${!n.read ? 'text-primary' : ''}`}>
-                                                    {n.title}
+                                                    className={`text-sm font-bold truncate ${!notification.read ? 'text-primary' : ''}`}>
+                                                    {notification.title}
                                                 </h4>
                                                 <span className="text-[10px] text-base-content/40 whitespace-nowrap mt-0.5">
-                                                    {formatDistanceToNow(n.timestamp, {
+                                                    {formatDistanceToNow(notification.timestamp, {
                                                         addSuffix: true,
                                                     })}
                                                 </span>
                                             </div>
                                             <p className="text-xs text-base-content/70 line-clamp-2 leading-relaxed">
-                                                {n.message}
+                                                {notification.message}
                                             </p>
 
                                             <div className="flex gap-3 mt-2">
-                                                {!n.read && (
+                                                {!notification.read && (
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            markAsRead(n.id);
+                                                            markAsRead(notification.id);
                                                         }}
                                                         className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
                                                         Mark as read
                                                     </button>
                                                 )}
-                                                {n.actionUrl && (
+                                                {notification.actionUrl && (
                                                     <Link
-                                                        href={n.actionUrl}
+                                                        href={notification.actionUrl}
                                                         className="text-[10px] font-bold text-accent hover:underline flex items-center gap-1"
-                                                        onClick={() => markAsRead(n.id)}>
+                                                        onClick={() => markAsRead(notification.id)}>
                                                         View <ExternalLink size={10} />
                                                     </Link>
                                                 )}
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        deleteNotification(n.id);
+                                                        deleteNotification(notification.id);
                                                     }}
                                                     className="text-[10px] font-bold text-error/50 hover:text-error hover:underline ml-auto">
                                                     Delete

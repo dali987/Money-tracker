@@ -58,7 +58,6 @@ function ShortcutsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
             Icon={Keyboard}
             closeButton={true}
             autoClose={true}>
-            {/* Content */}
             <div className="p-4 max-h-[60vh] overflow-y-auto">
                 {shortcuts.map((group, groupIndex) => (
                     <motion.div
@@ -93,7 +92,6 @@ function ShortcutsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
                 ))}
             </div>
 
-            {/* Footer */}
             <div className="p-4 border-t border-base-200 bg-base-200/30">
                 <p className="text-xs text-base-content/50 text-center">
                     Press <kbd className="kbd kbd-xs">Shift +?</kbd> anytime to show this help

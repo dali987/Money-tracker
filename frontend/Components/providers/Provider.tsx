@@ -20,18 +20,14 @@ const Provider = ({ children }: { children: React.ReactNode }) => {
     }, [checkAuth]);
 
     useEffect(() => {
-        // Don't redirect if still checking auth
         if (isCheckingAuth) return;
 
-        // Check if current path is a public route
         const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname === route);
 
-        // If user is not authenticated and trying to access a protected route
         if (authUser === null && !isPublicRoute) {
             router.push('/login');
         }
 
-        // If user IS authenticated and on login/signup page, redirect to dashboard
         if (authUser !== null && (pathname === '/login' || pathname === '/signup')) {
             router.push('/dashboard');
         }

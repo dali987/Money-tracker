@@ -13,7 +13,6 @@ interface RecurringFormProps {
 }
 
 const RecurringForm = ({ existingTransaction, isOpen, onClose, onSuccess }: RecurringFormProps) => {
-    // Default to 'expense' if creating new, or use existing type
     const [activeTab, setActiveTab] = useState<'expense' | 'income' | 'transfer'>(
         existingTransaction?.type || 'expense',
     );
@@ -21,7 +20,6 @@ const RecurringForm = ({ existingTransaction, isOpen, onClose, onSuccess }: Recu
     const [prevIsOpen, setPrevIsOpen] = useState(false);
     const [prevId, setPrevId] = useState<string | undefined>(undefined);
 
-    // Reset activeTab when modal opens with a different transaction (Sync during render)
     if (isOpen !== prevIsOpen || existingTransaction?._id !== prevId) {
         setPrevIsOpen(isOpen);
         setPrevId(existingTransaction?._id);
@@ -36,7 +34,6 @@ const RecurringForm = ({ existingTransaction, isOpen, onClose, onSuccess }: Recu
             onClose={onClose}
             title={existingTransaction ? 'Edit Recurring Rule' : 'New Recurring Rule'}
             Icon={Clock}>
-            {/* Tabs and Body */}
             <div className="tabs tabs-lift p-4">
                 {(['expense', 'transfer', 'income'] as const).map((type) => (
                     <React.Fragment key={type}>

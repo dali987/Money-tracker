@@ -1,40 +1,63 @@
+import mongoose from 'mongoose';
 import pkg from 'country-list-with-dial-code-and-flag';
 const countryList = pkg.default;
 import ExchangeRates from '../models/exchangeRates.model.js';
 import { ENV } from '../lib/env.js';
 
 export const fetchAndSaveExchangeRates = async () => {
-    const result = await fetch(
-        `https://v6.exchangerate-api.com/v6/${ENV.EXCHANGE_RATE_API_KEY}/latest/USD`,
-    );
-    if (!result.ok) {
-        throw new Error("Couldn't update exchange rates");
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const result = await fetch(
+            `https://v6.exchangerate-api.com/v6/${ENV.EXCHANGE_RATE_API_KEY}/latest/USD`,
+        );
+        if (!result.ok) {
+            const error = new Error("Couldn't update exchange rates");
+            error.status = 500;
+            throw error;
+        }
+
+        const exchangeRates = await result.json();
+
+        if (!exchangeRates) {
+            const error = new Error('Failed to update exchange rates');
+            error.status = 500;
+            throw error;
+        }
+
+        const updatedExchangeRates = await ExchangeRates.findOneAndUpdate(
+            {},
+            {
+                timeLastUpdateUnix: exchangeRates.time_last_update_unix,
+                timeLastUpdateUtc: exchangeRates.time_last_update_utc,
+                timeNextUpdateUnix: exchangeRates.time_next_update_unix,
+                timeNextUpdateUtc: exchangeRates.time_next_update_utc,
+                base: exchangeRates.base_code,
+                rates: exchangeRates.conversion_rates,
+                lastFetchedAt: new Date(),
+            },
+            { upsert: true, new: true, session },
+        );
+
+        if (!updatedExchangeRates) {
+            const error = new Error('Failed to update exchange rates');
+            error.status = 500;
+            throw error;
+        }
+
+        await session.commitTransaction();
+        return updatedExchangeRates;
+    } catch (error) {
+        console.error('An error occurred while fetching and saving exchange rates: ', error);
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        session.endSession();
     }
-
-    const exchangeRates = await result.json();
-
-    const updatedExchangeRates = await ExchangeRates.findOneAndUpdate(
-        {},
-        {
-            timeLastUpdateUnix: exchangeRates.time_last_update_unix,
-            timeLastUpdateUtc: exchangeRates.time_last_update_utc,
-            timeNextUpdateUnix: exchangeRates.time_next_update_unix,
-            timeNextUpdateUtc: exchangeRates.time_next_update_utc,
-            base: exchangeRates.base_code,
-            rates: exchangeRates.conversion_rates,
-            lastFetchedAt: new Date(),
-        },
-        { upsert: true, new: true },
-    );
-
-    if (!updatedExchangeRates) {
-        throw new Error('Failed to update exchange rates');
-    }
-
-    return updatedExchangeRates;
 };
 
-export const checkExchangeRates = async () => {
+export const getRates = async () => {
     try {
         const rates = await ExchangeRates.findOne();
         if (!rates) {
@@ -45,7 +68,6 @@ export const checkExchangeRates = async () => {
         const lastFetched = rates.lastFetchedAt ? new Date(rates.lastFetchedAt).getTime() : 0;
         const now = Date.now();
 
-        // If lastFetchedAt is missing (old data), fall back to timeLastUpdateUnix
         if (!rates.lastFetchedAt) {
             const oneDayInSeconds = 24 * 60 * 60;
             const nowUnix = Math.floor(Date.now() / 1000);
@@ -70,15 +92,6 @@ export const updateExchangeRates = async (req, res, next) => {
     } catch (error) {
         console.error('An error occurred while updating exchange rates: ', error);
         next(error);
-    }
-};
-
-export const getRates = async () => {
-    try {
-        return await checkExchangeRates();
-    } catch (error) {
-        console.error('An error occurred while getting exchange rates: ', error);
-        throw error;
     }
 };
 
@@ -107,6 +120,11 @@ export const convertCurrency = async (req, res, next) => {
             const error = new Error('missing inputs');
             error.status = 400;
             throw error;
+        }
+
+        if (from === to) {
+            res.status(200).json({ success: true, data: amount });
+            return;
         }
 
         const exchangeRates = await getRates();

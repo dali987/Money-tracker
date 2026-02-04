@@ -22,7 +22,6 @@ export const useNotificationTriggers = () => {
             const roundedBalance = Number(account.balance.toFixed(2));
             const lastNotifiedBalance = notificationCache[cacheKey];
 
-            // Notify only when the negative balance changes
             if (account.balance < 0 && lastNotifiedBalance !== roundedBalance) {
                 addNotification({
                     title: 'Negative Balance Alert',
@@ -33,7 +32,6 @@ export const useNotificationTriggers = () => {
                 setNotificationCache(cacheKey, roundedBalance);
             }
 
-            // Reset cache when balance is no longer negative
             if (account.balance >= 0 && lastNotifiedBalance !== undefined) {
                 clearNotificationCache(cacheKey);
             }
@@ -68,7 +66,7 @@ export const useNotificationTriggers = () => {
                     actionUrl: '/budget',
                 });
                 setNotificationCache(notificationId100, true);
-                setNotificationCache(notificationId80, true); // Mark 80 as done too if we hit 100
+                setNotificationCache(notificationId80, true);
             } else if (percentage >= threshold && !notificationCache[notificationId80]) {
                 addNotification({
                     title: 'Budget Warning',

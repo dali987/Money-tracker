@@ -15,7 +15,7 @@ import recurringRouter from './routes/recurring.router.js';
 import helmet from 'helmet';
 import { apiLimiter } from './middlewares/rateLimit.middleware.js';
 import cron from 'node-cron';
-import { checkExchangeRates } from './controllers/exchange.controller.js';
+import { getRates } from './controllers/exchange.controller.js';
 import { processDueRecurringTransactions } from './controllers/recurring.controller.js';
 
 const dev = ENV.NODE_ENV !== 'production';
@@ -74,7 +74,7 @@ nextApp.prepare().then(async () => {
 
         // Run startup check for exchange rates
         try {
-            await checkExchangeRates();
+            await getRates();
         } catch (error) {
             console.error('Failed to run startup exchange rates check:', error);
         }

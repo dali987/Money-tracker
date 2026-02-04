@@ -15,15 +15,8 @@ import { useAccountStore } from '@/store/useAccountStore';
 import { Transaction, TransactionFilter } from '@/types';
 
 interface TransactionsListProps {
-    /**
-     * Maximum number of transactions to display
-     * - When set to -1: Uses server-side pagination
-     * - When set to a positive number: limits displayed transactions (no pagination)
-     */
     maxCount: number;
-    /** Callback for the "Add Transaction" empty state action */
     onAddClick?: () => void;
-    /** Optional filters to apply when fetching transactions */
     filters?: TransactionFilter;
 }
 
@@ -34,28 +27,20 @@ const TransactionsList = ({ maxCount, onAddClick, filters }: TransactionsListPro
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-    // Fetch accounts (always needed for name mapping)
     const { data: accounts = [], isLoading: isAccountsLoading } = useAccounts();
 
-    // Determine pagination parameters
-    // If maxCount > 0, we want exactly that many items (limit=maxCount, page=1)
-    // If maxCount == -1, we want pagination (limit=ITEMS_PER_PAGE, page=currentPage)
     const isLimited = maxCount !== -1;
     const fetchLimit = isLimited ? maxCount : ITEMS_PER_PAGE;
     const fetchPage = isLimited ? 1 : currentPage;
 
-    // Use paginated fetch for both cases (Limited or Full) logic
     const {
         data: paginatedData,
         isLoading: isTransactionsLoading,
         isError: isPaginatedError,
     } = usePaginatedTransactions(fetchPage, fetchLimit, filters);
 
-    // Derive final transactions
     const transactions = paginatedData?.data ?? [];
 
-    // Pagination metadata
-    // If limited, we hide pagination (totalPages = 1)
     const totalPages = isLimited ? 1 : (paginatedData?.pagination?.totalPages ?? 1);
 
     const queryClient = useQueryClient();
@@ -83,7 +68,6 @@ const TransactionsList = ({ maxCount, onAddClick, filters }: TransactionsListPro
         await queryClient.invalidateQueries({ queryKey: ['accounts'] });
     };
 
-    // Error state
     if (isTransactionsError || isAccountsError || isPaginatedError) {
         return (
             <AnimatePresence>
@@ -105,7 +89,6 @@ const TransactionsList = ({ maxCount, onAddClick, filters }: TransactionsListPro
         );
     }
 
-    // Loading state
     if (
         isCheckingAuth ||
         (isTransactionsLoading && transactions.length < 1) ||

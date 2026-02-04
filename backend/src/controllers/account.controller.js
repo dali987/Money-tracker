@@ -2,18 +2,39 @@ import mongoose from 'mongoose';
 import Account from '../models/account.model.js';
 
 export const createAccount = async (req, res, next) => {
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { user } = req;
+        const { name, type } = req.body;
 
-        const account = await Account.create({
+        const existingAccount = await Account.findOne({
+            user: user._id,
+            name,
+            type,
+        }).session(session);
+
+        if (existingAccount) {
+            const error = new Error('Account already exists');
+            error.status = 400;
+            throw error;
+        }
+
+        const account = await Account.create([{
             ...req.body,
             user: user._id,
-        });
+        }], { session });
 
-        res.status(201).json({ success: true, data: account });
+        await session.commitTransaction();
+        res.status(201).json({ success: true, data: account[0] });
     } catch (error) {
+        await session.abortTransaction();
         console.error('An error occurred while creating an account: ', error);
         next(error);
+    } finally {
+        session.endSession();
     }
 };
 
@@ -24,7 +45,6 @@ export const updateAccount = async (req, res, next) => {
     try {
         const { id: accountId } = req.params;
 
-        // SECURITY: Ensure account belongs to user
         const account = await Account.findOneAndUpdate(
             { _id: accountId, user: req.user._id },
             req.body,
@@ -55,7 +75,6 @@ export const deleteAccount = async (req, res, next) => {
     try {
         const { id: accountId } = req.params;
 
-        // SECURITY: Ensure account belongs to user
         const account = await Account.findOneAndDelete({
             _id: accountId,
             user: req.user._id,
@@ -93,7 +112,7 @@ export const getAccount = async (req, res, next) => {
         const { id: accountId } = req.params;
         const account = await Account.findById(accountId);
 
-        if (!account || account.user._id.toString() !== req.user.id.toString()) {
+        if (!account || account.user._id.toString() !== req.user._id.toString()) {
             const error = new Error('Account not found or unauthorized');
             error.status = 401;
             throw error;

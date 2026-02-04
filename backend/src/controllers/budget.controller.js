@@ -1,30 +1,48 @@
+import mongoose from 'mongoose';
 import Budget from '../models/budget.model.js';
 
 export const createBudget = async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const userId = req.user._id;
-        const { tag, amount, alertThreshold } = req.body;
+        const { tag, amount, alertThreshold, type } = req.body;
 
-        const existingBudget = await Budget.findOne({ userId, tag });
+        const existingBudget = await Budget.findOne({
+            userId,
+            tag,
+            type,
+        }).session(session);
         if (existingBudget) {
             const error = new Error('Budget for this tag already exists');
-            error.statusCode = 400;
+            error.status = 400;
             throw error;
         }
 
-        const newBudget = await Budget.create({
-            userId,
-            tag,
-            amount,
-            alertThreshold: alertThreshold || 80,
-        });
+        const newBudget = await Budget.create(
+            [
+                {
+                    userId,
+                    tag,
+                    amount,
+                    alertThreshold: alertThreshold || 80,
+                },
+            ],
+            { session },
+        );
+
+        await session.commitTransaction();
 
         res.status(201).json({
             success: true,
-            data: newBudget,
+            data: newBudget[0],
         });
     } catch (error) {
+        await session.abortTransaction();
         next(error);
+    } finally {
+        session.endSession();
     }
 };
 
@@ -43,49 +61,64 @@ export const getBudgets = async (req, res, next) => {
 };
 
 export const updateBudget = async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const userId = req.user._id;
         const { id } = req.params;
         const { amount, alertThreshold } = req.body;
 
-        const budget = await Budget.findOne({ _id: id, userId });
+        const budget = await Budget.findOne({ _id: id, userId }).session(session);
         if (!budget) {
             const error = new Error('Budget not found');
-            error.statusCode = 404;
+            error.status = 404;
             throw error;
         }
 
         if (amount) budget.amount = amount;
         if (alertThreshold) budget.alertThreshold = alertThreshold;
 
-        await budget.save();
+        await budget.save({ session });
+
+        await session.commitTransaction();
 
         res.status(200).json({
             success: true,
             data: budget,
         });
     } catch (error) {
+        await session.abortTransaction();
         next(error);
+    } finally {
+        session.endSession();
     }
 };
 
 export const deleteBudget = async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const userId = req.user._id;
         const { id } = req.params;
 
-        const budget = await Budget.findOneAndDelete({ _id: id, userId });
+        const budget = await Budget.findOneAndDelete({ _id: id, userId }).session(session);
         if (!budget) {
             const error = new Error('Budget not found');
-            error.statusCode = 404;
+            error.status = 404;
             throw error;
         }
 
+        await session.commitTransaction();
         res.status(200).json({
             success: true,
             data: budget,
         });
     } catch (error) {
+        await session.abortTransaction();
         next(error);
+    } finally {
+        session.endSession();
     }
 };
