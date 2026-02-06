@@ -28,7 +28,6 @@ const Header = () => {
     return (
         <header className="sticky z-99999 top-0 left-0 w-full bg-base-100 flex justify-between items-center px-4 lg:px-8 py-3 h-16 shadow-xl transition-all duration-300">
             <div className="flex items-center gap-4">
-                {/* Hamburger menu for mobile */}
                 <label
                     htmlFor="my-drawer-4"
                     className="btn btn-ghost btn-circle btn-sm lg:hidden text-base-content/80 hover:bg-base-200">
@@ -53,7 +52,6 @@ const Header = () => {
             </div>
 
             <div className="flex items-center gap-3 lg:gap-4">
-                {/* Page Title - hidden on mobile, visible on desktop */}
                 <h1 className="text-sm font-medium text-base-content/60 hidden md:block capitalize mr-4">
                     {pathname.split('/')[1] || 'Dashboard'}
                 </h1>

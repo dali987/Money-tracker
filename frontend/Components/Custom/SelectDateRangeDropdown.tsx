@@ -119,14 +119,10 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
             e.preventDefault();
             const formDate = new FormData(e.currentTarget as HTMLFormElement);
 
-            const start = (
-                formDate.get('start') !== 'Pick a date' ? formDate.get('start') : ''
-            ) as string;
-            const end = (
-                formDate.get('end') !== 'Pick a date' ? formDate.get('end') : ''
-            ) as string;
+            const start = (formDate.get('start') || '') as string;
+            const end = (formDate.get('end') || '') as string;
 
-            if (start === '' || end === '') {
+            if (start.trim() === '' || end.trim() === '') {
                 toast.error('Please pick both start and end dates');
                 return;
             }

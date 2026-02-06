@@ -27,7 +27,6 @@ const Showcase = () => {
                 },
             });
 
-            // Entrance animation
             tl.from(contentRef.current, {
                 y: 100,
                 opacity: 0,
@@ -58,14 +57,12 @@ const Showcase = () => {
                     '-=1'
                 );
 
-            // Floating/Parallax effect on mouse move
             const handleMouseMove = (e: MouseEvent) => {
                 if (!sectionRef.current) return;
                 const { clientX, clientY } = e;
                 const x = (clientX / window.innerWidth - 0.5) * 2; // Normalize -1 to 1
                 const y = (clientY / window.innerHeight - 0.5) * 2;
 
-                // Move mockup content
                 gsap.to(mockupRef.current, {
                     rotationY: x * 15, // Increased rotation
                     rotationX: -y * 10,
@@ -75,7 +72,6 @@ const Showcase = () => {
                     transformPerspective: 1000,
                 });
 
-                // Move cards with parallax
                 gsap.to(card1Ref.current, {
                     x: x * 40,
                     y: y * 40,
@@ -113,7 +109,6 @@ const Showcase = () => {
             ref={sectionRef}
             className="min-h-screen py-24 relative flex items-center justify-center overflow-hidden"
             style={{
-                // Semi-transparent to show global particles
                 background: `linear-gradient(to bottom, transparent, rgba(0,0,0,0.8) 20%, rgba(0,0,0,0.8) 80%, transparent)`,
             }}>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(var(--primary-rgb),0.05),transparent_50%)] pointer-events-none" />
@@ -132,7 +127,6 @@ const Showcase = () => {
                 <div
                     className="relative max-w-5xl mx-auto perspective-1000"
                     style={{ perspective: '1200px' }}>
-                    {/* Main Dashboard Mockup */}
                     <div
                         ref={mockupRef}
                         className="mockup-browser border border-white/10 bg-base-300 w-full shadow-2xl shadow-indigo-500/20 transform-style-3d relative z-10"
@@ -150,12 +144,10 @@ const Showcase = () => {
                                 width={1920}
                                 height={1080}
                             />
-                            {/* Subtle overlay for depth */}
                             <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                         </div>
                     </div>
 
-                    {/* Reflection */}
                     <div
                         className="absolute top-full left-0 w-full h-full opacity-30 pointer-events-none -scale-y-100 origin-top blur-sm transition-transform duration-100" // Added transition for smoothness
                         style={{
@@ -165,7 +157,6 @@ const Showcase = () => {
                             transform: 'scaleY(-1) translateY(0px)', // Adjust gap as needed
                             zIndex: 0,
                         }}>
-                        {/* We duplicate the visual content for reflection - simplified for performance */}
                         <div className="w-full h-full bg-linear-to-b from-indigo-900/50 to-transparent rounded-xl" />
 
                         <Image
@@ -177,7 +168,6 @@ const Showcase = () => {
                         />
                     </div>
 
-                    {/* Floating Stats Cards */}
                     <div
                         ref={card1Ref}
                         className="absolute -top-10 -right-10 md:-right-20 bg-black/80 backdrop-blur-md border border-white/10 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-xl z-20 w-36 md:w-64 transform-gpu">

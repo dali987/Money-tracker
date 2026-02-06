@@ -8,7 +8,6 @@ interface AccountStore {
     isLoading: boolean;
     isError: boolean;
 
-    // Actions
     getAccounts: (force?: boolean) => Promise<Account[]>;
     createAccount: (accountData: Partial<Account>) => Promise<void>;
     updateAccount: (accountData: { id: string; data: Partial<Account> }) => Promise<void>;
@@ -30,8 +29,7 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
             const accounts = data.data;
 
             set({ accounts: accounts });
-            // Fetch summary whenever accounts are fetched to keep them in sync
-            // Note: In an optimized app, we might want to separate these calls
+
             get().getAccountsSummary();
             return accounts;
         } catch (error) {
@@ -72,7 +70,7 @@ export const useAccountStore = create<AccountStore>((set, get) => ({
             set((state) => ({
                 accounts: state.accounts.map((item) => (item._id === account._id ? account : item)),
             }));
-            get().getAccountsSummary(); // Refresh summary
+            get().getAccountsSummary();
         } catch (error) {
             console.error('An error occurred while updating account: ', error);
             toast.error('Something went wrong');

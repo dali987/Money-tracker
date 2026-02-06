@@ -28,7 +28,7 @@ export default function DateSelect({ name }: { name: string }) {
             <input
                 type="text"
                 className="input outline-0 pika-single w-full rounded transition-all"
-                defaultValue="Pick a date"
+                placeholder="Pick a date"
                 name={name}
                 ref={myDatepicker}
             />

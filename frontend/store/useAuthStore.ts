@@ -59,8 +59,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             return user;
         } catch (error) {
             console.error('Auth check failed:', error);
-            // If getProfile fails but we had a session, we need to clear the session in authClient
-            // prevents inconsistent state where client thinks user is logged in
             await authClient.signOut();
             set({ authUser: null, hasCheckedAuth: true });
             return null;
@@ -75,15 +73,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const { error } = await authClient.signUp.email({
                 email: formData.email,
                 password: formData.password,
-                name: formData.username, // Better Auth uses 'name' field
-                username: formData.username, // Custom field passed to adapter
+                name: formData.username,
+                username: formData.username,
             } as Parameters<typeof authClient.signUp.email>[0] & { username: string });
 
             if (error) {
                 throw new Error(error.message || 'Sign up failed');
             }
 
-            // Fetch full user data after signup
             const profileRes = await userApi.getProfile();
             const user = profileRes.data;
 
@@ -112,7 +109,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 throw new Error(error.message || 'Invalid credentials');
             }
 
-            // Fetch full user data after login
             const profileRes = await userApi.getProfile();
             const user = profileRes.data;
 

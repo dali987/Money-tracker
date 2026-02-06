@@ -109,7 +109,6 @@ export const useTransactionStore = create<TransactionStore>((set) => ({
                 );
                 return { transactions: newTransactions };
             });
-            // Refresh accounts using the new store
             useAccountStore.getState().getAccounts();
         } catch (error) {
             console.error('An error occurred while creating transaction: ', error);
@@ -130,7 +129,6 @@ export const useTransactionStore = create<TransactionStore>((set) => ({
                     item._id === transaction._id ? transaction : item,
                 ),
             }));
-            // Refresh accounts using the new store
             useAccountStore.getState().getAccounts();
         } catch (error) {
             console.error('An error occurred while updating transaction: ', error);

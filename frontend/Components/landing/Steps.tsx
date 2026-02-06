@@ -4,7 +4,6 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { useRef } from 'react';
 
-// Register ScrollTrigger
 if (typeof window !== 'undefined') {
     gsap.registerPlugin(ScrollTrigger);
 }
@@ -21,17 +20,14 @@ const Steps = () => {
             if (!sectionRef.current || !indicatorColRef.current || !indicatorFillRef.current)
                 return;
 
-            // 1. Pin the indicator column while scrolling through the content
             ScrollTrigger.create({
                 trigger: containerRef.current,
                 start: 'top 10%',
                 end: 'bottom 120%',
                 pin: indicatorColRef.current,
                 pinSpacing: false,
-                // markers: true,
             });
 
-            // 2. Timeline for the indicator fill progress
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: containerRef.current,
@@ -46,7 +42,6 @@ const Steps = () => {
                 ease: 'none',
             });
 
-            // 3. Animate each content section with a single timeline for smooth entry/exit
             stepsContentRefs.current.forEach((section) => {
                 if (!section) return;
 
@@ -55,11 +50,10 @@ const Steps = () => {
                         trigger: section,
                         start: 'top 95%',
                         end: 'bottom 5%',
-                        scrub: 0.5, // Smoother scrub
+                        scrub: 0.5,
                     },
                 });
 
-                // Sequence: Fade In -> Hold -> Fade Out
                 tl.fromTo(
                     section,
                     {
@@ -74,12 +68,12 @@ const Steps = () => {
                         rotateX: 0,
                         scale: 1,
                         ease: 'power3.out',
-                        duration: 0.4, // First 40% of the scroll range
+                        duration: 0.4,
                     }
                 )
                     .to(section, {
                         opacity: 1,
-                        duration: 0.2, // Hold for 20% in the middle
+                        duration: 0.2,
                     })
                     .to(section, {
                         opacity: 0,
@@ -87,7 +81,7 @@ const Steps = () => {
                         rotateX: 10,
                         scale: 0.9,
                         ease: 'power3.in',
-                        duration: 0.4, // Last 40% of the scroll range
+                        duration: 0.4,
                     });
             });
         },
@@ -99,15 +93,14 @@ const Steps = () => {
             ref={sectionRef}
             className="relative pt-24 lg:pt-48 bg-transparent overflow-hidden">
             <div className="max-w-7xl mx-auto px-6 md:px-12">
-                {/* Section Header */}
                 <div className="flex justify-center mb-24 lg:mb-40">
                     <div className="flex flex-col text-center items-center">
                         <div className="flex items-center gap-4 mb-6 lg:mb-8">
-                            <div className="w-8 lg:w-12 h-[2px] bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
+                            <div className="w-8 lg:w-12 h-0.5 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
                             <span className="text-sm lg:text-lg font-black tracking-[0.4em] lg:tracking-[0.6em] uppercase text-indigo-400 text-nowrap drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]">
                                 How it works
                             </span>
-                            <div className="w-8 lg:w-12 h-[2px] bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
+                            <div className="w-8 lg:w-12 h-0.5 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
                         </div>
                         <h2 className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black text-white uppercase leading-[0.8] mb-12 mix-blend-overlay opacity-50">
                             The{' '}
@@ -123,7 +116,7 @@ const Steps = () => {
                     <div
                         ref={indicatorColRef}
                         className="min-w-10 lg:w-28 flex flex-col items-center">
-                        <div className="relative w-full flex flex-col items-center h-[500px] lg:h-[600px]">
+                        <div className="relative w-full flex flex-col items-center h-125 lg:h-150">
                             {/* Base Line */}
                             <div className="absolute inset-y-0 w-1 bg-white/5 rounded-full" />
 
@@ -157,7 +150,6 @@ const Steps = () => {
                         </div>
                     </div>
 
-                    {/* Right Column: Scrollable Content */}
                     <div className="flex-1 flex flex-col gap-[40vh] lg:gap-[60vh] pb-[40vh]">
                         {steps.map((step, index) => {
                             const Icon = step.icon;
@@ -171,8 +163,6 @@ const Steps = () => {
                                     <div
                                         className="h-16 w-16 lg:w-24 lg:h-24 rounded-2xl mb-8 lg:mb-12 flex items-center justify-center bg-transparent border border-white/20 relative group hover:border-indigo-500/50 transition-colors duration-500"
                                         style={{ backdropFilter: 'blur(0px)' }}>
-                                        {' '}
-                                        {/* Clean look */}
                                         <Icon
                                             className="w-8 h-8 lg:w-12 lg:h-12 transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
                                             style={{ color: step.color }}
@@ -194,7 +184,7 @@ const Steps = () => {
                                             }}>
                                             Phase {step.number}
                                         </span>
-                                        <div className="h-px lg:h-[2px] w-20 bg-linear-to-r from-white/20 to-transparent" />
+                                        <div className="h-px lg:h-0.5 w-20 bg-linear-to-r from-white/20 to-transparent" />
                                     </div>
 
                                     <h3 className="text-4xl lg:text-7xl font-black mb-8 lg:mb-10 text-white leading-[0.9] uppercase tracking-tight">

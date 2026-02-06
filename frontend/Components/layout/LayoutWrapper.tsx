@@ -25,7 +25,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 }
 
 const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => {
-    // Activate global notification triggers only for authenticated users
     useNotificationTriggers();
 
     return (

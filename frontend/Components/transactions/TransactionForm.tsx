@@ -6,7 +6,7 @@ import RecurringFrequencySelect from '@/Components/Custom/RecurringFrequencySele
 import MoneyExchangeInput from '@/Components/Custom/MoneyExchangeInput';
 import { recurringApi } from '@/lib/api/recurring';
 import { transactionSchema } from '@/lib/validations';
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -74,6 +74,15 @@ const TransactionForm = ({
         toAccount: null,
         fromAccount: null,
     });
+
+    useEffect(() => {
+        setKeepFormData({
+            note: transaction?.note || '',
+            tags: transaction?.tags || [],
+            toAccount: null,
+            fromAccount: null,
+        });
+    }, [transaction]);
 
     const handleOptions = useMemo(() => {
         return (accounts || []).map((acc) => ({
@@ -163,7 +172,6 @@ const TransactionForm = ({
                     await updateTransaction({ id: action.id, data: cleanValues });
                 }
 
-                // Assuming getAccounts refreshes store state if needed, but react-query invalidation is key
                 await getAccounts();
                 await queryClient.invalidateQueries({ queryKey: ['accounts'] });
                 await queryClient.invalidateQueries({ queryKey: ['transactions'] });

@@ -28,7 +28,6 @@ const AccountForm = ({ action = 'create', onSuccess }: AccountFormProps) => {
     const [prevActionId, setPrevActionId] = useState<string | null>(null);
     const currentId = typeof action === 'object' ? action.id : 'create';
 
-    // Sync form state when action or accounts data changes (without using useEffect)
     if (currentId !== prevActionId && (currentId === 'create' || accounts)) {
         setPrevActionId(currentId);
         if (currentId === 'create') {

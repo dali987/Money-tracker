@@ -44,7 +44,7 @@ const TransactionListItem = ({
 
     return (
         <motion.li
-            className="list-row !"
+            className="list-row"
             layout
             transition={{ duration: 0.35, ease: 'easeOut' }}
             initial={{ opacity: 0, x: -20 }}

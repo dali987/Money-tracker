@@ -10,28 +10,20 @@ interface ShortcutConfig {
     alt?: boolean;
     action: () => void;
     description: string;
-    /** Disable in input fields */
     global?: boolean;
 }
 
 interface UseKeyboardShortcutsOptions {
-    /** Custom shortcuts to add */
     shortcuts?: ShortcutConfig[];
-    /** Enable default navigation shortcuts */
     enableNavigation?: boolean;
 }
 
-/**
- * Hook for global keyboard shortcuts
- * Provides power-user features for faster navigation and actions
- */
 export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) {
     const { shortcuts = [], enableNavigation = true } = options;
     const router = useRouter();
 
     const handleKeyDown = useCallback(
         (event: KeyboardEvent) => {
-            // Skip if user is typing in an input field (unless shortcut is global)
             const target = event.target as HTMLElement;
             const isInputField =
                 target.tagName === 'INPUT' ||
@@ -39,7 +31,6 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
                 target.contentEditable === 'true' ||
                 target.closest('[role="textbox"]');
 
-            // Default navigation shortcuts
             const defaultShortcuts: ShortcutConfig[] = enableNavigation
                 ? [
                       {
@@ -98,7 +89,6 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
                 const altMatch = shortcut.alt ? event.altKey : !event.altKey;
 
                 if (keyMatch && ctrlMatch && shiftMatch && altMatch) {
-                    // Skip if in input field and shortcut is not global
                     if (isInputField && !shortcut.global) continue;
 
                     event.preventDefault();
@@ -115,7 +105,6 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleKeyDown]);
 
-    // Return available shortcuts for displaying in UI
     const getShortcutList = useCallback(() => {
         const defaultShortcuts: ShortcutConfig[] = enableNavigation
             ? [
@@ -134,9 +123,6 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
     return { getShortcutList };
 }
 
-/**
- * Format a shortcut for display
- */
 export function formatShortcut(
     shortcut: Pick<ShortcutConfig, 'key' | 'ctrl' | 'shift' | 'alt'>,
 ): string {

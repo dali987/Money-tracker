@@ -28,11 +28,9 @@ const Hero = () => {
     }, []);
 
     useGSAP(() => {
-        // Set initial positions
         gsap.set('.parallax-slow', { y: -100, x: 0 });
         gsap.set('.parallax-fast', { y: 0, x: 0 });
 
-        // Create parallax timeline with random directions
         const tl = gsap.timeline({
             scrollTrigger: {
                 trigger: '#hero',
@@ -42,11 +40,9 @@ const Hero = () => {
             },
         });
 
-        // Animate orbs with random directions
         tl.to('.parallax-slow', { y: 250, x: -100 }, 0);
         tl.to('.parallax-fast', { y: 450, x: 150 }, 0);
 
-        // Add a second parallax-slow element with different direction
 
         return () => {
             ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
@@ -76,7 +72,6 @@ const Hero = () => {
             });
         });
 
-        // REVEAL HERE: Now that styles are set, make the container visible and start animation
         gsap.set('.title', { opacity: 1 });
 
         gsap.from(splitTitle.words, {
@@ -99,7 +94,6 @@ const Hero = () => {
     }, []);
 
     useGSAP(() => {
-        // Button animations
         const magneticBtn = document.querySelector('.magnetic');
         const demoBtn = document.querySelector('.demo');
 
@@ -122,7 +116,6 @@ const Hero = () => {
         });
 
         if (magneticBtn) {
-            // Magnetic effect for primary button
             magneticBtn.addEventListener('mousemove', (e: Event) => {
                 const mouseEvent = e as MouseEvent;
                 const rect = magneticBtn.getBoundingClientRect();
@@ -150,7 +143,6 @@ const Hero = () => {
         }
 
         if (demoBtn) {
-            // Hover effect for demo button
             demoBtn.addEventListener('mouseenter', () => {
                 gsap.to(demoBtn, {
                     scale: 1.05,
@@ -178,10 +170,8 @@ const Hero = () => {
             id="hero"
             className="relative min-h-screen flex items-center justify-center px-4 lg:px-12 py-20"
             style={{
-                // Using a semi-transparent gradient to let some particles show through at the edges
                 background: 'radial-gradient(ellipse at top, #1a1a2eE6, #000000 80%)',
             }}>
-            {/* Animated gradient orbs with parallax */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div
                     className="parallax-slow absolute top-20 left-10 w-150 h-150 rounded-full blur-3xl opacity-40"

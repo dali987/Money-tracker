@@ -19,7 +19,7 @@ export function HorizontalChart({
 }) {
     if (!data || data.length === 0) {
         return (
-            <div className="flex items-center justify-center min-h-[200px] w-full text-gray-500">
+            <div className="flex items-center justify-center min-h-50 w-full text-gray-500">
                 No data available
             </div>
         );
@@ -28,7 +28,7 @@ export function HorizontalChart({
     const dataKeys = Object.keys(data[0]);
 
     return (
-        <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+        <ChartContainer config={chartConfig} className="min-h-50 w-full">
             <BarChart accessibilityLayer data={data}>
                 <CartesianGrid vertical={false} stroke="#ddd" />
                 <YAxis type="number" tickLine={false} tickMargin={5} axisLine={false} />

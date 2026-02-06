@@ -109,7 +109,6 @@ export function KeyboardShortcutsProvider({ children }: { children: React.ReactN
     const hideHelp = useCallback(() => setIsHelpOpen(false), []);
 
     const handleNewTransaction = useCallback(() => {
-        // Dashboard: Open collapse
         const dashboardCollapse = document.getElementById('new-transaction-collapse');
         if (dashboardCollapse) {
             dashboardCollapse.click();
@@ -117,7 +116,6 @@ export function KeyboardShortcutsProvider({ children }: { children: React.ReactN
             return;
         }
 
-        // Transactions page: Click the "New" button
         const newBtn = document.querySelector(
             'button.btn-outline.flex.text-base.gap-2.items-center',
         );
@@ -126,16 +124,11 @@ export function KeyboardShortcutsProvider({ children }: { children: React.ReactN
             return;
         }
 
-        // If not on these pages, go to dashboard and then we'd need a way to open it.
-        // For now, let's just go to dashboard if nowhere else.
         if (!window.location.pathname.includes('/dashboard')) {
             router.push('/dashboard');
-            // We can't easily open the collapse after navigation without complex state,
-            // so just navigating is a good first step.
         }
     }, [router]);
 
-    // Initialize keyboard shortcuts
     useKeyboardShortcuts({
         shortcuts: [
             {

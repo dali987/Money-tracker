@@ -83,9 +83,7 @@ const NavBar = ({ children }: { children: React.ReactNode }) => {
                     aria-label="close sidebar"
                     className="drawer-overlay"></label>
                 <div className="w-64 lg:is-drawer-close:w-18 lg:is-drawer-open:w-64 shadow-neutral shadow-xl flex flex-col items-start lg:fixed h-full lg:h-[calc(100vh-var(--header-height))]">
-                    {/* Sidebar content here */}
                     <ul className="menu w-full grow gap-2">
-                        {/* list item */}
                         {elements.map((element) => (
                             <NavElement
                                 key={element.name}
@@ -95,8 +93,6 @@ const NavBar = ({ children }: { children: React.ReactNode }) => {
                         ))}
                     </ul>
 
-                    {/* button to open/close 
-                    drawer - hidden on mobile */}
                     <div
                         className="hidden lg:block m-4 is-drawer-close:tooltip is-drawer-close:tooltip-right"
                         data-tip="Open">

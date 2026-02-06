@@ -105,7 +105,6 @@ const TransactionsPagination = ({
                     «
                 </button>
 
-                {/* Page numbers */}
                 {getVisiblePages().map((page) => {
                     if (page === 'left-ellipsis') {
                         return inputMode === 'left'

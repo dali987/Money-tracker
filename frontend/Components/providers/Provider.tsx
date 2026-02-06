@@ -12,7 +12,6 @@ const PUBLIC_ROUTES = ['/', '/login', '/signup'];
 const Provider = ({ children }: { children: React.ReactNode }) => {
     const [queryClient] = useState(() => new QueryClient());
 
-    // Use selectors to ensure stability and reduce re-renders
     const checkAuth = useAuthStore((state) => state.checkAuth);
     const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
     const authUser = useAuthStore((state) => state.authUser);

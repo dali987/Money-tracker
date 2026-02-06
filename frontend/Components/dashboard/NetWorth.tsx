@@ -3,12 +3,18 @@
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTransactionStore } from '@/store/useTransactionStore';
 import { CreditCard, Pencil } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
-import AccountForm from '../accounts/AccountForm';
-import { motion, AnimatePresence, Variants } from 'motion/react';
-import AnimatedNumber from '../ui/AnimatedNumber';
-import ErrorState from '@/Components/states/ErrorState';
+import { AnimatePresence, Variants, motion } from 'motion/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import CustomModal from '@/Components/Custom/CustomModal';
+import CustomCollapse from '@/Components/Custom/CustomCollapse';
+import ErrorState from '@/Components/states/ErrorState';
+import NetWorthSkeleton from '@/Components/states/NetWorthSkeleton';
+import { useAccounts } from '@/hooks/useAccounts';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAccountStore } from '@/store/useAccountStore';
+import { Account, AccountSummary } from '@/types';
+import AnimatedNumber from '../ui/AnimatedNumber';
+import AccountForm from '../accounts/AccountForm';
 
 const container: Variants = {
     hidden: { opacity: 0, y: 15 },
@@ -24,14 +30,8 @@ const section: Variants = {
     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
-import CustomCollapse from '@/Components/Custom/CustomCollapse';
-import { useAccounts } from '@/hooks/useAccounts';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAccountStore } from '@/store/useAccountStore';
-import NetWorthSkeleton from '@/Components/states/NetWorthSkeleton';
-import { Account, AccountSummary } from '@/types';
-
 const EMPTY_GROUPS: string[] = [];
+const EMPTY_CURRENCIES: string[] = [];
 
 const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?: boolean }) => {
     const { rates } = useTransactionStore();
@@ -41,23 +41,34 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [accountsSummary, setAccountsSummary] = useState<AccountSummary | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [summaryError, setSummaryError] = useState<string | null>(null);
     const queryClient = useQueryClient();
     const isAccountsError = useAccountStore((state) => state.isError);
 
     const { data: accounts } = useAccounts();
 
-    useEffect(() => {
-        const fetchSummary = async () => {
+    const fetchSummary = useCallback(async () => {
+        setIsLoading(true);
+        setSummaryError(null);
+        try {
             const summary = await getAccountsSummary();
-
             setAccountsSummary(summary);
+        } catch {
+            setAccountsSummary(null);
+            setSummaryError('Failed to load your net worth data.');
+        } finally {
             setIsLoading(false);
-        };
+        }
+    }, [getAccountsSummary]);
+
+    useEffect(() => {
         fetchSummary();
-    }, [accounts, getAccountsSummary]);
+    }, [accounts, fetchSummary]);
 
     const totalNetWorth = accountsSummary?.totalNetWorth ?? 0;
     const groups = authUser?.groups ?? EMPTY_GROUPS;
+    const baseCurrency = authUser?.baseCurrency ?? '';
+    const currencies = authUser?.currencies ?? EMPTY_CURRENCIES;
 
     const sumsByType = useMemo(() => {
         const sums = accountsSummary?.sumsByGroup || {};
@@ -80,14 +91,14 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
         setEditAccount(null);
     };
 
-    if (isAccountsError) {
+    if (isAccountsError || summaryError) {
         return (
             <div className="w-full bg-base-100 rounded-box p-4">
                 <ErrorState
-                    message="Failed to load your net worth data."
+                    message={summaryError ?? 'Failed to load your net worth data.'}
                     onRetry={() => {
                         queryClient.invalidateQueries({ queryKey: ['accounts'] });
-                        getAccountsSummary();
+                        fetchSummary();
                     }}
                 />
             </div>
@@ -119,7 +130,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                             className={`ml-2 text-sm font-bold ${
                                 totalNetWorth < 0 ? 'text-red-700' : 'text-green-700'
                             }`}>
-                            {authUser.baseCurrency}
+                            {baseCurrency}
                         </span>
                     </div>
                 }>
@@ -146,7 +157,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                                             }`}>
                                             <AnimatedNumber value={sumsByType[group]} />
                                             <span className="ml-2 text-xs">
-                                                {authUser.baseCurrency}
+                                                {baseCurrency}
                                             </span>
                                         </div>
                                     }>
@@ -195,27 +206,31 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                                                                     </button>
                                                                 </div>
                                                                 <div className="flex flex-wrap flex-col items-end gap-1 shrink-0 ml-4">
-                                                                    {[
-                                                                        authUser.baseCurrency,
-                                                                        ...authUser.currencies!,
-                                                                    ]
+                                                                    {[baseCurrency, ...currencies]
                                                                         .filter((c): c is string =>
                                                                             Boolean(c),
                                                                         )
-                                                                        .map((currency: string) => (
+                                                                        .map((currency: string) => {
+                                                                            const baseRate =
+                                                                                rates?.[
+                                                                                    baseCurrency
+                                                                                ];
+                                                                            const targetRate =
+                                                                                rates?.[currency];
+                                                                            if (!baseRate || !targetRate) {
+                                                                                return null;
+                                                                            }
+                                                                            const convertedBalance =
+                                                                                (account.balance /
+                                                                                    baseRate) *
+                                                                                targetRate;
+                                                                            return (
                                                                             <div
                                                                                 key={currency}
                                                                                 className="flex items-center gap-1 whitespace-nowrap">
                                                                                 <AnimatedNumber
                                                                                     value={
-                                                                                        (account.balance /
-                                                                                            rates?.[
-                                                                                                authUser
-                                                                                                    .baseCurrency!
-                                                                                            ]) *
-                                                                                        rates?.[
-                                                                                            currency
-                                                                                        ]
+                                                                                        convertedBalance
                                                                                     }
                                                                                     className={
                                                                                         account.balance <
@@ -234,7 +249,8 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                                                                                     {currency}
                                                                                 </span>
                                                                             </div>
-                                                                        ))}
+                                                                            );
+                                                                        })}
                                                                 </div>
                                                             </div>
                                                             {i !== filtered.length - 1 && (

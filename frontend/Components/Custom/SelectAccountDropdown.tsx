@@ -122,8 +122,8 @@ const SelectAccountDropdown = ({
                         className={`absolute z-100 menu flex-col flex-nowrap bg-base-100 rounded-box w-full shadow-2xl p-2 max-h-48 overflow-y-auto outline-none border border-base-content/10 ${
                             isTop ? 'bottom-full mb-2' : 'top-full mt-2'
                         }`}>
-                        {options.map((option: { name: string; type: string; id: string }, i) => (
-                            <li key={i}>
+                        {options.map((option: { name: string; type: string; id: string }) => (
+                            <li key={option.id}>
                                 <button
                                     type="button"
                                     onClick={() => handleSelect(option)}

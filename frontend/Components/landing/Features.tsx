@@ -17,7 +17,6 @@ const Features = () => {
 
     useGSAP(
         () => {
-            // Section reveal animation
             gsap.fromTo(
                 sectionRef.current,
                 {
@@ -38,7 +37,6 @@ const Features = () => {
                 }
             );
 
-            // Title reveal with split text animation
             const titleChars = titleRef.current?.innerText.split('');
             if (titleRef.current && titleChars) {
                 titleRef.current.innerHTML = titleChars
@@ -72,7 +70,6 @@ const Features = () => {
                 );
             }
 
-            // Subtitle fade-in
             gsap.fromTo(
                 subtitleRef.current,
                 {
@@ -95,7 +92,6 @@ const Features = () => {
                 }
             );
 
-            // Staggered card reveal
             gsap.fromTo(
                 cardRefs.current,
                 {
@@ -120,7 +116,6 @@ const Features = () => {
                 }
             );
 
-            // Particle animations
         },
         { scope: sectionRef }
     );
@@ -150,7 +145,6 @@ const Features = () => {
             card.style.setProperty('--mouse-x', `${mouseXPercent}%`);
             card.style.setProperty('--mouse-y', `${mouseYPercent}%`);
 
-            // Parallax content effect - move content at different speed
             if (cardContent) {
                 const parallaxX = (x - centerX) * 0.05;
                 const parallaxY = (y - centerY) * 0.05;
@@ -165,7 +159,6 @@ const Features = () => {
 
             card.style.transform = 'rotateX(0) rotateY(0) scale(1)';
 
-            // Reset parallax content
             if (cardContent) {
                 cardContent.style.transform = 'translateX(0) translateY(0)';
             }
@@ -194,11 +187,9 @@ const Features = () => {
             ref={sectionRef}
             id="features"
             className="py-32 px-4 lg:px-12 relative min-h-screen flex items-center overflow-hidden"
-            // Keeping it largely transparent for particles, but adding a subtle gradient for readability
             style={{
                 background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.8), transparent)',
             }}>
-            {/* Subtle Gradient overlays */}
             <div
                 className="first absolute inset-0 bg-linear-to-br from-purple-900/10 via-transparent to-blue-900/10 pointer-events-none"
                 style={{ zIndex: -20 }}
@@ -213,7 +204,6 @@ const Features = () => {
                             Everything You Need
                         </h2>
                         <p className="text-xl max-w-2xl mx-auto text-gray-400 font-light blur-on-scroll">
-                            {/*  filter: 'blur(10px)', opacity: 0 */}
                             Powerful features designed to help you manage your money effectively
                         </p>
                     </div>
@@ -222,7 +212,6 @@ const Features = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
                     {features.map((feature, index) => {
                         const Icon = feature.icon;
-                        // Bento Grid Logic: Zig-Zag pattern (2+1, 1+2, 2+1)
                         const isLarge = index % 4 === 0 || index % 4 === 3;
                         const colSpanClass = isLarge ? 'md:col-span-2' : 'md:col-span-1';
 
@@ -284,7 +273,6 @@ const Features = () => {
                                             {feature.description}
                                         </p>
 
-                                        {/* Decorative elements for large cards */}
                                         {isLarge && (
                                             <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none transform translate-x-1/4 translate-y-1/4">
                                                 <Icon size={300} color={feature.color} />
@@ -292,7 +280,6 @@ const Features = () => {
                                         )}
                                     </div>
 
-                                    {/* Gradient bleed effect */}
                                     <div
                                         className="absolute -inset-4 rounded-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-700 pointer-events-none"
                                         style={{

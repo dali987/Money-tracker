@@ -18,8 +18,6 @@ const CTA = () => {
     useGSAP(
         () => {
             if (magneticBtn.current) {
-                // Magnetic effect for primary button
-
                 magneticBtn.current.addEventListener('mousemove', (e: MouseEvent) => {
                     const mouseEvent = e as MouseEvent;
                     const rect = magneticBtn.current!.getBoundingClientRect();
@@ -55,7 +53,6 @@ const CTA = () => {
                 },
             });
 
-            // Animate container scale and opacity
             tl.from(containerRef.current, {
                 scale: 0.9,
                 opacity: 0,
@@ -63,7 +60,6 @@ const CTA = () => {
                 ease: 'power3.out',
             });
 
-            // Animate content elements stagger
             tl.from(
                 contentRef.current?.children || [],
                 {
@@ -76,7 +72,6 @@ const CTA = () => {
                 '-=0.5'
             );
 
-            // Continuous glow pulse
             gsap.to(glowRef.current, {
                 opacity: 0.6,
                 scale: 1.2,
@@ -91,10 +86,8 @@ const CTA = () => {
 
     return (
         <section className="py-32 px-4 lg:px-12 relative min-h-[70vh] flex items-center justify-center overflow-hidden">
-            {/* Background elements - kept minimal to let global particles show through */}
 
             <div ref={containerRef} className="max-w-5xl mx-auto w-full relative z-10 group">
-                {/* Glow effect */}
                 <div
                     ref={glowRef}
                     className="absolute -inset-1 rounded-[3rem] bg-linear-to-r from-indigo-500/30 via-purple-500/30 to-pink-500/30 blur-2xl opacity-30 group-hover:opacity-50 transition-opacity duration-1000"
@@ -105,7 +98,6 @@ const CTA = () => {
                     style={{
                         boxShadow: '0 0 80px -20px rgba(99, 102, 241, 0.2)',
                     }}>
-                    {/* Inner sheen */}
                     <div className="absolute inset-0 bg-linear-to-br from-white/5 to-transparent pointer-events-none" />
 
                     <div
