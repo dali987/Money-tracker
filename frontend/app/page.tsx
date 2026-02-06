@@ -164,11 +164,13 @@ const LandingPage = () => {
             smoothWheel: true,
         });
 
-        lenis.on('scroll', ScrollTrigger.update);
+        const handleScroll = () => ScrollTrigger.update();
+        lenis.on('scroll', handleScroll);
 
-        gsap.ticker.add((time) => {
+        const tickerCallback = (time: number) => {
             lenis.raf(time * 1000);
-        });
+        };
+        gsap.ticker.add(tickerCallback);
 
         gsap.ticker.lagSmoothing(0);
 
@@ -176,7 +178,8 @@ const LandingPage = () => {
 
         return () => {
             lenis.destroy();
-            gsap.ticker.remove(lenis.raf);
+            lenis.off('scroll', handleScroll);
+            gsap.ticker.remove(tickerCallback);
         };
     }, []);
 
