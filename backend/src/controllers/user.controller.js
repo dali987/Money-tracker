@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import Account from '../models/account.model.js';
 import Transaction from '../models/transaction.model.js';
 import { getRates } from './exchange.controller.js';
+import { allowedSettingKeys } from '../schemas/userSettings.schema.js';
 
 export const getUser = async (req, res, next) => {
     try {
@@ -17,16 +18,7 @@ export const getUser = async (req, res, next) => {
     }
 };
 
-const ALLOWED_SETTINGS = [
-    'currencies',
-    'baseCurrency',
-    'tags',
-    'groups',
-    'username',
-    'name',
-    'image',
-    'profilePic',
-];
+const ALLOWED_SETTINGS = allowedSettingKeys;
 export const getSetting = async (req, res, next) => {
     try {
         const { key } = req.params;

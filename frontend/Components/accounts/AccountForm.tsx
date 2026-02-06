@@ -2,7 +2,7 @@
 
 import { useAuthStore } from '@/store/useAuthStore';
 import NumberInput from '@/Components/Custom/NumberInput';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { accountSchema } from '@/lib/validations';
 import SelectDropdown from '@/Components/Custom/SelectDropdown';
 import { useAccounts } from '@/hooks/useAccounts';
@@ -25,22 +25,28 @@ const AccountForm = ({ action = 'create', onSuccess }: AccountFormProps) => {
 
     const { data: accounts } = useAccounts();
 
-    const [prevActionId, setPrevActionId] = useState<string | null>(null);
     const currentId = typeof action === 'object' ? action.id : 'create';
 
-    if (currentId !== prevActionId && (currentId === 'create' || accounts)) {
-        setPrevActionId(currentId);
+    const prevActionIdRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (currentId === prevActionIdRef.current) return;
+        if (currentId !== 'create' && !accounts) return;
+
+        prevActionIdRef.current = currentId;
+
         if (currentId === 'create') {
             setName('');
             setGroup(authUser?.groups?.[0] || '');
-        } else {
-            const account = accounts?.find((a: Account) => a._id === currentId);
-            if (account) {
-                setName(account.name);
-                setGroup(account.group);
-            }
+            return;
         }
-    }
+
+        const account = accounts?.find((a: Account) => a._id === currentId);
+        if (account) {
+            setName(account.name);
+            setGroup(account.group);
+        }
+    }, [accounts, authUser?.groups, currentId]);
 
     const [error, setError] = useState<string | null>(null);
 
