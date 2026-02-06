@@ -91,6 +91,7 @@ const TransactionsPage = () => {
     }, [currentFilters, selectedRange]);
 
     const updateSummary = useCallback(async () => {
+        if (!authUser) return;
         const sum = await getTransactionsSummary(activeFilters);
         if (sum) {
             setSummary({
@@ -99,7 +100,7 @@ const TransactionsPage = () => {
                 netBalance: sum.netBalance ?? 0,
             });
         }
-    }, [getTransactionsSummary, activeFilters]);
+    }, [getTransactionsSummary, activeFilters, authUser]);
 
     const createFormSubmit = useCallback(async () => {
         setIsNewTransactionModalOpen(false);

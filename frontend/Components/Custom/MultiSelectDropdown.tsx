@@ -28,7 +28,6 @@ export default function MultiSelectDropdown({
     onSelect,
     selected = EMPTY_ARRAY,
 }: MultiSelectProps) {
-    // Internal state synced with the 'selected' prop
     const [selectedValues, setSelectedValues] = useState<string[]>(EMPTY_ARRAY);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -56,7 +55,6 @@ export default function MultiSelectDropdown({
 
     const isClearEnabled = selectedValues.length > 0;
 
-    // Handle clicks outside to close dropdown
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {

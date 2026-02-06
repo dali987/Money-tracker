@@ -10,6 +10,7 @@ interface NumberInputProps {
     min?: number;
     step?: number;
     placeholder?: string;
+    id?: string;
 }
 
 const NumberInput = ({
@@ -21,6 +22,7 @@ const NumberInput = ({
     min,
     step,
     placeholder,
+    id = "amountInput",
 }: NumberInputProps) => {
     const isControlled = controlledValue !== undefined;
     const [internalNumber, setInternalNumber] = useState(0);
@@ -52,7 +54,7 @@ const NumberInput = ({
                 </svg>
             </button>
             <input
-                id="amountInput"
+                id={id}
                 type="number"
                 name={name}
                 disabled={disabled}

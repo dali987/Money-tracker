@@ -12,9 +12,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     const isLandingPage = pathname === '/';
     const isAuthPage = pathname === '/login' || pathname === '/signup';
 
-    // Activate global notification triggers
-    useNotificationTriggers();
-
     if (isLandingPage || isAuthPage) {
         return (
             <>
@@ -24,6 +21,13 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         );
     }
 
+    return <AuthenticatedLayout>{children}</AuthenticatedLayout>;
+}
+
+const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => {
+    // Activate global notification triggers only for authenticated users
+    useNotificationTriggers();
+
     return (
         <KeyboardShortcutsProvider>
             <Header />
@@ -31,4 +35,4 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
             <NavBar>{children}</NavBar>
         </KeyboardShortcutsProvider>
     );
-}
+};

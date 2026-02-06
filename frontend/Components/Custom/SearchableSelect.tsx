@@ -9,37 +9,36 @@ interface Option {
     searchText: string;
 }
 
+interface SearchableSelectProps {
+    options: Option[];
+    onSelect: (val: string) => void;
+    placeholder: string;
+    name: string;
+    defaultValue?: string;
+}
+
 const SearchableSelect = ({
     options,
     onSelect,
     placeholder,
     name,
     defaultValue,
-}: {
-    options: Option[];
-    onSelect: (val: string) => void;
-    placeholder: string;
-    name: string;
-    defaultValue?: string;
-}) => {
+}: SearchableSelectProps) => {
     const [search, setSearch] = useState('');
-    const [selected, setSelected] = useState<Option | null>(null);
+    const [selectedValue, setSelectedValue] = useState<string | null>(null);
+    const [hasUserSelection, setHasUserSelection] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const [prevDefaultValue, setPrevDefaultValue] = useState<string | undefined>(undefined);
-    const [prevOptions, setPrevOptions] = useState<Option[]>([]);
-
-    // Initialize with default value if provided (Sync during render)
-    if (defaultValue !== prevDefaultValue || options !== prevOptions) {
-        setPrevDefaultValue(defaultValue);
-        setPrevOptions(options);
-
-        if (defaultValue && options.length > 0) {
-            const found = options.find((o) => o.value === defaultValue);
-            if (found) setSelected(found);
+    const selectedOption = useMemo(() => {
+        if (selectedValue) {
+            return options.find((o) => o.value === selectedValue) || null;
         }
-    }
+        if (!hasUserSelection && defaultValue) {
+            return options.find((o) => o.value === defaultValue) || null;
+        }
+        return null;
+    }, [defaultValue, hasUserSelection, options, selectedValue]);
 
     const filtered = useMemo(() => {
         if (!search) return options;
@@ -48,7 +47,6 @@ const SearchableSelect = ({
         );
     }, [search, options]);
 
-    // Handle clicks outside to close dropdown
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -62,10 +60,10 @@ const SearchableSelect = ({
     return (
         <div className={`dropdown w-full ${isFocused ? 'dropdown-open' : ''}`} ref={dropdownRef}>
             <div className="relative w-full">
+                <input type="hidden" name={name} value={selectedOption?.value ?? ''} />
                 <input
                     type="text"
-                    placeholder={selected ? '' : placeholder}
-                    name={name}
+                    placeholder={selectedOption ? '' : placeholder}
                     value={search}
                     onFocus={(e) => {
                         setIsFocused(true);
@@ -79,17 +77,20 @@ const SearchableSelect = ({
                     }}
                     onChange={(e) => {
                         setSearch(e.target.value);
-                        setSelected(null);
+                        if (selectedValue !== null || !hasUserSelection) {
+                            setSelectedValue(null);
+                            setHasUserSelection(true);
+                        }
                         setIsFocused(true);
                     }}
                     className="input input-bordered w-full"
                     autoComplete="off"
                 />
 
-                {selected && !search && !isFocused && (
+                {selectedOption && !search && !isFocused && (
                     <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none w-[calc(100%-40px)]">
                         <div className="truncate scale-95 origin-left text-sm">
-                            {selected.label}
+                            {selectedOption.label}
                         </div>
                     </div>
                 )}
@@ -128,7 +129,8 @@ const SearchableSelect = ({
                                         type="button"
                                         className="flex justify-start gap-2 py-3 text-sm"
                                         onClick={() => {
-                                            setSelected(opt);
+                                            setSelectedValue(opt.value);
+                                            setHasUserSelection(true);
                                             onSelect(opt.value);
                                             setSearch('');
                                             setIsFocused(false);

@@ -11,29 +11,38 @@ const PUBLIC_ROUTES = ['/', '/login', '/signup'];
 
 const Provider = ({ children }: { children: React.ReactNode }) => {
     const [queryClient] = useState(() => new QueryClient());
-    const { checkAuth, isCheckingAuth, authUser } = useAuthStore();
+
+    // Use selectors to ensure stability and reduce re-renders
+    const checkAuth = useAuthStore((state) => state.checkAuth);
+    const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
+    const authUser = useAuthStore((state) => state.authUser);
+    const hasCheckedAuth = useAuthStore((state) => state.hasCheckedAuth);
+
     const router = useRouter();
     const pathname = usePathname();
 
     useEffect(() => {
-        checkAuth();
-    }, [checkAuth]);
+        if (!hasCheckedAuth) {
+            checkAuth();
+        }
+    }, [checkAuth, hasCheckedAuth]);
 
     useEffect(() => {
-        if (isCheckingAuth) return;
+        if (isCheckingAuth || !hasCheckedAuth) return;
 
-        const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname === route);
+        const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
-        if (authUser === null && !isPublicRoute) {
-            router.push('/login');
+        if (!authUser && !isPublicRoute) {
+            router.replace('/login');
         }
 
-        if (authUser !== null && (pathname === '/login' || pathname === '/signup')) {
-            router.push('/dashboard');
+        if (authUser && (pathname === '/login' || pathname === '/signup')) {
+            router.replace('/dashboard');
         }
-    }, [isCheckingAuth, authUser, router, pathname]);
+    }, [isCheckingAuth, hasCheckedAuth, authUser, router, pathname]);
 
-    if (isCheckingAuth) {
+    const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+    if (!isPublicRoute && (!hasCheckedAuth || isCheckingAuth || !authUser)) {
         return (
             <div className="h-screen w-full flex items-center justify-center bg-base-100">
                 <span className="loading loading-spinner loading-lg text-primary"></span>

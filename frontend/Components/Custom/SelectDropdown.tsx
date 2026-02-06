@@ -37,10 +37,8 @@ const SelectDropdown = ({
     const listboxRef = useRef<HTMLUListElement>(null);
     const instanceId = useId();
 
-    // Prevent parent interactions (e.g., card clicks)
     const stopPropagation = useCallback((e: React.SyntheticEvent) => {
         e.stopPropagation();
-        // Prevent generic clicks, but allow form events if needed
     }, []);
 
     const [prevDefaultValue, setPrevDefaultValue] = useState<string | undefined>(undefined);
@@ -50,7 +48,6 @@ const SelectDropdown = ({
     const [prevShowSelected, setPrevShowSelected] = useState<boolean>(true);
     const [prevPlaceholder, setPrevPlaceholder] = useState<string | undefined>(undefined);
 
-    // Initial value checks (Sync during render)
     if (
         defaultValue !== prevDefaultValue ||
         options !== prevOptions ||
@@ -70,7 +67,6 @@ const SelectDropdown = ({
         }
     }
 
-    // Outside click & singular open logic
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent | TouchEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -105,16 +101,13 @@ const SelectDropdown = ({
         const nextOpen = !isOpen;
 
         if (nextOpen) {
-            // Smart positioning
             if (dropdownRef.current) {
                 const rect = dropdownRef.current.getBoundingClientRect();
                 const spaceBelow = window.innerHeight - rect.bottom;
                 const spaceAbove = rect.top;
-                // Prefer bottom, flip to top if barely any space below and tons above
                 setIsTop(spaceBelow < 250 && spaceAbove > spaceBelow);
             }
 
-            // Close others
             window.dispatchEvent(
                 new CustomEvent('money-tracker-dropdown-open', {
                     detail: { id: instanceId },
@@ -130,11 +123,10 @@ const SelectDropdown = ({
     ) => {
         const value = typeof option === 'string' ? option : option.value;
         setSelected(value);
-        setIsOpen(false); // Select always closes
+        setIsOpen(false); 
         onSelect?.(value);
     };
 
-    // Keyboard Navigation
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (disabled) return;
 
@@ -152,7 +144,6 @@ const SelectDropdown = ({
                 if (!isOpen) {
                     setIsOpen(true);
                 }
-                // Future: Focus management for options could go here
                 break;
         }
     };
@@ -169,11 +160,10 @@ const SelectDropdown = ({
         <div
             ref={dropdownRef}
             className={`relative inline-block text-left ${!trigger ? 'w-full' : ''} ${className}`}
-            onClick={stopPropagation} // Catch-all for click bubbling
-            onMouseDown={stopPropagation} // Catch-all for dragging/interaction starts
-            onPointerDown={stopPropagation} // Catch-all for pointer events
+            onClick={stopPropagation} 
+            onMouseDown={stopPropagation} 
+            onPointerDown={stopPropagation} 
         >
-            {/* Hidden input for form submission */}
             <input type="hidden" name={name} value={selected} />
 
             <div
@@ -224,7 +214,7 @@ const SelectDropdown = ({
                             max-h-60 overflow-y-auto border border-base-content/10 focus:outline-none
                             ${isTop ? 'bottom-full mb-2' : 'top-full mt-2'} 
                             ${menuClassName || 'w-full'} 
-                            ${trigger ? 'right-0 min-w-[200px]' : 'left-0 w-full'}
+                            ${trigger ? 'right-0 min-w-50' : 'left-0 w-full'}
                         `}>
                         {options.map((option, i) => {
                             const value = typeof option === 'string' ? option : option.value;

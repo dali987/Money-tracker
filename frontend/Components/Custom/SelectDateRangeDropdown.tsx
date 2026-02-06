@@ -1,3 +1,5 @@
+"use client"
+
 import { CalendarDays, Check, ChevronDown } from 'lucide-react';
 import { useCallback, useState, useRef, useEffect } from 'react';
 import DateSelect from './DateSelect';
@@ -16,7 +18,6 @@ const options = [
 ];
 
 interface Props {
-    // optional prop: where to handle filtering (preferred for separation of concerns)
     onRangeChange?: (range: { start: string | null; end: string | null; label: string }) => void;
     className?: string;
 }
@@ -156,7 +157,6 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
         [formatDate, onRangeChange],
     );
 
-    // Handle clicks outside to close dropdown
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {

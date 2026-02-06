@@ -1,4 +1,5 @@
-import React from 'react';
+"use client"
+
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { X } from 'lucide-react';
@@ -8,6 +9,17 @@ interface BadgeProps {
     type: string;
     onRemove: (name: string) => void;
 }
+
+const BADGE_VARIANT_CLASS: Record<string, string> = {
+    neutral: 'badge-neutral',
+    primary: 'badge-primary',
+    secondary: 'badge-secondary',
+    accent: 'badge-accent',
+    info: 'badge-info',
+    success: 'badge-success',
+    warning: 'badge-warning',
+    error: 'badge-error',
+};
 
 export const SortableBadge = ({ name, type, onRemove }: BadgeProps) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -24,10 +36,12 @@ export const SortableBadge = ({ name, type, onRemove }: BadgeProps) => {
         touchAction: 'none',
     };
 
+    const variantClass = BADGE_VARIANT_CLASS[type] || '';
+
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
             <div
-                className={`badge badge-soft badge-outline badge-${type} p-3 text-base cursor-grab active:cursor-grabbing`}>
+                className={`badge badge-soft badge-outline ${variantClass} p-3 text-base cursor-grab active:cursor-grabbing`}>
                 {name}
                 <button
                     onClick={() => onRemove(name)}

@@ -22,7 +22,6 @@ const CustomModal = ({
     isOpen,
     onClose,
 }: CustomModalProps) => {
-    // Handle escape key to close modal
     useEffect(() => {
         if (!isOpen) return;
 
@@ -45,7 +44,6 @@ const CustomModal = ({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}>
-                    {/* Backdrop */}
                     <motion.div
                         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                         initial={{ opacity: 0 }}
@@ -54,7 +52,6 @@ const CustomModal = ({
                         onClick={autoClose ? onClose : undefined}
                     />
 
-                    {/* Modal Content */}
                     <motion.div
                         className="modal-box w-full max-w-xl p-0 overflow-hidden bg-white dark:bg-base-100 rounded-2xl border border-zinc-200 dark:border-base-300 shadow-2xl relative z-10"
                         initial={{ opacity: 0, scale: 0.9, y: 30 }}

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { recurringApi } from '@/lib/api/recurring';
 import { RecurringTransaction } from '@/types';
 import RecurringForm from '@/Components/transactions/RecurringForm';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Plus, Clock, Wallet, ArrowRight, MoreVertical } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -34,6 +35,8 @@ const itemVariants = {
 
 const RecurringPage = () => {
     const queryClient = useQueryClient();
+    const authUser = useAuthStore((state) => state.authUser);
+    const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
     const [editingItem, setEditingItem] = useState<RecurringTransaction | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -44,6 +47,7 @@ const RecurringPage = () => {
     } = useQuery({
         queryKey: ['recurringTransactions'],
         queryFn: recurringApi.getAll,
+        enabled: !!authUser && !isCheckingAuth,
     });
 
     const deleteMutation = useMutation({

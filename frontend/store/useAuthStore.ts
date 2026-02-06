@@ -9,8 +9,9 @@ interface AuthState {
     isCheckingAuth: boolean;
     isSigningUp: boolean;
     isLoggingIn: boolean;
+    hasCheckedAuth: boolean;
 
-    checkAuth: () => Promise<User | null>;
+    checkAuth: (force?: boolean) => Promise<User | null>;
     signup: (formData: Record<string, string>) => Promise<boolean | string>;
     login: (formData: Record<string, string>) => Promise<boolean | string>;
     logout: () => Promise<void>;
@@ -21,23 +22,29 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
     authUser: null,
-    isCheckingAuth: true,
+    isCheckingAuth: false,
     isSigningUp: false,
     isLoggingIn: false,
+    hasCheckedAuth: false,
 
-    checkAuth: async () => {
+    checkAuth: async (force = false) => {
+        const { authUser, hasCheckedAuth, isCheckingAuth } = get();
+
+        if (isCheckingAuth) return authUser;
+        if (hasCheckedAuth && !force) return authUser;
+
         set({ isCheckingAuth: true });
 
-        if (get().authUser) {
-            set({ isCheckingAuth: false });
-            return get().authUser;
+        if (authUser && !force) {
+            set({ isCheckingAuth: false, hasCheckedAuth: true });
+            return authUser;
         }
 
         try {
             const { data: session } = await authClient.getSession();
 
             if (!session?.user) {
-                set({ authUser: null });
+                set({ authUser: null, hasCheckedAuth: true });
                 return null;
             }
 
@@ -48,14 +55,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 throw new Error('Failed to fetch user data');
             }
 
-            set({ authUser: user });
+            set({ authUser: user, hasCheckedAuth: true });
             return user;
         } catch (error) {
             console.error('Auth check failed:', error);
-            set({ authUser: null });
+            // If getProfile fails but we had a session, we need to clear the session in authClient
+            // prevents inconsistent state where client thinks user is logged in
+            await authClient.signOut();
+            set({ authUser: null, hasCheckedAuth: true });
             return null;
         } finally {
-            set({ isCheckingAuth: false });
+            set({ isCheckingAuth: false, hasCheckedAuth: true });
         }
     },
 
@@ -77,7 +87,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const profileRes = await userApi.getProfile();
             const user = profileRes.data;
 
-            set({ authUser: user });
+            set({ authUser: user, hasCheckedAuth: true });
             return true;
         } catch (error) {
             console.error('Signup error:', error);
@@ -106,7 +116,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const profileRes = await userApi.getProfile();
             const user = profileRes.data;
 
-            set({ authUser: user });
+            set({ authUser: user, hasCheckedAuth: true });
             return true;
         } catch (error) {
             console.error('Login error:', error);
@@ -125,7 +135,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         } catch (error) {
             console.error('Logout error:', error);
         }
-        set({ authUser: null });
+        set({ authUser: null, hasCheckedAuth: true });
     },
 
     updateSetting: async (key, setting) => {

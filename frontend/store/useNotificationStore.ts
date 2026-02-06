@@ -78,8 +78,9 @@ export const useNotificationStore = create<NotificationStore>()(
             clearNotificationCache: (key) => {
                 set((state) => {
                     if (!(key in state.notificationCache)) return state;
-                    const { [key]: _removed, ...rest } = state.notificationCache;
-                    return { notificationCache: rest };
+                    const nextCache = { ...state.notificationCache };
+                    delete nextCache[key];
+                    return { notificationCache: nextCache };
                 });
             },
         }),

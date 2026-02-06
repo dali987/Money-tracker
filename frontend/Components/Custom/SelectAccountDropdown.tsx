@@ -1,3 +1,5 @@
+'use client';
+
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -62,7 +64,6 @@ const SelectAccountDropdown = ({
         }
     }, [defaultValue, internalSelectedId, isControlled, onSelect, options]);
 
-    // Handle clicks outside to close dropdown
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -76,7 +77,6 @@ const SelectAccountDropdown = ({
     const toggleDropdown = () => {
         if (disabled) return;
 
-        // Calculate position before opening
         if (!isOpen && dropdownRef.current) {
             const rect = dropdownRef.current.getBoundingClientRect();
             const isBottomHalf = rect.top > window.innerHeight / 2;

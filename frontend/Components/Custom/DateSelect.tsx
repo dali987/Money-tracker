@@ -3,17 +3,25 @@
 import { useEffect, useRef } from 'react';
 import { CalendarDays } from 'lucide-react';
 
-export default function DateSelect({ name }: { name: string }) {
-    const myDatepicker = useRef(null);
-    useEffect(() => {
-        // Import Pikaday dynamically on client side
-        import('pikaday').then(({ default: Pikaday }) => {
-            const picker = new Pikaday({
-                field: myDatepicker.current!,
-            });
+type PikadayInstance = { destroy: () => void };
 
-            return () => picker.destroy();
+export default function DateSelect({ name }: { name: string }) {
+    const myDatepicker = useRef<HTMLInputElement | null>(null);
+    useEffect(() => {
+        let picker: PikadayInstance | null = null;
+        let cancelled = false;
+
+        import('pikaday').then(({ default: Pikaday }) => {
+            if (cancelled || !myDatepicker.current) return;
+            picker = new Pikaday({
+                field: myDatepicker.current,
+            });
         });
+
+        return () => {
+            cancelled = true;
+            picker?.destroy();
+        };
     }, []);
     return (
         <div className="relative w-full">

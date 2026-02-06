@@ -1,46 +1,51 @@
 import { useQuery } from '@tanstack/react-query';
 import { axiosInstance } from '@/lib/axios';
 import { Transaction, TransactionFilter, PaginatedResponse } from '@/types';
+import { useAuthStore } from '@/store/useAuthStore';
 
-/**
- * Hook for fetching all transactions (no pagination)
- * Used for components that need full data set (e.g., reports, charts)
- */
 export const useTransactions = (filters?: TransactionFilter) => {
+    const authUser = useAuthStore((state) => state.authUser);
+    const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
+    const filtersKey = filters
+        ? JSON.stringify(filters, Object.keys(filters).sort())
+        : 'all';
+
     return useQuery<Transaction[]>({
-        queryKey: ['transactions', filters],
+        queryKey: ['transactions', filtersKey],
         queryFn: async () => {
             const res = await axiosInstance.get('/transaction/', { params: filters });
             const transactions = res.data.data as Transaction[];
 
-            // Sort by date descending (newest first)
             return [...transactions].sort(
                 (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
             );
         },
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        enabled: filters !== undefined,
+        staleTime: 1000 * 60 * 5,
+        enabled: !!authUser && !isCheckingAuth && filters !== undefined,
     });
 };
 
-/**
- * Hook for fetching paginated transactions
- * Delegates pagination to the server for better performance
- */
 export const usePaginatedTransactions = (
     page: number,
     limit: number = 10,
     filters?: Omit<TransactionFilter, 'page' | 'limit'>,
 ) => {
+    const authUser = useAuthStore((state) => state.authUser);
+    const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
+    const filtersKey = filters
+        ? JSON.stringify(filters, Object.keys(filters).sort())
+        : 'all';
+
     return useQuery<PaginatedResponse<Transaction>>({
-        queryKey: ['transactions', 'paginated', page, limit, filters],
+        queryKey: ['transactions', 'paginated', page, limit, filtersKey],
         queryFn: async () => {
             const res = await axiosInstance.get('/transaction/', {
                 params: { ...filters, page, limit },
             });
             return res.data;
         },
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        placeholderData: (previousData) => previousData, // Keep previous data while loading
+        staleTime: 1000 * 60 * 5,
+        placeholderData: (previousData) => previousData,
+        enabled: !!authUser && !isCheckingAuth,
     });
 };
