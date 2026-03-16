@@ -1,3 +1,5 @@
+'use client';
+
 import NumberInput from '@/Components/Custom/NumberInput';
 import SelectAccountDropdown from '@/Components/Custom/SelectAccountDropdown';
 
@@ -22,7 +24,7 @@ const MoneyExchangeInput = ({
                 name={name}
                 className="w-full"
                 options={options}
-                defaultValue={!selectedId}
+                defaultValue={!selectedId && options.length > 0 ? options[0].id : undefined}
                 selectedId={selectedId}
                 onSelect={onSelect}
             />

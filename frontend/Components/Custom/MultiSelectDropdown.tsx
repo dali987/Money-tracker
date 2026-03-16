@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
+import { useClickOutside } from '@/hooks/useClickOutside';
+import { useDropdownPosition } from '@/hooks/useDropdownPosition';
 
 interface Option {
     label: React.ReactNode;
@@ -31,7 +33,10 @@ export default function MultiSelectDropdown({
     const [selectedValues, setSelectedValues] = useState<string[]>(EMPTY_ARRAY);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const [isTop, setIsTop] = useState(false);
+
+    const closeDropdown = useCallback(() => setIsOpen(false), []);
+    useClickOutside(dropdownRef, closeDropdown, isOpen);
+    const { isTop, updatePosition } = useDropdownPosition(dropdownRef);
 
     useEffect(() => {
         setSelectedValues(selected);
@@ -55,22 +60,8 @@ export default function MultiSelectDropdown({
 
     const isClearEnabled = selectedValues.length > 0;
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
     const toggleDropdown = () => {
-        if (!isOpen && dropdownRef.current) {
-            const rect = dropdownRef.current.getBoundingClientRect();
-            const isBottomHalf = rect.top > window.innerHeight / 2;
-            setIsTop(isBottomHalf);
-        }
+        if (!isOpen) updatePosition();
         setIsOpen(!isOpen);
     };
 

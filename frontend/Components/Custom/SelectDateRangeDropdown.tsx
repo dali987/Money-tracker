@@ -1,11 +1,13 @@
-"use client"
+'use client';
 
 import { CalendarDays, Check, ChevronDown } from 'lucide-react';
-import { useCallback, useState, useRef, useEffect } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import DateSelect from './DateSelect';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import CustomModal from './CustomModal';
+import { useClickOutside } from '@/hooks/useClickOutside';
+import { useDropdownPosition } from '@/hooks/useDropdownPosition';
 
 const options = [
     'Today',
@@ -22,12 +24,16 @@ interface Props {
     className?: string;
 }
 
-const SelectDropdown = ({ onRangeChange, className }: Props) => {
+const SelectDateRangeDropdown = ({ onRangeChange, className }: Props) => {
     const [selected, setSelected] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const [isTop, setIsTop] = useState(false);
+
+    const closeDropdown = useCallback(() => setIsOpen(false), []);
+    useClickOutside(dropdownRef, closeDropdown, isOpen);
+    const { isTop, updatePosition } = useDropdownPosition(dropdownRef);
+
     const [dateRange, setDateRange] = useState<{
         start: { date: Date | undefined; label: string };
         end: { date: Date | undefined; label: string };
@@ -153,22 +159,8 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
         [formatDate, onRangeChange],
     );
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
     const toggleDropdown = () => {
-        if (!isOpen && dropdownRef.current) {
-            const rect = dropdownRef.current.getBoundingClientRect();
-            const isBottomHalf = rect.top > window.innerHeight / 2;
-            setIsTop(isBottomHalf);
-        }
+        if (!isOpen) updatePosition();
         setIsOpen(!isOpen);
     };
 
@@ -178,7 +170,7 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
                 <button
                     type="button"
                     onClick={toggleDropdown}
-                    className="btn btn-outline border-base-content/20 join-item p-3 justify-between font-normal min-w-[180px]">
+                    className="btn btn-outline border-base-content/20 join-item p-3 justify-between font-normal min-w-45">
                     <div className="flex items-center gap-2 overflow-hidden">
                         <CalendarDays className="h-4 w-4 shrink-0" />
                         <span className="text-sm truncate">
@@ -253,4 +245,4 @@ const SelectDropdown = ({ onRangeChange, className }: Props) => {
     );
 };
 
-export default SelectDropdown;
+export default SelectDateRangeDropdown;

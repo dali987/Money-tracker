@@ -1,19 +1,19 @@
 import mongoose from 'mongoose';
 import Account from '../models/account.model.js';
+import Transaction from '../models/transaction.model.js';
 
 export const createAccount = async (req, res, next) => {
-
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
         const { user } = req;
-        const { name, type } = req.body;
+        const { name, group } = req.body;
 
         const existingAccount = await Account.findOne({
             user: user._id,
             name,
-            type,
+            group,
         }).session(session);
 
         if (existingAccount) {
@@ -22,10 +22,15 @@ export const createAccount = async (req, res, next) => {
             throw error;
         }
 
-        const account = await Account.create([{
-            ...req.body,
-            user: user._id,
-        }], { session });
+        const account = await Account.create(
+            [
+                {
+                    ...req.body,
+                    user: user._id,
+                },
+            ],
+            { session },
+        );
 
         await session.commitTransaction();
         res.status(201).json({ success: true, data: account[0] });
@@ -85,6 +90,10 @@ export const deleteAccount = async (req, res, next) => {
             error.statusCode = 404;
             throw error;
         }
+
+        await Transaction.deleteMany({
+            $or: [{ fromAccount: accountId }, { toAccount: accountId }],
+        }).session(session);
 
         await session.commitTransaction();
         res.status(200).json({ success: true, data: account });

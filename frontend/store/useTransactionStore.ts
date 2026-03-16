@@ -112,7 +112,7 @@ export const useTransactionStore = create<TransactionStore>((set) => ({
             useAccountStore.getState().getAccounts();
         } catch (error) {
             console.error('An error occurred while creating transaction: ', error);
-            toast.error('Something went wrong');
+            throw error;
         }
     },
 
@@ -132,7 +132,7 @@ export const useTransactionStore = create<TransactionStore>((set) => ({
             useAccountStore.getState().getAccounts();
         } catch (error) {
             console.error('An error occurred while updating transaction: ', error);
-            toast.error('Something went wrong');
+            throw error;
         }
     },
 

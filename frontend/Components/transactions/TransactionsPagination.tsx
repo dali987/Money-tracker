@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 
 interface TransactionsPaginationProps {
     currentPage: number;
@@ -13,8 +13,6 @@ const TransactionsPagination = ({
     onPageChange,
     isLoading = false,
 }: TransactionsPaginationProps) => {
-    const [inputMode, setInputMode] = useState<'left' | 'right' | null>(null);
-
     const getVisiblePages = useCallback(() => {
         const pages: (number | 'left-ellipsis' | 'right-ellipsis')[] = [];
 
@@ -48,39 +46,24 @@ const TransactionsPagination = ({
         if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
             onPageChange(pageNum);
         }
-        setInputMode(null);
     };
 
     const renderEllipsisInput = (key: string) => (
         <input
             key={key}
-            className="join-item btn w-16 px-1 text-center"
+            className="join-item btn w-16 px-1 text-center font-normal"
             type="number"
-            autoFocus
             min={1}
             max={totalPages}
             placeholder="..."
-            onBlur={() => setInputMode(null)}
+            disabled={isLoading}
             onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                     handleJumpToPage((e.target as HTMLInputElement).value);
-                }
-                if (e.key === 'Escape') {
-                    setInputMode(null);
+                    (e.target as HTMLInputElement).value = '';
                 }
             }}
         />
-    );
-
-    const renderEllipsisButton = (key: string, side: 'left' | 'right') => (
-        <button
-            key={key}
-            className="join-item btn"
-            onClick={() => setInputMode(side)}
-            disabled={isLoading}
-            aria-label={`Jump to page (${side})`}>
-            ...
-        </button>
     );
 
     const renderPageButton = (page: number) => (
@@ -106,16 +89,8 @@ const TransactionsPagination = ({
                 </button>
 
                 {getVisiblePages().map((page) => {
-                    if (page === 'left-ellipsis') {
-                        return inputMode === 'left'
-                            ? renderEllipsisInput(page)
-                            : renderEllipsisButton(page, 'left');
-                    }
-
-                    if (page === 'right-ellipsis') {
-                        return inputMode === 'right'
-                            ? renderEllipsisInput(page)
-                            : renderEllipsisButton(page, 'right');
+                    if (page === 'left-ellipsis' || page === 'right-ellipsis') {
+                        return renderEllipsisInput(page);
                     }
 
                     return renderPageButton(page);

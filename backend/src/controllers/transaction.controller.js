@@ -10,6 +10,26 @@ const CHART_GROUP_CONFIGS = {
     tag: '$tags',
 };
 
+const verifyAccountOwnership = async (fromAccount, toAccount, userId) => {
+    if (fromAccount) {
+        const acc = await Account.findOne({ _id: fromAccount, user: userId });
+        if (!acc) {
+            const error = new Error('Unauthorized: You do not own the source account');
+            error.statusCode = 403;
+            throw error;
+        }
+    }
+
+    if (toAccount) {
+        const acc = await Account.findOne({ _id: toAccount, user: userId });
+        if (!acc) {
+            const error = new Error('Unauthorized: You do not own the destination account');
+            error.statusCode = 403;
+            throw error;
+        }
+    }
+};
+
 const getFilter = async (req) => {
     const { startDate, endDate, account, tags, excludeTags, type } = req.query;
 
@@ -109,6 +129,12 @@ export const getNetWorthChartData = async (req, res, next) => {
     try {
         const { startDate, endDate, account, groupBy = 'month' } = req.query;
         const userId = req.user._id;
+        const rangeStart = startDate ? new Date(startDate) : new Date(0);
+        let rangeEnd = endDate ? new Date(endDate) : new Date();
+        if (endDate) {
+            // Include transactions up to the very end of the selected end date
+            rangeEnd.setUTCHours(23, 59, 59, 999);
+        }
 
         const accountFilter = { user: userId };
         if (account) accountFilter._id = account;
@@ -116,26 +142,26 @@ export const getNetWorthChartData = async (req, res, next) => {
         const accounts = await Account.find(accountFilter);
         const accountsIds = accounts.map((a) => a._id);
 
+        const matchStage = {
+            $or: [
+                { toAccount: { $in: accountsIds } },
+                { fromAccount: { $in: accountsIds } },
+            ],
+            type: { $in: ['income', 'expense'] },
+            date: { $gte: rangeStart, $lte: rangeEnd },
+        };
+
+        if (req.query.excludeTags) {
+            matchStage.tags = { $nin: req.query.excludeTags.split(',') };
+        }
+
         const stats = await Transaction.aggregate([
             {
-                $match: {
-                    $or: [
-                        { toAccount: { $in: accountsIds } },
-                        { fromAccount: { $in: accountsIds } },
-                    ],
-                    type: { $in: ['income', 'expense'] },
-                    date: { $gte: new Date(startDate), $lte: new Date(endDate) },
-                },
+                $match: matchStage,
             },
             {
                 $group: {
-                    _id: {
-                        $cond: [
-                            { $eq: [groupBy, 'month'] },
-                            { $month: '$date' },
-                            { $dayOfMonth: '$date' },
-                        ],
-                    },
+                    _id: groupBy === 'month' ? { $month: '$date' } : { $dayOfMonth: '$date' },
                     netChange: {
                         $sum: {
                             $cond: [
@@ -156,13 +182,48 @@ export const getNetWorthChartData = async (req, res, next) => {
                 },
             },
         ]);
+
+        const changesAfterEndDateMatchStage = {
+            $or: [
+                { toAccount: { $in: accountsIds } },
+                { fromAccount: { $in: accountsIds } },
+            ],
+            type: { $in: ['income', 'expense'] },
+            date: { $gt: rangeEnd },
+        };
+
+        if (req.query.excludeTags) {
+            changesAfterEndDateMatchStage.tags = { $nin: req.query.excludeTags.split(',') };
+        }
+
+        const changesAfterEndDate = await Transaction.aggregate([
+            {
+                $match: changesAfterEndDateMatchStage,
+            },
+            {
+                $group: {
+                    _id: null,
+                    total: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ['$type', 'income'] },
+                                '$amount',
+                                { $multiply: ['$amount', -1] },
+                            ],
+                        },
+                    },
+                },
+            },
+        ]);
+
         const grouped = stats.reduce((acc, change) => {
             acc[change.period] = change.amount;
             return acc;
         }, {});
-        const netWorthAtStart = accounts.reduce((acc, account) => (acc += account.balance), 0);
-        const sumOfChanges = stats.reduce((acc, change) => (acc += change.amount), 0);
-        const netWorthAtEndOfPeriod = netWorthAtStart + sumOfChanges;
+        const currentNetWorth = accounts.reduce((acc, account) => (acc += account.balance), 0);
+        const postPeriodNetChange = changesAfterEndDate[0]?.total || 0;
+        const netWorthAtEndOfPeriod = currentNetWorth - postPeriodNetChange;
+        console.log(netWorthAtEndOfPeriod, grouped);
 
         res.status(200).json({
             success: true,
@@ -185,14 +246,7 @@ export const createTransaction = async (req, res, next) => {
         const { fromAccount, toAccount, type } = req.body;
         const userId = req.user._id;
 
-        if (fromAccount) {
-            const acc = await Account.findOne({ _id: fromAccount, user: userId });
-            if (!acc) throw new Error('Unauthorized: You do not own the source account');
-        }
-        if (toAccount) {
-            const acc = await Account.findOne({ _id: toAccount, user: userId });
-            if (!acc) throw new Error('Unauthorized: You do not own the destination account');
-        }
+        await verifyAccountOwnership(fromAccount, toAccount, userId);
 
         const transaction = await Transaction.create(
             [
@@ -326,12 +380,16 @@ export const updateTransaction = async (req, res, next) => {
             throw error;
         }
 
+        const nextFromAccount = req.body.fromAccount ?? transaction.fromAccount;
+        const nextToAccount = req.body.toAccount ?? transaction.toAccount;
+        await verifyAccountOwnership(nextFromAccount, nextToAccount, userId);
+
         await accountActions[transaction.type](transaction, session, -1);
 
         const updatedTransaction = await Transaction.findByIdAndUpdate(
             transactionId,
             { ...req.body },
-            { new: true, session },
+            { new: true, session, runValidators: true },
         );
 
         await accountActions[updatedTransaction.type](updatedTransaction, session);

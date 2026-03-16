@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useClickOutside } from '@/hooks/useClickOutside';
 
 interface Option {
     label: React.ReactNode;
@@ -47,15 +48,8 @@ const SearchableSelect = ({
         );
     }, [search, options]);
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsFocused(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    const closeFocused = useCallback(() => setIsFocused(false), []);
+    useClickOutside(dropdownRef, closeFocused, isFocused);
 
     return (
         <div className={`dropdown w-full ${isFocused ? 'dropdown-open' : ''}`} ref={dropdownRef}>

@@ -31,24 +31,30 @@ nextApp.prepare().then(async () => {
 
     app.use(cookieParser());
 
+    app.use('/api/auth', (req, res, next) => {
+        if (!req.headers.origin && req.headers.host) {
+            req.headers.origin = `${req.protocol}://${req.headers.host}`;
+        }
+        next();
+    });
     app.all('/api/auth/{*path}', toNodeHandler(auth));
 
     app.use(express.json());
 
-    app.use(
-        helmet({
-            contentSecurityPolicy: {
-                useDefaults: true,
-                directives: {
-                    'default-src': ["'self'"],
-                    'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-                    'connect-src': ["'self'", ENV.CLIENT_URL],
-                    'style-src': ["'self'", "'unsafe-inline'"],
-                    'img-src': ["'self'", 'data:', 'https:'],
-                },
-            },
-        }),
-    );
+    // app.use(
+    //     helmet({
+    //         contentSecurityPolicy: {
+    //             useDefaults: true,
+    //             directives: {
+    //                 'default-src': ["'self'"],
+    //                 'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+    //                 'connect-src': ["'self'", ENV.CLIENT_URL],
+    //                 'style-src': ["'self'", "'unsafe-inline'"],
+    //                 'img-src': ["'self'", 'data:', 'https:'],
+    //             },
+    //         },
+    //     }),
+    // );
 
     const apiRouter = express.Router();
     apiRouter.use('/account', accountRouter);
@@ -84,7 +90,7 @@ nextApp.prepare().then(async () => {
 
         cron.schedule('0 0 * * *', async () => {
             try {
-                await checkExchangeRates();
+                await getRates();
             } catch (error) {
                 console.error('Failed to check exchange rates in scheduler:', error);
             }

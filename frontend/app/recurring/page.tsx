@@ -225,7 +225,7 @@ const RecurringPage = () => {
                                                 {item.type === 'expense' ? '-' : '+'}
                                                 {Number(item.amount).toLocaleString('en-US', {
                                                     style: 'currency',
-                                                    currency: 'USD',
+                                                    currency: authUser?.baseCurrency,
                                                 })}
                                             </div>
 
@@ -234,7 +234,7 @@ const RecurringPage = () => {
                                                 <Wallet size={14} className="opacity-70" />
                                                 {item.type === 'transfer' ? (
                                                     <div className="flex items-center gap-1 overflow-hidden">
-                                                        <span className="truncate max-w-[80px]">
+                                                        <span className="truncate max-w-20">
                                                             {typeof item.fromAccount === 'object'
                                                                 ? item.fromAccount?.name
                                                                 : 'Account'}
@@ -243,7 +243,7 @@ const RecurringPage = () => {
                                                             size={12}
                                                             className="shrink-0"
                                                         />
-                                                        <span className="truncate max-w-[80px]">
+                                                        <span className="truncate max-w-20">
                                                             {typeof item.toAccount === 'object'
                                                                 ? item.toAccount?.name
                                                                 : 'Account'}

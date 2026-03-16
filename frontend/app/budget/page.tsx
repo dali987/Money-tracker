@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useBudgetStore } from '@/store/useBudgetStore';
-import { useTransactionStore } from '@/store/useTransactionStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, AlertCircle, CheckCircle, Wallet, MoreVertical } from 'lucide-react';
@@ -14,6 +13,7 @@ import ErrorState from '@/Components/states/ErrorState';
 import EmptyState from '@/Components/states/EmptyState';
 import ThreeBlockSkeleton from '@/Components/states/ThreeBlockSkeleton';
 import { Budget, Transaction } from '@/types';
+import { useTransactions } from '@/hooks/useTransactions';
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -45,8 +45,22 @@ const formatMoney = (amount: number) => {
 const BudgetPage = () => {
     const { budgets, getBudgets, createBudget, updateBudget, deleteBudget, isLoading, isError } =
         useBudgetStore();
-    const { transactions } = useTransactionStore(); // Fetch all/monthly transactions
     const { authUser } = useAuthStore();
+
+    const now = useMemo(() => new Date(), []);
+    const monthStart = useMemo(
+        () => new Date(now.getFullYear(), now.getMonth(), 1),
+        [now],
+    );
+    const monthEnd = useMemo(
+        () => new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999),
+        [now],
+    );
+    const { data: monthlyExpenseTransactions = [] } = useTransactions({
+        startDate: monthStart,
+        endDate: monthEnd,
+        type: 'expense',
+    });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
@@ -64,8 +78,8 @@ const BudgetPage = () => {
 
     const budgetStats = useMemo(() => {
         return budgets.map((budget) => {
-            const spent = transactions
-                .filter((transaction: Transaction) => transaction.type === 'expense' && transaction.tags?.includes(budget.tag))
+            const spent = monthlyExpenseTransactions
+                .filter((transaction: Transaction) => transaction.tags?.includes(budget.tag))
                 .reduce((sum: number, transaction: Transaction) => sum + transaction.amount, 0);
 
             const percentage = Math.min((spent / budget.amount) * 100, 100);
@@ -80,7 +94,7 @@ const BudgetPage = () => {
                 isNearLimit,
             };
         });
-    }, [budgets, transactions]);
+    }, [budgets, monthlyExpenseTransactions]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

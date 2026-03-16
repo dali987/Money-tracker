@@ -5,7 +5,7 @@ import MultiSelectDropdown from '@/Components/Custom/MultiSelectDropdown';
 import SelectAccountDropdown, {
     AccountDropdownOption,
 } from '@/Components/Custom/SelectAccountDropdown';
-import SelectDropdown from '@/Components/Custom/SelectDateRangeDropdown';
+import SelectDateRangeDropdown from '@/Components/Custom/SelectDateRangeDropdown';
 import TransactionForm from '@/Components/transactions/TransactionForm';
 import TransactionsList from '@/Components/transactions/TransactionsList';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -193,7 +193,10 @@ const TransactionsPage = () => {
                     </CustomModal>
 
                     <div className="join">
-                        <SelectDropdown className="join-item" onRangeChange={handleRangeChange} />
+                        <SelectDateRangeDropdown
+                            className="join-item"
+                            onRangeChange={handleRangeChange}
+                        />
                         <button
                             className="btn btn-outline rounded-box rounded-l-none text-base join-item p-3"
                             onClick={() => {
@@ -218,7 +221,6 @@ const TransactionsPage = () => {
                                     name="account"
                                     className="w-full"
                                     options={options || []}
-                                    defaultValue={false}
                                     selectedId={tempFilters.account}
                                     onSelect={(option: AccountDropdownOption) =>
                                         setTempFilters({

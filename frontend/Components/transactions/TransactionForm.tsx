@@ -183,8 +183,14 @@ const TransactionForm = ({
                 error.issues.forEach((issue) => {
                     toast.error(issue.message);
                 });
+            } else if (error && typeof error === 'object' && 'isAxiosError' in error) {
+                const axiosError = error as any;
+                const message = axiosError.response?.data?.message || 'Server error occurred';
+                toast.error(message);
+            } else if (error instanceof Error) {
+                toast.error(error.message || "Unexpected error occurred");
             } else {
-                toast.error('Unexpected error occurred');
+                toast.error("Unexpected error occurred");
                 console.error(error);
             }
         } finally {

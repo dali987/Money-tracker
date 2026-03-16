@@ -12,7 +12,7 @@ interface AccountDropDownProps {
     onSelect?: (option: AccountDropdownOption) => void;
     disabled?: boolean;
     name?: string;
-    defaultValue?: boolean;
+    defaultValue?: string;
     placeholder?: string;
     selectedId?: string;
 }
@@ -27,22 +27,20 @@ const SelectAccountDropdown = ({
     placeholder,
     selectedId,
 }: AccountDropDownProps) => {
-    const [internalSelectedId, setInternalSelectedId] = useState<string>('');
+    const [internalSelectedId, setInternalSelectedId] = useState<string>(
+        () => selectedId || defaultValue || '',
+    );
     const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
     const [isTop, setIsTop] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const isControlled = selectedId !== undefined;
+    const isControlled = !!selectedId;
 
     const selectedOption = useMemo(() => {
-        const preferredId = isControlled ? selectedId : internalSelectedId;
+        const preferredId = isControlled ? selectedId : internalSelectedId || defaultValue;
         if (preferredId) {
             const found = options.find((o) => o.id === preferredId);
             if (found) return found;
-        }
-
-        if (defaultValue && options.length > 0) {
-            return options[0];
         }
 
         return { name: '', type: '', id: '' };
@@ -59,28 +57,26 @@ const SelectAccountDropdown = ({
     };
 
     useEffect(() => {
-        if (!isControlled && defaultValue && options.length > 0 && !internalSelectedId) {
-            onSelect?.(options[0]);
-        }
-    }, [defaultValue, internalSelectedId, isControlled, onSelect, options]);
+        if (!isOpen) return;
 
-    useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
             }
         };
+
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [isOpen]);
 
     const toggleDropdown = () => {
         if (disabled) return;
 
         if (!isOpen && dropdownRef.current) {
             const rect = dropdownRef.current.getBoundingClientRect();
-            const isBottomHalf = rect.top > window.innerHeight / 2;
-            setIsTop(isBottomHalf);
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            setIsTop(spaceBelow < 250 && spaceAbove > spaceBelow);
         }
 
         setIsOpen(!isOpen);
