@@ -42,6 +42,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
     const [accountsSummary, setAccountsSummary] = useState<AccountSummary | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [summaryError, setSummaryError] = useState<string | null>(null);
+    const [isMounted, setIsMounted] = useState(false);
     const queryClient = useQueryClient();
     const isAccountsError = useAccountStore((state) => state.isError);
 
@@ -63,6 +64,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
 
     useEffect(() => {
         fetchSummary();
+        setIsMounted(true);
     }, [accounts, fetchSummary]);
 
     const totalNetWorth = accountsSummary?.totalNetWorth ?? 0;
@@ -114,7 +116,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
             layout
             variants={container}
             initial="hidden"
-            animate="visible"
+            animate={isMounted ? "visible" : "hidden"}
             className="w-full">
             <CustomCollapse
                 title="NET WORTH"
@@ -137,7 +139,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                 <motion.div
                     variants={container}
                     initial="hidden"
-                    animate="visible"
+                    animate={isMounted ? "visible" : "hidden"}
                     className="flex flex-col gap-2">
                     <AnimatePresence>
                         {groups.map((group: string) => (
@@ -164,7 +166,7 @@ const NetWorth = ({ closable = true, editMode }: { closable?: boolean; editMode?
                                     <motion.div
                                         variants={container}
                                         initial="hidden"
-                                        animate="visible"
+                                        animate={isMounted ? "visible" : "hidden"}
                                         className="flex flex-col gap-1">
                                         {accounts &&
                                             accounts
