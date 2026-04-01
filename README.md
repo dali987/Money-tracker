@@ -103,4 +103,4 @@ This project is open source and available under the [MIT License](LICENSE).
 ---
 
 **Built as a learning project and maybe after some polishing it will be a port of my portfolio** — feedback and suggestions are very welcome! 🙌
-(most of the read me file is written with ai, cuz im still new to writing read me files)
+(this is still in development btw)
